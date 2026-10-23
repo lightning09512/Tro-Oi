@@ -1,7 +1,3 @@
-# Trọ Ơi — mã nguồn nhóm
-
-Repo này là nơi nhóm triển khai lại website Trọ Ơi. [Repo giao diện tham chiếu](https://github.com/lightning09512/Rental-Room-Sharing-Platform) dùng để đối chiếu nhận diện, giao diện và luồng sử dụng.
-
 ## Chạy ứng dụng
 
 Yêu cầu Node.js và pnpm.
