@@ -1,4 +1,24 @@
-## Chạy ứng dụng
+# Trọ Ơi
+
+Trọ Ơi là nền tảng kết nối người thuê phòng với chủ trọ. Dự án hướng tới việc giúp người thuê tìm nơi ở phù hợp, trao đổi thông tin và tham gia cộng đồng; đồng thời hỗ trợ chủ trọ quản lý tin đăng và quản trị viên kiểm duyệt nội dung.
+
+## Mục tiêu và chức năng
+
+- **Người thuê:** tìm phòng theo khu vực, giá và diện tích; xem chi tiết phòng; lưu tin yêu thích; đánh giá phòng; đăng và quản lý tin chuyển nhượng; nhắn tin, nhận thông báo và tham gia diễn đàn.
+- **Chủ trọ:** đăng, chỉnh sửa và quản lý tin cho thuê; theo dõi thống kê tin đăng.
+- **Quản trị viên:** quản lý người dùng, tin cho thuê, bài viết, danh mục, báo cáo và thống kê.
+
+## Công nghệ
+
+- React 19, TypeScript, Vite và React Router.
+- Tailwind CSS v4 cho giao diện responsive.
+- pnpm để quản lý dependencies và chạy các lệnh phát triển.
+
+## Hiện trạng
+
+Nhánh `main` hiện có khung giao diện, điều hướng, bố cục dùng chung và các route cho những luồng chính. Một số route vẫn hiển thị trang tạm. Các module API và migration database mới ở mức một phần, chưa tạo thành backend được tích hợp đầy đủ với ứng dụng. README mô tả mục tiêu sản phẩm và trạng thái mã nguồn hiện có.
+
+## Chạy dự án
 
 Yêu cầu Node.js và pnpm.
 
@@ -7,27 +27,18 @@ pnpm install
 pnpm dev
 ```
 
-Vite in địa chỉ xem trước trong terminal. Để kiểm tra bản dựng:
+Vite sẽ in địa chỉ xem trước trong terminal. Kiểm tra bản dựng production bằng:
 
 ```powershell
 pnpm build
 pnpm preview
 ```
 
-## Trạng thái phần khung
+## Cấu trúc màn hình
 
-Ứng dụng hiện có React, Vite, TypeScript, Tailwind CSS v4, điều hướng, bố cục chung, bố cục quản trị, font và footer. Các route được tạo theo project tham chiếu nhưng **nội dung trang vẫn là trang tạm**. Chưa có tài khoản, dữ liệu, API, phân quyền hay chức năng nghiệp vụ. Những phần đó sẽ được triển khai trong các nhánh tính năng của từng thành viên.
+- **Công khai:** trang chủ, tìm phòng, chi tiết phòng, diễn đàn và hồ sơ công khai.
+- **Tài khoản:** đăng nhập, đăng ký, khôi phục mật khẩu, hồ sơ, tin yêu thích, tin nhắn và thông báo.
+- **Chủ trọ:** quản lý tin, đăng/sửa tin và thống kê.
+- **Quản trị:** tổng quan, quản lý người dùng, tin cho thuê, bài viết, danh mục, báo cáo và thống kê.
 
-Các route chuyển nhượng cũ chỉ chuyển về trang tìm phòng; không xây dựng chức năng chuyển nhượng riêng.
-
-## Phân chia phần việc
-
-- Trang công khai và tài khoản: trang chủ, tìm phòng, chi tiết phòng, yêu thích, xác thực và hồ sơ của chính mình.
-- Cộng đồng và liên lạc: diễn đàn, hồ sơ công khai, tin nhắn, thông báo và báo cáo của tôi.
-- Chủ trọ và quản trị: quản lý tin, đăng/sửa tin, thống kê, các màn hình quản trị.
-
-Người phụ trách phần nền quản lý `src/routes`, `src/components/layout` và `src/index.css`. Thành viên làm trang riêng báo các route hoặc thay đổi dùng chung cần ghép, tránh cùng sửa một file trong nhiều nhánh.
-
-## Quy trình Git
-
-Mỗi thành viên tạo nhánh riêng từ `main`, triển khai đúng phần được giao, chạy `pnpm build`, commit và push nhánh của mình rồi mở Pull Request vào `main`. Không đưa `.env`, `node_modules` hoặc `dist` lên repo.
+Các chức năng sẽ được hoàn thiện theo use case và cập nhật trạng thái triển khai trong quá trình phát triển.
