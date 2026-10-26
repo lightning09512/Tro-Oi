@@ -1,21 +1,3 @@
-// import { usePlatform } from "@/contexts/PlatformContext"
-
-// export default function PlatformStatusBanner() {
-//   const { connectionState, connectionError } = usePlatform()
-
-//   if (connectionState !== "error" || !connectionError) {
-//     return null
-//   }
-
-//   return (
-//     <div
-//       role="alert"
-//       className="bg-amber-600 px-4 py-2 text-center text-sm font-medium text-white shadow-sm"
-//     >
-//       {connectionError}
-//     </div>
-//   )
-// }
 import { useEffect, useState } from "react"
 import { usePlatform } from "@/contexts/PlatformContext"
 import { isApiMode } from "@/services/apiClient"
@@ -41,4 +23,3 @@ export default function PlatformStatusBanner() {
     {error ? `Chưa đồng bộ với máy chủ: ${error}` : "Đang tải dữ liệu Trọ Ơi…"}
   </div>
 }
-
