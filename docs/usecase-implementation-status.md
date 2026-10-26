@@ -4,7 +4,7 @@
 
 | Vai trò | Use case trong báo cáo | Màn hình/luồng | API và nơi lưu | Trạng thái |
 |---|---|---|---|---|
-| Khách | Đăng ký, đăng nhập, đăng xuất | Đăng ký/đăng nhập | `/api/auth/*`, PostgreSQL `users`, bcrypt, JWT | Có API; cần cấu hình PostgreSQL và `JWT_SECRET` |
+| Khách | Đăng ký, đăng nhập, đăng xuất; xác minh email bằng OTP khi đăng ký | Đăng ký/đăng nhập | `/api/auth/register/request-code`, `/api/auth/register`, PostgreSQL `users`, bcrypt, JWT, SMTP | Có API/giao diện; đăng ký API yêu cầu OTP email; cần cấu hình SMTP, PostgreSQL và `JWT_SECRET`; cần xác nhận gửi email end-to-end |
 | Khách | Quên/đặt lại mật khẩu | Khôi phục tài khoản | `/api/auth/password-reset/*`, token băm trong PostgreSQL, SMTP | Có API; cần SMTP để gửi mã thật |
 | Khách | Tìm theo khu vực, GPS, giá, diện tích, tiện ích; sắp xếp/phân trang | Trang chủ, tìm phòng, bộ lọc mobile/desktop | `/api/listings`, PostgreSQL/PostGIS | Có API; GPS chỉ tìm các tin có tọa độ do chủ trọ cung cấp |
 | Khách | Xem chi tiết tin | Ảnh, giá, cọc, tiện ích, vị trí, liên hệ | `/api/listings/:id`, PostgreSQL; bản đồ Leaflet/OpenStreetMap | Có API; ảnh và tọa độ lấy từ dữ liệu tin |
@@ -39,7 +39,7 @@
 - Chạy `pnpm db:seed` để chủ động nạp bộ dữ liệu phát triển vào PostgreSQL và MongoDB; `pnpm db:setup` chạy cả migration và seed. Seed không tự chạy khi khởi động server và không xóa dữ liệu khác.
 - Tạo tài khoản admin đầu tiên bằng `pnpm admin:create`; không có mật khẩu admin mặc định trong mã nguồn.
 - Tạo `.env` dựa trên `.env.example`. Cần `DATABASE_URL`, `MONGODB_URI`, `JWT_SECRET` tối thiểu 32 ký tự, `WEB_ORIGIN`.
-- Cần cấu hình SMTP để dùng đặt lại mật khẩu thật và Cloudinary để tải ảnh lên. Khi thiếu, API trả lỗi cấu hình thay vì giả vờ hoàn thành thao tác.
+- Cần cấu hình SMTP để gửi OTP đăng ký và mã đặt lại mật khẩu thật; Cloudinary để tải ảnh lên. Khi thiếu, API trả lỗi cấu hình thay vì giả vờ hoàn thành thao tác.
 - Tin chuyển nhượng dùng bảng riêng `transfers`, được tạo bởi migration `003_transfers.sql`; nội dung không lưu trong diễn đàn. Chạy `pnpm db:migrate` để áp dụng migration. Thông tin liên hệ dùng cuộc trò chuyện MongoDB có `transferId` để giữ ngữ cảnh tin.
 - Trong chế độ demo, tin chuyển nhượng, trạng thái kiểm duyệt và cuộc trò chuyện được lưu trên `localStorage` để tiếp tục sau khi tải lại trang.
 - Rà soát backend: endpoint thống kê admin đã sửa lỗi đọc kết quả truy vấn và thêm tin chuyển nhượng; kiểm tra giới hạn quản trị viên cuối cùng, xử lý báo cáo và mã đặt lại mật khẩu đã dùng transaction PostgreSQL. Cột `date` của tin chuyển nhượng được giữ ở dạng `YYYY-MM-DD` theo ngày Việt Nam. Không cần migration mới cho các sửa đổi này.

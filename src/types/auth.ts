@@ -22,4 +22,5 @@ export interface RegisterPayload {
   phone: string
   password: string
   role: Exclude<UserRole, "admin">
+  verificationCode: string
 }

@@ -41,7 +41,7 @@ app.use(express.urlencoded({ extended: false, limit: "1mb" }))
 
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau." } })
 const apiLimiter = rateLimit({ windowMs: 60_000, limit: 180, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn gửi quá nhiều yêu cầu. Vui lòng thử lại sau." } })
-const resetLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 3, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn đã yêu cầu quá nhiều mã. Vui lòng đợi trước khi thử lại." } })
+const emailCodeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 3, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn đã yêu cầu quá nhiều mã. Vui lòng đợi trước khi thử lại." } })
 app.use("/api", apiLimiter)
 app.get("/api/health", async (_req, res) => {
   const databases = await databaseStatus()
@@ -50,7 +50,7 @@ app.get("/api/health", async (_req, res) => {
   res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "configuration_required", databases, authConfigured: configured, emailConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM), uploadsConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) })
 })
 
-app.use("/api/auth", authLimiter, (req, res, next) => req.path === "/password-reset/request" ? resetLimiter(req, res, next) : next(), requirePostgres, authRoutes)
+app.use("/api/auth", authLimiter, (req, res, next) => ["/password-reset/request", "/register/request-code"].includes(req.path) ? emailCodeLimiter(req, res, next) : next(), requirePostgres, authRoutes)
 app.use("/api/listings", requirePostgres, listingRoutes)
 app.use("/api/transfers", requirePostgres, transferRoutes)
 app.use("/api/favorites", requirePostgres, favoriteRoutes)

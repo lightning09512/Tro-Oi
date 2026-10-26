@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import AuthShell from "@/pages/auth/AuthShell"
 import useAuth from "@/hooks/useAuth"
+import { isApiMode } from "@/services/apiClient"
 import type { UserRole } from "@/types/auth"
 
 export default function RegisterPage() {
@@ -16,12 +17,41 @@ export default function RegisterPage() {
   const [role, setRole] = useState<Exclude<UserRole, "admin">>("renter")
   const [agreed, setAgreed] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [codeSentEmail, setCodeSentEmail] = useState("")
+  const [notice, setNotice] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
+  const [sendingCode, setSendingCode] = useState(false)
+  const { register, requestRegistrationCode } = useAuth()
   const navigate = useNavigate()
-  const update = (key: keyof typeof values, value: string) =>
+  const update = (key: keyof typeof values, value: string) => {
     setValues((current) => ({ ...current, [key]: value }))
+    if (key === "email" && value.trim().toLocaleLowerCase("vi") !== codeSentEmail) {
+      setCodeSentEmail("")
+      setVerificationCode("")
+      setNotice("")
+    }
+  }
+  const requestCode = async () => {
+    setError("")
+    setNotice("")
+    const email = values.email.trim().toLocaleLowerCase("vi")
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Nhập email hợp lệ trước khi yêu cầu mã.")
+      return
+    }
+    setSendingCode(true)
+    try {
+      const demoCode = await requestRegistrationCode(email)
+      setCodeSentEmail(email)
+      setNotice(demoCode ? "Mã demo: " + demoCode : "Mã xác minh đã được gửi tới " + email + ".")
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Không thể gửi mã xác minh. Vui lòng thử lại.")
+    } finally {
+      setSendingCode(false)
+    }
+  }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError("")
@@ -29,6 +59,10 @@ export default function RegisterPage() {
       return setError("Vui lòng điền đầy đủ các trường bắt buộc.")
     if (!/^\S+@\S+\.\S+$/.test(values.email))
       return setError("Email chưa đúng định dạng.")
+    if (codeSentEmail !== values.email.trim().toLocaleLowerCase("vi"))
+      return setError("Hãy gửi mã xác minh tới email này trước.")
+    if (!/^\d{6}$/.test(verificationCode))
+      return setError("Nhập mã xác minh gồm 6 chữ số.")
     if (values.password.length < 8)
       return setError("Mật khẩu phải có ít nhất 8 ký tự.")
     if (values.password !== values.confirm)
@@ -42,6 +76,7 @@ export default function RegisterPage() {
         phone: values.phone,
         password: values.password,
         role,
+        verificationCode,
       })
       navigate(role === "landlord" ? "/chu-tro/thong-ke" : "/")
     } catch (caught) {
@@ -102,6 +137,25 @@ export default function RegisterPage() {
             autoComplete="email"
           />
         </label>
+        <div className="full-field">
+          <Button type="button" variant="outline" onClick={requestCode} disabled={sendingCode || loading}>
+            {sendingCode ? "Đang gửi mã..." : codeSentEmail ? "Gửi lại mã xác minh" : "Gửi mã xác minh"}
+          </Button>
+          <small>{isApiMode ? "Mã sẽ được gửi tới email bằng dịch vụ SMTP của project." : "Chế độ demo hiển thị mã xác minh trên trang."}</small>
+        </div>
+        {notice && <p className="form-message success full-field" role="status">{notice}</p>}
+        {codeSentEmail && <label className="form-field full-field">
+          <span>Mã xác minh email <b>*</b></span>
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={verificationCode}
+            onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, ""))}
+            placeholder="Nhập mã 6 chữ số"
+          />
+          <small>Mã chỉ dùng một lần và hết hạn sau 15 phút.</small>
+        </label>}
         <label className="form-field">
           <span>
             Số điện thoại <b>*</b>
@@ -161,7 +215,7 @@ export default function RegisterPage() {
           </p>
         )}
         <div className="full-field">
-          <Button>{loading ? "Đang tạo tài khoản..." : "Đăng ký"}</Button>
+          <Button disabled={loading}>{loading ? "Đang tạo tài khoản..." : "Đăng ký"}</Button>
         </div>
         <p className="auth-switch full-field">
           Đã có tài khoản? <NavLink to="/dang-nhap">Đăng nhập</NavLink>

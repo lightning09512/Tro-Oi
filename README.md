@@ -21,7 +21,7 @@ Trọ Ơi kết nối người thuê phòng với chủ trọ, hỗ trợ tìm p
 - Node.js 22 và pnpm 10. Nếu terminal báo không nhận diện lệnh pnpm, cài bằng `npm install --global pnpm@10` rồi mở terminal mới.
 - PostgreSQL có PostGIS và extension unaccent.
 - MongoDB Server đang chạy. MongoDB Compass là công cụ quản lý giao diện, không thay thế MongoDB Server.
-- SMTP để gửi email khôi phục mật khẩu và Cloudinary để bật tải ảnh lên. Hai dịch vụ này không bắt buộc để khởi động project.
+- SMTP để gửi OTP xác minh đăng ký và mã khôi phục mật khẩu; Cloudinary để bật tải ảnh lên. Đây là cấu hình tùy chọn khi chỉ chạy các chức năng khác.
 
 ## Cài đặt database trên Windows
 
@@ -102,7 +102,20 @@ pnpm install
 pnpm db:migrate
 ~~~
 
-Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 4 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
+Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 5 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
+
+   Để gửi OTP thật qua Gmail, điền các dòng sau vào `.env`:
+
+   ~~~ini
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=dia-chi-gmail@gmail.com
+   SMTP_PASSWORD=GOOGLE_APP_PASSWORD
+   SMTP_FROM="Tro Oi <dia-chi-gmail@gmail.com>"
+   ~~~
+
+   Thay địa chỉ mẫu bằng Gmail dùng để gửi. Tạo Google App Password sau khi bật [Xác minh 2 bước](https://support.google.com/accounts/answer/185839); không dùng mật khẩu đăng nhập Gmail thông thường. Google có thể không hiện tùy chọn App Password cho một số tài khoản do chính sách bảo mật hoặc quản trị viên. Gmail dùng `smtp.gmail.com` và cổng TLS/STARTTLS `587` theo [tài liệu SMTP của Google](https://support.google.com/mail/answer/7104828). Không đưa App Password lên GitHub hoặc gửi trong chat.
 
 Migration đầu tiên bật pgcrypto, PostGIS và unaccent. Nếu báo thiếu PostGIS:
 

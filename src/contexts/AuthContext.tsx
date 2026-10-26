@@ -14,6 +14,7 @@ interface AuthContextValue {
   user: AuthUser | null
   isAuthenticated: boolean
   login: (credentials: LoginCredentials) => Promise<AuthUser>
+  requestRegistrationCode: (email: string) => Promise<string>
   register: (payload: RegisterPayload) => Promise<AuthUser>
   logout: () => void
   updateUser: (user: AuthUser) => Promise<void>
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser)
     return nextUser
   }, [])
+  const requestRegistrationCode = useCallback((email: string) => authService.requestRegistrationCode(email), [])
   const register = useCallback(async (payload: RegisterPayload) => {
     const nextUser = await authService.register(payload)
     setUser(nextUser)
@@ -52,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: Boolean(user),
       login,
+      requestRegistrationCode,
       register,
       logout,
       updateUser: async (nextUser: AuthUser) => {
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(nextUser)
       },
     }),
-    [user, login, register, logout],
+    [user, login, requestRegistrationCode, register, logout],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

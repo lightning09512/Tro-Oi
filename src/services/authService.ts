@@ -5,6 +5,7 @@ import { apiRequest, clearApiSession, isApiMode, storeApiSession } from "@/servi
 const STORAGE_KEY = "phongtroplus_auth_user"
 const ACCOUNTS_KEY = "phongtroplus_accounts"
 const RESET_KEY = "phongtroplus_password_reset"
+const REGISTER_KEY = "phongtroplus_registration_email_verification"
 const DEMO_PASSWORD = "PhongTro@123"
 type AccountRecord = AuthUser & { password: string; status: "active" | "locked" }
 const wait = (duration = 220) => new Promise((resolve) => window.setTimeout(resolve, duration))
@@ -59,6 +60,11 @@ export const authService = {
       return result.user
     }
     await wait()
+    const savedVerification = window.sessionStorage.getItem(REGISTER_KEY)
+    const verification = savedVerification ? JSON.parse(savedVerification) as { email: string; code: string; expiresAt: number } : null
+    if (!verification || verification.email !== payload.email.trim().toLocaleLowerCase("vi") || verification.code !== payload.verificationCode || verification.expiresAt < Date.now()) {
+      throw new Error("Mã xác minh không hợp lệ hoặc đã hết hạn. Hãy yêu cầu mã mới.")
+    }
     const accounts = getAccounts()
     const email = payload.email.trim().toLocaleLowerCase("vi")
     const phone = payload.phone.replace(/\s/g, "")
@@ -70,8 +76,23 @@ export const authService = {
       initials: payload.name.trim().split(" ").slice(-2).map((part) => part[0]).join("").toUpperCase(),
     }
     saveAccounts([...accounts, { ...user, password: payload.password, status: "active" }])
+    window.sessionStorage.removeItem(REGISTER_KEY)
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
     return user
+  },
+  async requestRegistrationCode(email: string): Promise<string> {
+    const normalizedEmail = email.trim().toLocaleLowerCase("vi")
+    if (isApiMode) {
+      await apiRequest("auth/register/request-code", { method: "POST", body: JSON.stringify({ email: normalizedEmail }) })
+      return ""
+    }
+    await wait()
+    if (getAccounts().some((item) => item.email.trim().toLocaleLowerCase("vi") === normalizedEmail)) {
+      throw new Error("Email này đã được đăng ký. Hãy đăng nhập hoặc khôi phục mật khẩu.")
+    }
+    const code = "123456"
+    window.sessionStorage.setItem(REGISTER_KEY, JSON.stringify({ email: normalizedEmail, code, expiresAt: Date.now() + 15 * 60 * 1000 }))
+    return code
   },
   async requestPasswordReset(identifier: string): Promise<string> {
     if (isApiMode) {
