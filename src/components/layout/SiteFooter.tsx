@@ -1,66 +1,96 @@
 import { Link } from "react-router"
+import { Icon } from "@/components/common/legacy"
+import useAuth from "@/hooks/useAuth"
 
-const projectDetails = [
-  "Trường Đại học Sư phạm Kỹ thuật TP. Hồ Chí Minh · Khoa Đào tạo Chất lượng cao",
-  "Giảng viên hướng dẫn: TS. Lê Văn Vinh",
-  "Nhóm 04: Nguyễn Minh Quốc Khánh, Phạm Minh Khánh, Hoàng Thanh Tú",
-]
+type FooterLink = { label: string; to: string }
+type FooterGroup = { title: string; links?: FooterLink[]; details?: string[] }
+
+const legalText = "© 2026 Trọ Ơi · Tiểu luận chuyên ngành của Nhóm 04"
+
+function FooterLinks({ links }: { links: FooterLink[] }) {
+  return <div className="footer-links">{links.map(({ label, to }) => <Link key={to} to={to}>{label}</Link>)}</div>
+}
+
+function FooterGroupContent({ group }: { group: FooterGroup }) {
+  if (group.links) return <FooterLinks links={group.links} />
+  return <div className="footer-project-info">{group.details?.map((detail) => <p key={detail}>{detail}</p>)}</div>
+}
 
 export default function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" }) {
+  const { user } = useAuth()
+
   if (variant === "compact") {
-    return (
-      <footer className="border-t border-line bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm sm:px-6">
-          <Link to="/" className="font-bold text-forest">Trọ Ơi</Link>
-          <nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label="Điều hướng cuối trang">
-            <Link className="hover:underline" to="/tim-phong">Tìm phòng</Link>
-            <Link className="hover:underline" to="/dien-dan">Diễn đàn</Link>
-            <Link className="hover:underline" to="/">Trang chủ</Link>
-          </nav>
-          <small className="text-slate-600">© 2026 Trọ Ơi · Nhóm 04</small>
-        </div>
-      </footer>
-    )
-  }
-
-  return (
-    <footer className="bg-forest-dark text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="flex flex-wrap items-start justify-between gap-5 border-b border-white/20 pb-7">
-          <div>
-            <Link to="/" className="text-2xl font-bold tracking-tight">Trọ <span className="text-green-200">Ơi</span></Link>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-green-50">Nền tảng tìm phòng và kết nối cộng đồng người thuê trọ.</p>
-          </div>
-          <Link to="/admin/dang-nhap" className="inline-flex min-h-11 items-center rounded-lg border border-white/40 px-4 text-sm font-semibold transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            Trang quản trị
-          </Link>
-        </div>
-
-        <div className="grid gap-8 py-8 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.6fr]">
-          <div>
-            <h2 className="font-semibold">Khám phá</h2>
-            <div className="mt-4 grid gap-3 text-sm text-green-50">
-              <Link className="w-fit hover:underline" to="/tim-phong">Tìm phòng trọ</Link>
-              <Link className="w-fit hover:underline" to="/dien-dan">Diễn đàn</Link>
-            </div>
-          </div>
-          <div>
-            <h2 className="font-semibold">Tài khoản</h2>
-            <div className="mt-4 grid gap-3 text-sm text-green-50">
-              <Link className="w-fit hover:underline" to="/dang-nhap">Đăng nhập</Link>
-              <Link className="w-fit hover:underline" to="/dang-ky">Đăng ký</Link>
-            </div>
-          </div>
-          <div>
-            <h2 className="font-semibold">Thông tin dự án</h2>
-            <div className="mt-4 grid gap-3 text-sm leading-6 text-green-50">
-              {projectDetails.map((detail) => <p key={detail}>{detail}</p>)}
-            </div>
-          </div>
-        </div>
-
-        <p className="border-t border-white/20 pt-5 text-sm text-green-50">© 2026 Trọ Ơi · Tiểu luận chuyên ngành của Nhóm 04</p>
+    return <footer className="site-footer site-footer--compact">
+      <div className="container footer-compact-row">
+        <Link className="logo" to="/">Trọ <span>Ơi</span></Link>
+        <nav className="footer-compact-links" aria-label="Điều hướng cuối trang">
+          <Link to="/tim-phong">Tìm phòng</Link>
+          <Link to="/dien-dan">Diễn đàn</Link>
+          <Link to="/">Trang chủ</Link>
+        </nav>
+        <small>© 2026 Trọ Ơi · Nhóm 04</small>
       </div>
     </footer>
-  )
+  }
+
+  const accountLinks: FooterLink[] = user?.role === "landlord"
+    ? [
+        { label: "Đăng tin cho thuê", to: "/chu-tro/dang-tin" },
+        { label: "Quản lý tin", to: "/chu-tro/quan-ly-tin" },
+        { label: "Tin nhắn", to: "/tin-nhan" },
+      ]
+    : user?.role === "renter"
+      ? [
+          { label: "Tin yêu thích", to: "/yeu-thich" },
+          { label: "Tin nhắn", to: "/tin-nhan" },
+          { label: "Hồ sơ cá nhân", to: "/tai-khoan/ho-so" },
+        ]
+      : user?.role === "admin"
+        ? [{ label: "Khu quản trị", to: "/admin" }]
+        : [
+            { label: "Đăng nhập", to: "/dang-nhap" },
+            { label: "Đăng ký", to: "/dang-ky" },
+          ]
+  const groups: FooterGroup[] = [
+    { title: "Khám phá", links: [
+      { label: "Tìm phòng trọ", to: "/tim-phong" },
+      { label: "Diễn đàn", to: "/dien-dan" },
+    ] },
+    { title: user?.role === "landlord" ? "Chủ trọ" : "Tài khoản", links: accountLinks },
+    { title: "Thông tin dự án", details: [
+      "Trường Đại học Sư phạm Kỹ thuật TP. Hồ Chí Minh · Khoa Đào tạo Chất lượng cao",
+      "Giảng viên hướng dẫn: TS. Lê Văn Vinh",
+      "Nhóm 04: Nguyễn Minh Quốc Khánh, Phạm Minh Khánh, Hoàng Thanh Tú",
+    ] },
+  ]
+
+  return <footer className="site-footer">
+    <div className="container">
+      <div className="footer-intro">
+        <div className="footer-brand">
+          <Link className="logo" to="/">Trọ <span>Ơi</span></Link>
+          <p>Nền tảng tìm phòng và kết nối cộng đồng người thuê trọ.</p>
+        </div>
+        <Link className="admin-link" to="/admin/dang-nhap">Trang quản trị</Link>
+      </div>
+
+      <div className="footer-columns desktop-footer-columns">
+        {groups.map((group) => <div className="footer-column" key={group.title}>
+          <h3>{group.title}</h3>
+          <FooterGroupContent group={group} />
+        </div>)}
+      </div>
+
+      <div className="mobile-footer-content">
+        <div className="mobile-footer-accordions">
+          {groups.map((group) => <details className="footer-column" key={group.title}>
+            <summary>{group.title}<Icon name="down" size={18} /></summary>
+            <FooterGroupContent group={group} />
+          </details>)}
+        </div>
+      </div>
+
+      <div className="footer-legal">{legalText}</div>
+    </div>
+  </footer>
 }
