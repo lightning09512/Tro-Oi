@@ -1,29 +1,21 @@
-import { useEffect } from "react"
 import { Outlet, useLocation } from "react-router"
-import MainHeader from "./MainHeader"
-import SiteFooter from "./SiteFooter"
+import MainHeader from "@/components/layout/MainHeader"
+import SiteFooter from "@/components/layout/SiteFooter"
+import BottomNavigation from "@/components/layout/BottomNavigation"
+import useScrollToTop from "@/hooks/useScrollToTop"
 
 export default function MainLayout() {
   const { pathname } = useLocation()
-
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [pathname])
-
-  const isFocusedWorkspace = pathname === "/tin-nhan" ||
-    pathname === "/chu-tro/dang-tin" ||
-    /^\/chu-tro\/tin\/[^/]+\/chinh-sua$/.test(pathname)
-  const isPublicContent = pathname === "/" || pathname === "/tim-phong" ||
-    pathname.startsWith("/phong/") || pathname === "/dien-dan" ||
-    pathname.startsWith("/bai-viet/")
+  useScrollToTop()
+  const isFocusedWorkspace = pathname === "/tin-nhan" || pathname === "/chu-tro/dang-tin" || /^\/chu-tro\/tin\/[^/]+\/chinh-sua$/.test(pathname)
+  const isPublicContent = pathname === "/" || pathname === "/tim-phong" || pathname.startsWith("/phong/") || pathname === "/dien-dan" || pathname.startsWith("/bai-viet/")
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <>
       <MainHeader />
-      <main id="main-content" className="flex flex-1 flex-col">
-        <Outlet />
-      </main>
+      <Outlet />
       {!isFocusedWorkspace && <SiteFooter variant={isPublicContent ? "full" : "compact"} />}
-    </div>
+      <BottomNavigation />
+    </>
   )
 }
