@@ -7,16 +7,41 @@ import Notification from "../models/Notification.js"
 
 const router = Router()
 router.use(requireAuth)
+
 router.get("/", async (req, res) => {
   const rows = await Notification.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100).lean()
   res.json({ items: rows.map((row) => ({ id: String(row._id), userId: row.userId, title: row.title, detail: row.detail, read: row.read, createdAt: row.createdAt })) })
 })
+
 router.patch("/read", async (req, res) => {
   const input = z.object({ ids: z.array(z.string()).max(100).optional() }).parse(req.body)
   const filter = input.ids?.length ? { userId: req.user.id, _id: { $in: input.ids } } : { userId: req.user.id }
   await Notification.updateMany(filter, { $set: { read: true } })
   res.json({ message: "Đã đánh dấu thông báo đã đọc." })
 })
+
+router.patch("/:id", async (req, res) => {
+  const input = z.object({ read: z.boolean().optional() }).parse(req.body)
+  const item = await Notification.findOneAndUpdate(
+    { _id: req.params.id, userId: req.user.id },
+    { $set: { read: input.read ?? true } },
+    { new: true },
+  ).lean()
+  if (!item) return res.status(404).json({ error: "Không tìm thấy thông báo." })
+  res.json({ item: { id: String(item._id), userId: item.userId, title: item.title, detail: item.detail, read: item.read, createdAt: item.createdAt } })
+})
+
+router.delete("/:id", async (req, res) => {
+  const result = await Notification.deleteOne({ _id: req.params.id, userId: req.user.id })
+  if (!result.deletedCount) return res.status(404).json({ error: "Không tìm thấy thông báo." })
+  res.json({ message: "Đã xóa thông báo." })
+})
+
+router.delete("/", async (req, res) => {
+  await Notification.deleteMany({ userId: req.user.id })
+  res.json({ message: "Đã xóa tất cả thông báo." })
+})
+
 router.post("/", requireRole("admin"), async (req, res) => {
   const input = z.object({ userId: z.string().min(1), title: z.string().trim().min(1).max(300), detail: z.string().trim().min(1).max(3000) }).parse(req.body)
   const user = await pool.query("SELECT id FROM users WHERE id=$1", [input.userId])
@@ -24,4 +49,5 @@ router.post("/", requireRole("admin"), async (req, res) => {
   const row = await Notification.create({ userId: input.userId, title: input.title, detail: input.detail })
   res.status(201).json({ item: { id: String(row._id), userId: row.userId, title: row.title, detail: row.detail, read: row.read, createdAt: row.createdAt } })
 })
+
 export default router

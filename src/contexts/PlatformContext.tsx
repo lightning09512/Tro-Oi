@@ -316,6 +316,9 @@ interface PlatformContextValue {
   deleteCategory: (id: string) => Promise<void>
   addNotification: (value: Omit<NotificationRecord, "id" | "read" | "createdAt">) => Promise<void>
   markNotificationsRead: (userId: string) => Promise<void>
+  markSingleNotificationRead: (id: string, read?: boolean) => Promise<void>
+  deleteNotification: (id: string) => Promise<void>
+  clearAllNotifications: (userId: string) => Promise<void>
   sendMessage: (conversationId: string, accountId: string, text: string) => Promise<void>
   markConversationRead: (conversationId: string, accountId: string) => Promise<void>
   toggleConversationMute: (conversationId: string, accountId: string) => Promise<void>
@@ -579,6 +582,26 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         if (!result) return
       }
       setNotifications((current) => current.map((item) => item.userId === userId ? { ...item, read: true } : item))
+    },
+    markSingleNotificationRead: async (id: string, read = true) => {
+      if (isApiMode) {
+        await platformRequest(`notifications/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ read }) }).catch(() => undefined)
+      }
+      setNotifications((current) => current.map((item) => item.id === id ? { ...item, read } : item))
+    },
+    deleteNotification: async (id: string) => {
+      if (isApiMode) {
+        await platformRequest(`notifications/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => undefined)
+      }
+      setNotifications((current) => current.filter((item) => item.id !== id))
+    },
+    clearAllNotifications: async (userId: string) => {
+      if (isApiMode) {
+        if (userId === user?.id) {
+          await platformRequest("notifications", { method: "DELETE" }).catch(() => undefined)
+        }
+      }
+      setNotifications((current) => current.filter((item) => item.userId !== userId))
     },
     sendMessage: async (conversationId, accountId, text) => {
       if (isApiMode) {
