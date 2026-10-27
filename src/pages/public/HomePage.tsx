@@ -20,11 +20,13 @@ function HomeFilterDropdown({
   value,
   options,
   onChange,
+  icon,
 }: {
   label: string
   value: string
   options: HomeFilterOption[]
   onChange: (value: string) => void
+  icon?: string
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -61,7 +63,10 @@ function HomeFilterDropdown({
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
-        <span>{selectedOption?.label ?? "Chọn mức lọc"}</span>
+        <div className="home-filter-value-group">
+          {icon && <Icon name={icon} size={16} />}
+          <span>{selectedOption?.label ?? "Chọn mức lọc"}</span>
+        </div>
         <span className={`home-filter-chevron${open ? " is-flipped" : ""}`} aria-hidden="true">
           <Icon name="chevronDown" size={15} />
         </span>
@@ -212,7 +217,19 @@ function Home() {
           </div>
           <div className="search-panel">
             <div className="search-panel-tabs">
-              <h2 className="search-panel-tab">Phòng cho thuê</h2>
+              <div className="search-panel-tab-active">
+                <Icon name="home" size={17} />
+                <span>Phòng cho thuê</span>
+              </div>
+              <button
+                type="button"
+                className="search-panel-near-me"
+                onClick={() => searchNearby()}
+                title="Tìm phòng trọ gần vị trí GPS của bạn"
+              >
+                <Icon name="pin" size={14} />
+                <span>Tìm phòng gần tôi</span>
+              </button>
             </div>
             <div className="hero-fields">
               <div className="hero-location-field">
@@ -225,6 +242,7 @@ function Home() {
                   label="Giá thuê tối đa"
                   value={maxPrice}
                   onChange={setMaxPrice}
+                  icon="chart"
                   options={[
                     { value: "", label: "Mọi mức giá" },
                     { value: "3", label: "Dưới 3 triệu" },
@@ -239,6 +257,7 @@ function Home() {
                   label="Diện tích phòng"
                   value={areaRange}
                   onChange={setAreaRange}
+                  icon="grid"
                   options={[
                     { value: "all", label: "Tất cả diện tích" },
                     { value: "under20", label: "Dưới 20 m²" },
@@ -248,13 +267,11 @@ function Home() {
                   ]}
                 />
               </div>
-              <Button onClick={runSearch} icon="search">
-                Tìm kiếm
-              </Button>
+              <button type="button" className="hero-search-btn" onClick={runSearch}>
+                <Icon name="search" size={18} />
+                <span>Tìm kiếm</span>
+              </button>
             </div>
-            <button className="near-me" onClick={() => searchNearby()}>
-              <Icon name="pin" size={17} /> Tìm phòng gần tôi
-            </button>
             {nearbyMessage && <p className="nearby-message" role="status">{nearbyMessage}</p>}
           </div>
         </div>
