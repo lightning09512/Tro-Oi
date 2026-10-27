@@ -8,7 +8,7 @@ router.get("/", async (_req, res) => {
 })
 router.get("/:id", async (req, res) => {
   const { rows } = await pool.query(
-    "SELECT id,name,role,status,avatar_url FROM users WHERE id=$1 AND status='active' AND role IN ('renter','landlord')",
+    "SELECT id,name,phone,role,status,avatar_url,created_at FROM users WHERE id=$1 AND status='active' AND role IN ('renter','landlord')",
     [req.params.id],
   )
   const member = rows[0]
@@ -16,9 +16,11 @@ router.get("/:id", async (req, res) => {
   res.json({ item: {
     id: member.id,
     name: member.name,
+    phone: member.phone ?? "",
     role: member.role,
     status: member.status,
     avatarUrl: member.avatar_url ?? undefined,
+    createdAt: member.created_at,
     initials: member.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(),
   } })
 })
