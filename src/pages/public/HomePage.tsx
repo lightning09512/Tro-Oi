@@ -205,7 +205,6 @@ function Home() {
   const [location, setLocation] = useState("TP. Hồ Chí Minh")
   const [maxPrice, setMaxPrice] = useState("")
   const [areaRange, setAreaRange] = useState("all")
-  const [nearbyMessage, setNearbyMessage] = useState("")
   const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : user ? "/chu-tro/dang-tin" : "/dang-nhap"
 
   const promoCampaigns = useMemo(() => [
@@ -279,28 +278,6 @@ function Home() {
 
   const runSearch = () => navigate(buildSearchUrl())
 
-  const searchNearby = (radiusKm = 20) => {
-    setNearbyMessage("")
-    if (!navigator.geolocation) {
-      setNearbyMessage("Trình duyệt chưa hỗ trợ tìm phòng theo vị trí.")
-      return
-    }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const params = new URLSearchParams()
-        params.set("location", location || "TP. Hồ Chí Minh")
-        params.set("lat", String(coords.latitude))
-        params.set("lng", String(coords.longitude))
-        params.set("radiusKm", String(radiusKm))
-        navigate(`/tim-phong?${params.toString()}`)
-      },
-      () =>
-        setNearbyMessage(
-          "Chưa lấy được vị trí. Bạn có thể nhập khu vực để tìm phòng.",
-        ),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
-    )
-  }
   return (
     <main>
       <section className="hero">
@@ -335,20 +312,11 @@ function Home() {
                 <Icon name="home" size={17} />
                 <span>Phòng cho thuê</span>
               </div>
-              <button
-                type="button"
-                className="search-panel-near-me"
-                onClick={() => searchNearby()}
-                title="Tìm phòng trọ gần vị trí GPS của bạn"
-              >
-                <Icon name="pin" size={14} />
-                <span>Tìm phòng gần tôi</span>
-              </button>
             </div>
             <div className="hero-fields">
               <div className="hero-location-field">
                 <span>Khu vực</span>
-                <LocationPicker value={location} onChange={setLocation} showNearby onSearchNearby={searchNearby} />
+                <LocationPicker value={location} onChange={setLocation} />
               </div>
               <div className="home-filter-field">
                 <span>Khoảng giá</span>
@@ -386,7 +354,6 @@ function Home() {
                 <span>Tìm kiếm</span>
               </button>
             </div>
-            {nearbyMessage && <p className="nearby-message" role="status">{nearbyMessage}</p>}
           </div>
         </div>
       </section>

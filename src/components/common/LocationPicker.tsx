@@ -23,7 +23,6 @@ const cityAreas: Record<string, Record<string, string[]>> = {
 }
 
 const cities = Object.keys(cityAreas)
-const nearbyRadii = ["5", "10", "20", "30"]
 
 function normalize(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi")
@@ -131,24 +130,18 @@ type LocationPickerProps = {
   value: string
   onChange: (value: string) => void
   variant?: "hero" | "filter"
-  showNearby?: boolean
-  onSearchNearby?: (radiusKm: number) => void
 }
 
 export default function LocationPicker({
   value,
   onChange,
   variant = "hero",
-  showNearby = false,
-  onSearchNearby,
 }: LocationPickerProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const [city, setCity] = useState(() => parseLocation(value).city || cities[0])
   const [district, setDistrict] = useState(() => parseLocation(value).district)
   const [ward, setWard] = useState(() => parseLocation(value).ward)
-  const [nearby, setNearby] = useState(false)
-  const [radiusKm, setRadiusKm] = useState("20")
   const districts = Object.keys(cityAreas[city] ?? {})
   const wards = cityAreas[city]?.[district] ?? []
   const displayValue = value || "Tất cả khu vực"
@@ -159,7 +152,6 @@ export default function LocationPicker({
     setCity(selection.city || cities[0])
     setDistrict(selection.district)
     setWard(selection.ward)
-    setNearby(false)
   }, [open, value])
 
   useEffect(() => {
@@ -181,11 +173,6 @@ export default function LocationPicker({
   }, [open])
 
   const applySelection = () => {
-    if (nearby && onSearchNearby) {
-      onSearchNearby(Number(radiusKm))
-      setOpen(false)
-      return
-    }
     onChange(ward ? `${ward}, ${district}` : district ? `${district}, ${city}` : city)
     setOpen(false)
   }
@@ -194,7 +181,6 @@ export default function LocationPicker({
     setCity(cities[0])
     setDistrict("")
     setWard("")
-    setNearby(false)
     onChange("")
     setOpen(false)
   }
@@ -281,39 +267,6 @@ export default function LocationPicker({
               }}
             />
           </div>
-
-          {/* Tìm kiếm gần tôi nếu có */}
-          {showNearby && onSearchNearby && (
-            <div className={`location-picker-nearby${nearby ? " is-enabled" : ""}`}>
-              <label className="location-picker-nearby-toggle">
-                <input
-                  type="checkbox"
-                  checked={nearby}
-                  onChange={(event) => setNearby(event.target.checked)}
-                />
-                <span className="location-picker-nearby-icon">
-                  <Icon name="pin" size={17} />
-                </span>
-                <span className="location-picker-nearby-copy">
-                  <strong>Tìm phòng gần tôi</strong>
-                  <small>Dùng định vị GPS thiết bị</small>
-                </span>
-              </label>
-              <div className="location-picker-radius-pills">
-                {nearbyRadii.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    disabled={!nearby}
-                    className={`location-radius-pill${radiusKm === item ? " is-active" : ""}`}
-                    onClick={() => setRadiusKm(item)}
-                  >
-                    {item} km
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* 2 Nút thao tác bo góc mềm mại */}
           <div className="location-picker-footer">
