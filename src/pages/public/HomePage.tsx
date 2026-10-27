@@ -13,6 +13,73 @@ import useAuth from "@/hooks/useAuth"
 
 const forumFallbackImage = "/images/tromoi/p301-quang-trung/anh-01.webp"
 
+type PopularDistrict = {
+  id: string
+  name: string
+  image: string
+  query: string
+  roomCount: string
+  priceRange: string
+  highlight: string
+}
+
+const POPULAR_DISTRICTS: PopularDistrict[] = [
+  {
+    id: "binh-thanh",
+    name: "Quận Bình Thạnh",
+    image: "/images/rooms/city-window.jpg",
+    query: "Quận Bình Thạnh",
+    roomCount: "450+ phòng",
+    priceRange: "Từ 3.2 – 6.5 tr/tháng",
+    highlight: "Gần ĐH Ngoại Thương, HUTECH, GTVT, Văn Lang",
+  },
+  {
+    id: "go-vap",
+    name: "Quận Gò Vấp",
+    image: "/images/rooms/compact-color-room.jpg",
+    query: "Quận Gò Vấp",
+    roomCount: "380+ phòng",
+    priceRange: "Từ 2.5 – 4.8 tr/tháng",
+    highlight: "Gần ĐH Công Nghiệp (IUH), CV Gia Định, Sân bay",
+  },
+  {
+    id: "quan-10",
+    name: "Quận 10 & Quận 3",
+    image: "/images/rooms/blue-bedroom.jpg",
+    query: "Quận 10",
+    roomCount: "290+ phòng",
+    priceRange: "Từ 3.8 – 7.5 tr/tháng",
+    highlight: "Gần ĐH Bách Khoa, Kinh Tế (UEH), Y Dược TP.HCM",
+  },
+  {
+    id: "thu-duc",
+    name: "TP. Thủ Đức",
+    image: "/images/rooms/scandinavian-room.jpg",
+    query: "TP. Thủ Đức",
+    roomCount: "520+ phòng",
+    priceRange: "Từ 2.0 – 5.0 tr/tháng",
+    highlight: "Làng ĐH Quốc Gia, ĐH SP Kỹ Thuật, Nông Lâm",
+  },
+  {
+    id: "quan-7",
+    name: "Quận 7",
+    image: "/images/rooms/studio-kitchen.jpg",
+    query: "Quận 7",
+    roomCount: "310+ phòng",
+    priceRange: "Từ 3.5 – 7.0 tr/tháng",
+    highlight: "Gần ĐH Tôn Đức Thắng, RMIT, ĐH Tài chính - Marketing",
+  },
+  {
+    id: "tan-binh",
+    name: "Quận Tân Bình",
+    image: "/images/rooms/wood-accent-room.jpg",
+    query: "Quận Tân Bình",
+    roomCount: "260+ phòng",
+    priceRange: "Từ 2.8 – 5.5 tr/tháng",
+    highlight: "Khu Sân bay Tân Sơn Nhất, CV Hoàng Văn Thụ",
+  },
+]
+
 type HomeFilterOption = { value: string; label: string }
 
 function HomeFilterDropdown({
@@ -139,18 +206,7 @@ function Home() {
   const [maxPrice, setMaxPrice] = useState("")
   const [areaRange, setAreaRange] = useState("all")
   const [nearbyMessage, setNearbyMessage] = useState("")
-  const [shareMessage, setShareMessage] = useState("")
-  const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : "/dang-ky"
-
-  const shareTroOi = async () => {
-    const shareUrl = `${window.location.origin}/dang-ky`
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      setShareMessage("Đã sao chép liên kết Trọ Ơi để bạn chia sẻ.")
-    } catch {
-      setShareMessage("Không thể sao chép tự động. Hãy sao chép địa chỉ trang Trọ Ơi trên thanh trình duyệt.")
-    }
-  }
+  const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : user ? "/chu-tro/dang-tin" : "/dang-nhap"
 
   const buildSearchUrl = (roomType?: string) => {
     const params = new URLSearchParams()
@@ -308,78 +364,157 @@ function Home() {
         </div>
       </section>
 
-      <section className="home-promotions" aria-labelledby="home-promotions-title">
+      <section className="home-districts-section" aria-labelledby="home-districts-title">
         <div className="container">
-          <div className="promotion-panel">
-            <div className="promotion-banner">
-              <div className="promotion-copy">
-                <span className="promotion-badge">Nền tảng tìm & cho thuê phòng trọ</span>
-                <h2 id="home-promotions-title">Khởi đầu dễ dàng cùng Trọ Ơi</h2>
-                <p>Tìm phòng ưng ý, đăng tin cho thuê và kết nối trực tiếp chủ trọ – người thuê hoàn toàn miễn phí trên một nền tảng an toàn, minh bạch.</p>
-                <div className="promotion-actions">
-                  <Link className="promotion-primary" to={landlordProgramUrl}>
-                    Đăng tin miễn phí <Icon name="chevron" size={16}/>
-                  </Link>
-                  <Link className="promotion-secondary" to="/tim-phong">
-                    Khám phá phòng ngay <Icon name="chevron" size={16}/>
-                  </Link>
+          <div className="section-head-with-subtitle">
+            <div>
+              <span className="section-eyebrow">Địa điểm nổi bật</span>
+              <h2 id="home-districts-title" className="section-heading">Khu vực thuê phòng phổ biến tại TP. Hồ Chí Minh</h2>
+              <p className="section-subtext">Các quận tập trung nhiều trường đại học lớn, khu văn phòng và giao thông thuận tiện</p>
+            </div>
+            <Link to="/tim-phong" className="section-view-all">
+              <span>Xem tất cả khu vực</span>
+              <Icon name="chevron" size={16} />
+            </Link>
+          </div>
+
+          <div className="districts-grid">
+            {POPULAR_DISTRICTS.map((district) => (
+              <div
+                key={district.id}
+                className="district-card"
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(`/tim-phong?location=${encodeURIComponent(district.query)}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    navigate(`/tim-phong?location=${encodeURIComponent(district.query)}`)
+                  }
+                }}
+              >
+                <div className="district-media">
+                  <img
+                    src={district.image}
+                    alt={`Phòng trọ tại ${district.name}`}
+                    loading="lazy"
+                  />
+                  <div className="district-media-gradient" />
+                  <span className="district-count-badge">
+                    <Icon name="home" size={13} />
+                    {district.roomCount}
+                  </span>
+                </div>
+                <div className="district-info">
+                  <div className="district-title-row">
+                    <h3 className="district-name">{district.name}</h3>
+                    <span className="district-price">{district.priceRange}</span>
+                  </div>
+                  <p className="district-highlight">
+                    <Icon name="pin" size={14} />
+                    <span>{district.highlight}</span>
+                  </p>
+                  <div className="district-footer">
+                    <span className="district-explore-link">
+                      Khám phá phòng ngay <Icon name="chevron" size={14} />
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="promotion-art" aria-hidden="true">
-                <div className="promotion-showcase-card">
-                  <div className="promotion-showcase-header">
-                    <span className="promotion-pill">Ưu đãi nền tảng</span>
-                    <strong className="promotion-brand">TRỌ ƠI</strong>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-landlord-section" aria-labelledby="home-landlord-title">
+        <div className="container">
+          <div className="landlord-cta-container">
+            <div className="landlord-cta-content">
+              <span className="landlord-badge">Dành cho chủ trọ & người quản lý</span>
+              <h2 id="home-landlord-title">Bạn có phòng trọ, căn hộ trống cần cho thuê?</h2>
+              <p className="landlord-desc">
+                Đăng tin tiếp cận hơn <strong>50.000+</strong> lượt tìm kiếm mỗi tháng từ sinh viên và người đi làm tại TP.HCM. Kết nối trực tiếp, hẹn xem phòng ngay trên hệ thống mà không qua trung gian hay chi phí ẩn.
+              </p>
+
+              <div className="landlord-features-list">
+                <div className="landlord-feature-item">
+                  <div className="feature-icon-wrapper">
+                    <Icon name="check" size={15} />
                   </div>
-                  <div className="promotion-showcase-price">
-                    <span className="price-big">0đ</span>
-                    <span className="price-label">phí đăng tin & tìm kiếm</span>
+                  <div className="feature-text">
+                    <strong>Đăng tin nhanh & thuận tiện</strong>
+                    <span>Chỉ 3 phút tạo tin với hình ảnh, giá điện nước và tiện ích rõ ràng.</span>
                   </div>
-                  <ul className="promotion-feature-list">
-                    <li><Icon name="check" size={15}/> Đăng tin nhanh chóng, duyệt tin uy tín</li>
-                    <li><Icon name="check" size={15}/> Nhắn tin trực tiếp không qua trung gian</li>
-                    <li><Icon name="check" size={15}/> Lọc phòng theo bản đồ & tiện ích xung quanh</li>
-                  </ul>
+                </div>
+
+                <div className="landlord-feature-item">
+                  <div className="feature-icon-wrapper">
+                    <Icon name="chat" size={15} />
+                  </div>
+                  <div className="feature-text">
+                    <strong>Nhắn tin & đặt lịch trực tiếp</strong>
+                    <span>Trao đổi trực tiếp với khách thuê thật, chủ động xếp lịch xem phòng.</span>
+                  </div>
+                </div>
+
+                <div className="landlord-feature-item">
+                  <div className="feature-icon-wrapper">
+                    <Icon name="shield" size={15} />
+                  </div>
+                  <div className="feature-text">
+                    <strong>Kiểm duyệt minh bạch, uy tín</strong>
+                    <span>Hệ thống gắn nhãn phòng chính chủ, gia tăng độ tin cậy và tỷ lệ lấp phòng.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="landlord-actions">
+                <Link to={landlordProgramUrl} className="btn-landlord-primary">
+                  <span>Đăng tin cho thuê ngay</span>
+                  <Icon name="chevron" size={16} />
+                </Link>
+                <Link to="/dien-dan" className="btn-landlord-secondary">
+                  <Icon name="chat" size={15} />
+                  <span>Kinh nghiệm cho thuê</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="landlord-cta-visual">
+              <div className="landlord-stat-card">
+                <div className="stat-card-header">
+                  <span className="stat-card-dot" />
+                  <span>Hiệu quả kết nối trên Trọ Ơi</span>
+                </div>
+
+                <div className="stat-metrics-grid">
+                  <div className="stat-metric-item">
+                    <div className="metric-number">50K+</div>
+                    <div className="metric-label">Lượt tìm kiếm/tháng</div>
+                  </div>
+                  <div className="stat-metric-item">
+                    <div className="metric-number">95%</div>
+                    <div className="metric-label">Có khách trong 2 tuần</div>
+                  </div>
+                  <div className="stat-metric-item">
+                    <div className="metric-number">100%</div>
+                    <div className="metric-label">Khách thuê trực tiếp</div>
+                  </div>
+                  <div className="stat-metric-item">
+                    <div className="metric-number">0đ</div>
+                    <div className="metric-label">Không phí môi giới</div>
+                  </div>
+                </div>
+
+                <div className="landlord-tip-box">
+                  <div className="tip-header">
+                    <Icon name="star" size={14} />
+                    <span>Mẹo cho chủ trọ:</span>
+                  </div>
+                  <p>Phòng có 4–6 ảnh chụp thực tế và chi phí điện nước rõ ràng giúp tăng gấp 3 lần lượt liên hệ xem phòng.</p>
                 </div>
               </div>
             </div>
-            <div className="promotion-programs" id="chuong-trinh-chi-tiet">
-              <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="building" size={22}/></span>
-                <div>
-                  <span className="promotion-card-label">Dành cho chủ trọ</span>
-                  <h3>Đăng tin cho thuê miễn phí</h3>
-                  <p>Thêm ảnh, giá và tiện ích để người thuê dễ tìm thấy phòng của bạn. Tin đăng được duyệt trước khi hiển thị.</p>
-                </div>
-                <Link to={landlordProgramUrl} className="promotion-card-link">
-                  Bắt đầu đăng tin <Icon name="chevron" size={15}/>
-                </Link>
-              </article>
-              <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="heart" size={22}/></span>
-                <div>
-                  <span className="promotion-card-label">Dành cho người thuê</span>
-                  <h3>Tìm và lưu phòng yêu thích</h3>
-                  <p>Lọc theo khu vực, giá và diện tích; lưu lại những lựa chọn phù hợp để so sánh và hẹn xem phòng.</p>
-                </div>
-                <Link to="/tim-phong" className="promotion-card-link">
-                  Khám phá phòng <Icon name="chevron" size={15}/>
-                </Link>
-              </article>
-              <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="share" size={22}/></span>
-                <div>
-                  <span className="promotion-card-label">Chia sẻ Trọ Ơi</span>
-                  <h3>Rủ bạn cùng tìm nơi ở</h3>
-                  <p>Gửi đường dẫn đăng ký cho bạn bè đang tìm phòng hoặc người quen có phòng trống muốn cho thuê.</p>
-                </div>
-                <button type="button" onClick={shareTroOi} className="promotion-card-link">
-                  Sao chép liên kết <Icon name="chevron" size={15}/>
-                </button>
-              </article>
-            </div>
-            {shareMessage && <p className="promotion-share-message" role="status">{shareMessage}</p>}
-            <p className="promotion-terms">Chương trình áp dụng cho các tính năng hiện có trên Trọ Ơi. Không bao gồm quà tặng hoặc tiền thưởng giới thiệu.</p>
           </div>
         </div>
       </section>
