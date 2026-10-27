@@ -10361,72 +10361,6 @@ input[type="file"]::file-selector-button:hover {
   margin-top: 2px !important;
 }
 
-.avatar-modal-presets-section {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-  padding-top: 14px !important;
-  border-top: 1px solid #edf2ee !important;
-}
-
-.avatar-modal-presets-label {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: #2e4435 !important;
-}
-
-.avatar-modal-presets-grid {
-  display: grid !important;
-  grid-template-columns: repeat(6, 1fr) !important;
-  gap: 10px !important;
-}
-
-.avatar-modal-preset-item {
-  position: relative !important;
-  aspect-ratio: 1 !important;
-  border-radius: 50% !important;
-  border: 2.5px solid transparent !important;
-  padding: 0 !important;
-  background: #eaf1ec !important;
-  cursor: pointer !important;
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease !important;
-}
-
-.avatar-modal-preset-item img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  border-radius: 50% !important;
-  display: block !important;
-}
-
-.avatar-modal-preset-item:hover {
-  transform: scale(1.08) !important;
-  border-color: #8bb898 !important;
-}
-
-.avatar-modal-preset-item.is-selected {
-  border-color: #245f3b !important;
-  transform: scale(1.08) !important;
-  box-shadow: 0 0 0 2px rgba(36, 95, 59, 0.25) !important;
-}
-
-.avatar-modal-preset-check {
-  position: absolute !important;
-  bottom: -2px !important;
-  right: -2px !important;
-  width: 18px !important;
-  height: 18px !important;
-  border-radius: 50% !important;
-  background: #245f3b !important;
-  color: #ffffff !important;
-  border: 2px solid #ffffff !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
-}
-
 .avatar-modal-feedback {
   margin: 0 !important;
 }
@@ -10473,10 +10407,5 @@ input[type="file"]::file-selector-button:hover {
   .account-change-photo-btn {
     width: 100% !important;
     justify-content: center !important;
-  }
-
-  .avatar-modal-presets-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 12px !important;
   }
 }

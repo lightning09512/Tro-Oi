@@ -7,15 +7,6 @@ import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform } from "@/contexts/PlatformContext"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 
-const PRESET_AVATARS = [
-  { url: "/images/avatars/demo-owner-01.jpg", label: "Ảnh mẫu 1" },
-  { url: "/images/avatars/demo-owner-02.jpg", label: "Ảnh mẫu 2" },
-  { url: "/images/avatars/demo-owner-03.jpg", label: "Ảnh mẫu 3" },
-  { url: "/images/avatars/demo-owner-04.jpg", label: "Ảnh mẫu 4" },
-  { url: "/images/avatars/demo-owner-05.jpg", label: "Ảnh mẫu 5" },
-  { url: "/images/avatars/demo-owner-06.jpg", label: "Ảnh mẫu 6" },
-]
-
 export default function AccountPage({
   passwordMode = false,
 }: {
@@ -91,20 +82,6 @@ export default function AccountPage({
       setUploadingAvatar(false)
       if (fileInputRef.current) fileInputRef.current.value = ""
       window.setTimeout(() => setAvatarFeedback(null), 4000)
-    }
-  }
-
-  const handleSelectPresetAvatar = async (url: string) => {
-    setAvatarUrl(url)
-    setAvatarFeedback(null)
-    if (user) {
-      try {
-        await updateUser({ ...user, avatarUrl: url })
-        setAvatarFeedback({ message: "Đã đổi ảnh đại diện thành công!", type: "success" })
-        window.setTimeout(() => setAvatarFeedback(null), 3000)
-      } catch (caught) {
-        setAvatarFeedback({ message: caught instanceof Error ? caught.message : "Lỗi khi lưu ảnh đại diện.", type: "error" })
-      }
     }
   }
 
@@ -344,7 +321,7 @@ export default function AccountPage({
             <div className="avatar-modal-header">
               <div>
                 <h3 id="avatar-modal-title">Cập nhật ảnh đại diện</h3>
-                <p>Chọn ảnh từ thiết bị của bạn hoặc chọn mẫu có sẵn</p>
+                <p>Tải ảnh từ thiết bị của bạn</p>
               </div>
               <button
                 type="button"
@@ -401,32 +378,6 @@ export default function AccountPage({
                 <div>
                   <strong>{uploadingAvatar ? "Đang tải ảnh lên..." : "Tải ảnh mới từ thiết bị"}</strong>
                   <small>Hỗ trợ định dạng JPG, PNG, WebP (tối đa 3 MB)</small>
-                </div>
-              </div>
-
-              <div className="avatar-modal-presets-section">
-                <span className="avatar-modal-presets-label">Hoặc chọn nhanh từ ảnh mẫu:</span>
-                <div className="avatar-modal-presets-grid">
-                  {PRESET_AVATARS.map((preset) => {
-                    const isSelected = avatarUrl === preset.url
-                    return (
-                      <button
-                        key={preset.url}
-                        type="button"
-                        className={`avatar-modal-preset-item${isSelected ? " is-selected" : ""}`}
-                        onClick={() => void handleSelectPresetAvatar(preset.url)}
-                        title={preset.label}
-                        aria-label={`Chọn ${preset.label}`}
-                      >
-                        <img src={preset.url} alt={preset.label} />
-                        {isSelected && (
-                          <span className="avatar-modal-preset-check">
-                            <Icon name="check" size={11} />
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
                 </div>
               </div>
 
