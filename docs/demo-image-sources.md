@@ -16,3 +16,18 @@ Các ảnh trong `public/images/rooms/` là tư liệu Pexels cũ, không đại
 | `shared-dorm.jpg` | Giường tầng và không gian ở ghép | [Pexels photo 5158497](https://www.pexels.com/photo/clothes-hanging-on-a-bunk-bes-5158497/) |
 
 Các trang ảnh trên ghi ảnh được dùng miễn phí theo giấy phép Pexels. Xem thêm [Pexels License](https://www.pexels.com/license/).
+
+## Ảnh đại diện mẫu
+
+Sáu ảnh chân dung Unsplash bên dưới được tải về `public/images/avatars/` và chỉ dùng làm avatar minh họa cho hồ sơ mẫu. Người trong ảnh không phải chủ trọ hay người dùng thật của Trọ Ơi.
+
+| Tệp | Tác giả | Nguồn |
+| --- | --- | --- |
+| `demo-owner-01.jpg` | Vitaly Gariev | [Ảnh chân dung nữ châu Á](https://unsplash.com/photos/a-smiling-asian-woman-with-dark-hair-5V6takmtNUM) |
+| `demo-owner-02.jpg` | Phước Sang | [Ảnh chân dung nữ](https://unsplash.com/photos/a-young-woman-with-long-dark-hair-smiles-oTDQTME3phs) |
+| `demo-owner-03.jpg` | Bangun Stock Production | [Ảnh chân dung nữ](https://unsplash.com/photos/a-woman-wearing-a-headscarf-and-smiling-ELJV48A9xog) |
+| `demo-owner-04.jpg` | Oktavianus Mulyadi | [Ảnh chân dung nữ](https://unsplash.com/photos/a-person-with-dark-hair-N6Pfi3d8duc) |
+| `demo-owner-05.jpg` | Mohammed Umar Ashrafi | [Ảnh chân dung nam](https://unsplash.com/photos/a-smiling-man-in-a-white-polo-shirt-XGs1bSZ9P6s) |
+| `demo-owner-06.jpg` | AL Kaium | [Ảnh chân dung nam](https://unsplash.com/photos/young-man-with-patterned-shirt-in-dappled-sunlight-l8ks_T8klNo) |
+
+Ảnh nguồn ghi được dùng miễn phí theo [Unsplash License](https://unsplash.com/license/). Việc tải ảnh về không có nghĩa người trong ảnh xác nhận hoặc đại diện cho người đăng tin.

@@ -12,12 +12,12 @@ const messageTime = (date) => new Intl.DateTimeFormat("vi-VN", { hour: "2-digit"
 async function formatConversation(conversation, selfId) {
   const otherId = conversation.participants.find((id) => id !== selfId)
   const [otherResult, listingResult] = await Promise.all([
-    pool.query("SELECT id,name,status FROM users WHERE id=$1", [otherId]),
+    pool.query("SELECT id,name,status,avatar_url FROM users WHERE id=$1", [otherId]),
     conversation.listingId ? pool.query("SELECT id,title,price_vnd,image_url FROM listings WHERE id=$1", [conversation.listingId]) : Promise.resolve({ rows: [] }),
   ])
   const other = otherResult.rows[0]
   return {
-    id: String(conversation._id), accountId: selfId, name: other?.name ?? "Thành viên", avatar: initials(other?.name), active: false,
+    id: String(conversation._id), accountId: selfId, name: other?.name ?? "Thành viên", avatar: initials(other?.name), avatarUrl: other?.avatar_url ?? undefined, active: false,
     text: conversation.messages.at(-1)?.text ?? (conversation.listingId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện"),
     time: conversation.messages.at(-1) ? messageTime(conversation.messages.at(-1).createdAt) : messageTime(conversation.updatedAt),
     unread: conversation.messages.some((message) => message.senderId !== selfId && !message.readBy.includes(selfId)),

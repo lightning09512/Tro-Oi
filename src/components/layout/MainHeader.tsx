@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { NavLink, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
+import LocationPicker from "@/components/common/LocationPicker"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform } from "@/contexts/PlatformContext"
 
@@ -21,6 +22,7 @@ export default function MainHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [headerLocation, setHeaderLocation] = useState("TP. Hồ Chí Minh")
   const { user, logout } = useAuth()
   const { notifications } = usePlatform()
   const unreadNotifications = notifications.filter((item) => item.userId === user?.id && !item.read).length
@@ -69,8 +71,19 @@ export default function MainHeader() {
           Trọ <span className="text-[#34794a]">Ơi</span>
         </NavLink>
 
+        <div className="header-location-picker hidden w-[min(22vw,276px)] shrink-0 min-[1120px]:block">
+          <LocationPicker
+            value={headerLocation}
+            variant="filter"
+            onChange={(location) => {
+              setHeaderLocation(location)
+              navigate(location ? `/tim-phong?location=${encodeURIComponent(location)}` : "/tim-phong")
+            }}
+          />
+        </div>
+
         <form
-          className="group hidden h-11 w-[min(22vw,270px)] shrink-0 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] px-3.5 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 xl:flex"
+          className="group hidden h-12 min-w-[200px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-4 pr-1.5 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex min-[1120px]:max-w-[620px]"
           onSubmit={(event) => {
             event.preventDefault()
             const params = new URLSearchParams()
@@ -78,20 +91,24 @@ export default function MainHeader() {
             navigate(`/tim-phong?${params.toString()}`)
           }}
         >
-          <button
-            className="inline-grid size-8 shrink-0 place-items-center rounded-full text-[#63756b] transition-colors hover:bg-[#eaf3eb] hover:text-[#245f3b] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#34794a]"
-            type="submit"
-            aria-label="Tìm phòng"
-          >
-            <Icon name="search" size={18} />
-          </button>
+          <Icon name="search" size={20} />
           <input
             className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[14px] text-[#26382e] outline-none placeholder:text-[#84908a]"
             aria-label="Tìm kiếm"
-            placeholder="Tìm phòng, khu vực..."
+            placeholder="Tìm phòng, khu vực, tiện nghi..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
+            autoComplete="off"
+            spellCheck={false}
           />
+          <button
+            className="inline-grid size-9 shrink-0 place-items-center rounded-full bg-[#245f3b] text-white shadow-sm transition-all hover:bg-[#1c4e30] hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
+            type="submit"
+            aria-label="Tìm kiếm phòng"
+            title="Tìm kiếm"
+          >
+            <Icon name="search" size={16} />
+          </button>
         </form>
 
         <nav

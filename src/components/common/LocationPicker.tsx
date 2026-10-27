@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Icon } from "@/components/common/legacy"
 
 const cityAreas: Record<string, Record<string, string[]>> = {
@@ -39,6 +39,94 @@ function parseLocation(value: string) {
   return { city, district, ward }
 }
 
+/** Custom dropdown field for selecting City, District, or Ward with soft rounded corners */
+function CustomSelectField({
+  label,
+  placeholder,
+  value,
+  options,
+  disabled = false,
+  onChange,
+}: {
+  label: string
+  placeholder: string
+  value: string
+  options: string[]
+  disabled?: boolean
+  onChange: (val: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const fieldRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (!fieldRef.current?.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown)
+    return () => document.removeEventListener("pointerdown", onPointerDown)
+  }, [isOpen])
+
+  return (
+    <div
+      ref={fieldRef}
+      className={`custom-select-field${disabled ? " is-disabled" : ""}${isOpen ? " is-active" : ""}`}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        className="custom-select-trigger"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="custom-select-label">{label}</span>
+        <div className="custom-select-value-row">
+          <span className={`custom-select-value${!value ? " is-placeholder" : ""}`}>
+            {value || placeholder}
+          </span>
+          <span className={`custom-select-arrow${isOpen ? " is-flipped" : ""}`}>⌄</span>
+        </div>
+      </button>
+
+      {isOpen && !disabled && (
+        <div className="custom-select-menu" role="listbox" aria-label={label}>
+          <button
+            type="button"
+            className={`custom-select-option${!value ? " is-selected" : ""}`}
+            onClick={() => {
+              onChange("")
+              setIsOpen(false)
+            }}
+          >
+            <span>{placeholder}</span>
+            {!value && <span className="custom-select-check">✓</span>}
+          </button>
+          {options.map((option) => {
+            const isSelected = value === option
+            return (
+              <button
+                key={option}
+                type="button"
+                className={`custom-select-option${isSelected ? " is-selected" : ""}`}
+                onClick={() => {
+                  onChange(option)
+                  setIsOpen(false)
+                }}
+              >
+                <span>{option}</span>
+                {isSelected && <span className="custom-select-check">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 type LocationPickerProps = {
   value: string
   onChange: (value: string) => void
@@ -54,8 +142,9 @@ export default function LocationPicker({
   showNearby = false,
   onSearchNearby,
 }: LocationPickerProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  const [city, setCity] = useState(() => parseLocation(value).city)
+  const [city, setCity] = useState(() => parseLocation(value).city || cities[0])
   const [district, setDistrict] = useState(() => parseLocation(value).district)
   const [ward, setWard] = useState(() => parseLocation(value).ward)
   const [nearby, setNearby] = useState(false)
@@ -67,7 +156,7 @@ export default function LocationPicker({
   useEffect(() => {
     if (!open) return
     const selection = parseLocation(value)
-    setCity(selection.city)
+    setCity(selection.city || cities[0])
     setDistrict(selection.district)
     setWard(selection.ward)
     setNearby(false)
@@ -75,11 +164,20 @@ export default function LocationPicker({
 
   useEffect(() => {
     if (!open) return
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false)
     }
+    document.addEventListener("pointerdown", closeOnOutsidePointer)
     window.addEventListener("keydown", closeOnEscape)
-    return () => window.removeEventListener("keydown", closeOnEscape)
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer)
+      window.removeEventListener("keydown", closeOnEscape)
+    }
   }, [open])
 
   const applySelection = () => {
@@ -88,12 +186,12 @@ export default function LocationPicker({
       setOpen(false)
       return
     }
-    onChange(ward ? `${ward}, ${district}` : district || city)
+    onChange(ward ? `${ward}, ${district}` : district ? `${district}, ${city}` : city)
     setOpen(false)
   }
 
   const clearSelection = () => {
-    setCity("")
+    setCity(cities[0])
     setDistrict("")
     setWard("")
     setNearby(false)
@@ -102,7 +200,7 @@ export default function LocationPicker({
   }
 
   return (
-    <div className={`location-picker location-picker--${variant}${open ? " is-open" : ""}`}>
+    <div ref={rootRef} className={`location-picker location-picker--${variant}${open ? " is-open" : ""}`}>
       <button
         type="button"
         className="location-picker-trigger"
@@ -115,72 +213,126 @@ export default function LocationPicker({
         <span>{displayValue}</span>
         <span className="location-picker-chevron" aria-hidden="true">⌄</span>
       </button>
+
       {open && (
-        <>
-          <button
-            type="button"
-            className="location-picker-backdrop"
-            aria-label="Đóng bộ chọn khu vực"
-            onClick={() => setOpen(false)}
-          />
-          <section className="location-picker-popover" role="dialog" aria-label="Chọn khu vực">
-            <h3>Khu vực</h3>
-            <label className="location-picker-select">
-              <span>Tỉnh / thành phố</span>
-              <select
-                value={city}
-                onChange={(event) => {
-                  setCity(event.target.value)
-                  setDistrict("")
-                  setWard("")
-                }}
-              >
-                <option value="">Tất cả khu vực</option>
-                {cities.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-            <label className="location-picker-select">
-              <span>Quận / huyện</span>
-              <select
-                value={district}
-                disabled={!city}
-                onChange={(event) => {
-                  setDistrict(event.target.value)
-                  setWard("")
-                }}
-              >
-                <option value="">Tất cả quận, huyện</option>
-                {districts.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-            <label className="location-picker-select">
-              <span>Phường / xã</span>
-              <select value={ward} disabled={!district} onChange={(event) => setWard(event.target.value)}>
-                <option value="">Tất cả phường, xã</option>
-                {wards.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-            {showNearby && onSearchNearby && (
-              <div className={`location-picker-nearby${nearby ? " is-enabled" : ""}`}>
-                <label className="location-picker-nearby-toggle">
-                  <input type="checkbox" checked={nearby} onChange={(event) => setNearby(event.target.checked)} />
-                  <span className="location-picker-nearby-icon"><Icon name="pin" size={17} /></span>
-                  <span className="location-picker-nearby-copy"><strong>Tìm phòng gần tôi</strong></span>
-                </label>
-                <label className="location-picker-radius">
-                  <span>Bán kính tìm kiếm</span>
-                  <select aria-label="Bán kính tìm kiếm" value={radiusKm} disabled={!nearby} onChange={(event) => setRadiusKm(event.target.value)}>
-                    {nearbyRadii.map((item) => <option key={item} value={item}>{item} km</option>)}
-                  </select>
-                </label>
+        <section
+          className="location-picker-dropdown"
+          role="region"
+          aria-label="Bảng chọn khu vực"
+        >
+          {/* Header */}
+          <div className="location-picker-dropdown-header">
+            <div className="location-picker-title-group">
+              <span className="location-picker-icon-badge">
+                <Icon name="pin" size={16} />
+              </span>
+              <div>
+                <h4>Chọn khu vực</h4>
+                <p>Tìm phòng theo tỉnh thành, quận huyện</p>
               </div>
-            )}
-            <div className="location-picker-actions">
-              <button type="button" onClick={clearSelection}>Xóa lọc</button>
-              <button type="button" onClick={applySelection}>Áp dụng</button>
             </div>
-          </section>
-        </>
+            <button
+              type="button"
+              className="location-picker-close-btn"
+              onClick={() => setOpen(false)}
+              aria-label="Đóng"
+            >
+              <Icon name="close" size={16} />
+            </button>
+          </div>
+
+          {/* 3 Ô chọn Custom Dropdown bo tròn mềm mại */}
+          <div className="location-custom-fields">
+            {/* Ô 1: Tỉnh / thành phố */}
+            <CustomSelectField
+              label="Tỉnh / thành phố"
+              placeholder="Tất cả khu vực"
+              value={city}
+              options={cities}
+              onChange={(nextCity) => {
+                setCity(nextCity)
+                setDistrict("")
+                setWard("")
+              }}
+            />
+
+            {/* Ô 2: Quận / huyện */}
+            <CustomSelectField
+              label="Quận / huyện"
+              placeholder="Tất cả quận, huyện"
+              value={district}
+              options={districts}
+              disabled={!city}
+              onChange={(nextDistrict) => {
+                setDistrict(nextDistrict)
+                setWard("")
+              }}
+            />
+
+            {/* Ô 3: Phường / xã */}
+            <CustomSelectField
+              label="Phường / xã"
+              placeholder="Tất cả phường, xã"
+              value={ward}
+              options={wards}
+              disabled={!district || wards.length === 0}
+              onChange={(nextWard) => {
+                setWard(nextWard)
+              }}
+            />
+          </div>
+
+          {/* Tìm kiếm gần tôi nếu có */}
+          {showNearby && onSearchNearby && (
+            <div className={`location-picker-nearby${nearby ? " is-enabled" : ""}`}>
+              <label className="location-picker-nearby-toggle">
+                <input
+                  type="checkbox"
+                  checked={nearby}
+                  onChange={(event) => setNearby(event.target.checked)}
+                />
+                <span className="location-picker-nearby-icon">
+                  <Icon name="pin" size={17} />
+                </span>
+                <span className="location-picker-nearby-copy">
+                  <strong>Tìm phòng gần tôi</strong>
+                  <small>Dùng định vị GPS thiết bị</small>
+                </span>
+              </label>
+              <div className="location-picker-radius-pills">
+                {nearbyRadii.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    disabled={!nearby}
+                    className={`location-radius-pill${radiusKm === item ? " is-active" : ""}`}
+                    onClick={() => setRadiusKm(item)}
+                  >
+                    {item} km
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 2 Nút thao tác bo góc mềm mại */}
+          <div className="location-picker-footer">
+            <button
+              type="button"
+              className="location-btn-reset"
+              onClick={clearSelection}
+            >
+              Xóa lọc
+            </button>
+            <button
+              type="button"
+              className="location-btn-apply"
+              onClick={applySelection}
+            >
+              Áp dụng
+            </button>
+          </div>
+        </section>
       )}
     </div>
   )

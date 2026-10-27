@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { useNavigate } from "react-router"
 import { rooms } from "@/mocks/content"
 import { useFavorites } from "@/contexts/FavoritesContext"
+import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 
 export function Icon({
@@ -72,6 +73,14 @@ export function Icon({
       <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4-5.9-3.1L6.1 20l1.1-6.4L2.5 9 9 8Z" />
     ),
     send: <path d="m22 2-7 20-4-9-9-4Z M22 2 11 13" />,
+    smile: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <line x1="9" x2="9.01" y1="9" y2="9" strokeWidth="2" strokeLinecap="round" />
+        <line x1="15" x2="15.01" y1="9" y2="9" strokeWidth="2" strokeLinecap="round" />
+      </>
+    ),
     chart: (
       <>
         <path d="M3 3v18h18" />
@@ -209,17 +218,30 @@ export function RoomCard({
   room,
   onClick,
 }: {
-  room: Omit<(typeof rooms)[number], "latitude" | "longitude" | "areaValue"> & { latitude?: number; longitude?: number; areaValue: number | null; areaIsEstimate?: boolean; ownerAvatarUrl?: string; ownerName?: string }
+  room: Omit<(typeof rooms)[number], "latitude" | "longitude" | "areaValue"> & { latitude?: number; longitude?: number; areaValue: number | null; ownerAvatarUrl?: string; ownerName?: string }
   onClick: () => void
 }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isFavorite, toggleFavorite } = useFavorites()
+  const { toast } = useToast()
   const saved = isFavorite(room.id)
   const sellerName = room.ownerName || "Chủ phòng"
   const initials = sellerName.split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase()
   return (
-    <article className="room-card" onClick={onClick}>
+    <article
+      className="room-card"
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      role="link"
+      tabIndex={0}
+      aria-label={`Xem chi tiết ${room.title}`}
+    >
       <div className="room-photo">
         <img src={room.image} alt={room.title} />
         <span className="photo-badge" aria-label={`Trạng thái tin: ${room.badge}`}>{room.badge}</span>
@@ -234,6 +256,7 @@ export function RoomCard({
               return
             }
             toggleFavorite(room.id)
+            toast(saved ? "Đã bỏ lưu phòng khỏi danh sách yêu thích" : "Đã lưu phòng vào danh sách yêu thích", "success")
           }}
         >
           <Icon name="heart" size={19} />
@@ -248,7 +271,7 @@ export function RoomCard({
         <div className="room-meta">
           <span className="room-area">
             <Icon name="building" size={14} />
-            {room.area}{room.areaIsEstimate && <small> · ước tính</small>}
+            {room.area}
           </span>
           <span className="room-location">
             <Icon name="pin" size={15} />

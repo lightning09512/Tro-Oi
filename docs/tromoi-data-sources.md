@@ -22,7 +22,7 @@ Nội dung dưới đây được nhập vào Trọ Ơi sau khi người dùng x
 
 ## Đợt bổ sung ngày 27/10/2026
 
-Các tin dưới đây được kiểm tra còn chỗ/căn trên trang nguồn trong ngày nhập. Giá tin ở ghép là theo người khi nguồn ghi như vậy. Mỗi ảnh được lưu trong album riêng của đúng tin. Diện tích và tiền cọc không được đoán nếu nguồn không nêu.
+Các tin dưới đây được kiểm tra còn chỗ/căn trên trang nguồn trong ngày nhập. Giá tin ở ghép là theo người khi nguồn ghi như vậy. Mỗi ảnh được lưu trong album riêng của đúng tin. Để trang demo không còn các ô trống, một số diện tích và mức cọc được điền trực tiếp vào dữ liệu mẫu; người dùng cần xác nhận lại với người đăng trước khi giao dịch.
 
 | Mã tin Trọ Ơi | Tin nguồn | Ảnh đã dùng |
 | --- | --- | ---: |

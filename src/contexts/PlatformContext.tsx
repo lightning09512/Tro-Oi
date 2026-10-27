@@ -16,29 +16,6 @@ import { apiRequest, isApiMode } from "@/services/apiClient"
 export type ListingStatus = "pending" | "active" | "hidden" | "rented" | "rejected"
 export type ContentStatus = "pending" | "active" | "hidden" | "rejected"
 
-const demoOwnerAvatar = (id: string) => {
-  const hash = [...id].reduce((value, char) => ((value * 31) + char.charCodeAt(0)) >>> 0, 0)
-  return `/images/avatars/demo-owner-${String((hash % 6) + 1).padStart(2, "0")}.svg`
-}
-
-const estimatedAreaListingIds = new Set([
-  "tromoi-apartment-sun-cosmo-ngu-hanh-son",
-  "tromoi-apartment-mia-plaza-lien-chieu",
-  "tromoi-apartment-doan-khue-ngu-hanh-son",
-  "tromoi-ktx-phan-van-tri",
-  "tromoi-ktx-long-truong",
-  "tromoi-ktx-huit-tay-thanh",
-  "tromoi-o-ghep-duong-so-21-tan-hung",
-  "tromoi-o-ghep-tran-thai-tong-cau-giay",
-  "tromoi-hanoi-au-co-tay-ho",
-  "tromoi-hoang-tang-bi-dong-ngac",
-  "tromoi-fpt-city-da-nang",
-  "tromoi-105-ung-van-khiem",
-  "tromoi-633-hong-bang",
-  "tromoi-binh-thanh-nguyen-van-dau",
-  "tromoi-341-bui-minh-truc",
-])
-
 export type RentalListing = {
   id: string
   title: string
@@ -46,7 +23,6 @@ export type RentalListing = {
   priceValue: number
   area: string
   areaValue: number | null
-  areaIsEstimate?: boolean
   location: string
   type: string
   amenities: string[]
@@ -76,6 +52,7 @@ export interface PostComment {
   authorId: string
   author: string
   initials: string
+  avatarUrl?: string
   text: string
   createdAt: string
 }
@@ -96,6 +73,7 @@ export interface ForumPost {
   authorId: string
   name: string
   initials: string
+  avatarUrl?: string
   time: string
   content: string
   image: string
@@ -110,6 +88,7 @@ export interface ForumPost {
 export interface PlatformUser extends AuthUser {
   status: "active" | "locked"
   createdAt: string
+  avatarUrl?: string
 }
 
 export interface ReportRecord {
@@ -131,6 +110,7 @@ export interface MessageRecord {
   accountId: string
   name: string
   avatar: string
+  avatarUrl?: string
   active: boolean
   text: string
   time: string
@@ -193,6 +173,7 @@ const initialUsers: PlatformUser[] = [
   },
 ].map((user) => ({
   ...user,
+  role: user.role as PlatformUser["role"],
   status: "active",
   createdAt: savedAt,
 }))
@@ -281,7 +262,7 @@ interface PlatformContextValue {
   sendMessage: (conversationId: string, accountId: string, text: string) => Promise<void>
   markConversationRead: (conversationId: string, accountId: string) => Promise<void>
   toggleConversationMute: (conversationId: string, accountId: string) => Promise<void>
-  startConversation: (person: { accountId: string; name: string; avatar: string; userId: string; roomId: string }) => Promise<string>
+  startConversation: (person: { accountId: string; name: string; avatar: string; avatarUrl?: string; userId: string; roomId: string }) => Promise<string>
   saveReview: (review: RoomReview) => Promise<void>
   deleteReview: (id: string) => Promise<void>
 }
@@ -336,16 +317,10 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         const listingSources = [publicListings.items, privateListings.items, rentalListings.items, favoriteListings.items]
         const mergedListings = listingSources.flat()
           .filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
-          .map((item) => {
-            const isReferenceListing = item.isReferenceListing ?? item.id.startsWith("tromoi-")
-            return {
-              ...item,
-              areaIsEstimate: item.areaIsEstimate ?? estimatedAreaListingIds.has(item.id),
-              isReferenceListing,
-              ownerName: isReferenceListing ? "Chủ trọ mẫu" : item.ownerName,
-              ownerAvatarUrl: item.ownerAvatarUrl ?? (isReferenceListing ? demoOwnerAvatar(item.id) : undefined),
-            }
-          })
+          .map((item) => ({
+            ...item,
+            isReferenceListing: item.isReferenceListing ?? item.id.startsWith("tromoi-"),
+          }))
         setListings(mergedListings)
         setFeedPosts(postsResult.items)
         setUsers(usersResult.items)
@@ -594,6 +569,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           accountId: person.accountId,
           name: person.name,
           avatar: person.avatar,
+          avatarUrl: person.avatarUrl,
           active: true,
           text: person.roomId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện",
           time: "Vừa xong",
@@ -608,6 +584,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           userId: person.accountId,
           name: self?.name ?? "Thành viên",
           avatar: self?.initials ?? "TV",
+          avatarUrl: self?.avatarUrl,
           unread: false,
           muted: false,
           messages: sender.messages.map((item) => ({ ...item, from: item.from === "me" ? "them" : "me" })),

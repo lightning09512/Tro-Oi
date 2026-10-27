@@ -182,7 +182,6 @@ function Home() {
         <div className="container hero-inner">
           <div className={`hero-intro-grid${featuredRoom ? " has-featured-room" : ""}`}>
             <div className="hero-copy">
-              <span className="eyebrow home-hero-kicker">Tìm phòng cùng Trọ Ơi</span>
               <h1>Tìm phòng hợp túi tiền, gần nơi bạn cần.</h1>
               <p>Lọc theo khu vực, giá và diện tích. Xem ảnh cùng thông tin phòng trước khi liên hệ chủ trọ.</p>
             </div>
@@ -247,7 +246,7 @@ function Home() {
                 Tìm kiếm
               </Button>
             </div>
-            <button className="near-me" onClick={searchNearby}>
+            <button className="near-me" onClick={() => searchNearby()}>
               <Icon name="pin" size={17} /> Tìm phòng gần tôi
             </button>
             {nearbyMessage && <p className="nearby-message" role="status">{nearbyMessage}</p>}
@@ -270,7 +269,6 @@ function Home() {
             ))}
           </div>
           <SectionTitle
-            eyebrow="Tin cho thuê đang mở"
             title="Phòng bạn có thể xem"
             action="Xem tất cả"
             onAction={() => navigate("/tim-phong")}
@@ -292,29 +290,26 @@ function Home() {
           <div className="promotion-panel">
             <div className="promotion-banner">
               <div className="promotion-copy">
-                <span className="promotion-eyebrow">Ưu đãi / Chương trình</span>
                 <h2 id="home-promotions-title">Khởi đầu dễ dàng cùng Trọ Ơi</h2>
                 <p>Tìm phòng, đăng tin và kết nối ngay trên một nền tảng. Các tính năng hiện có của Trọ Ơi đang được sử dụng miễn phí.</p>
                 <Link className="promotion-primary" to={landlordProgramUrl}>Đăng tin miễn phí <Icon name="chevron" size={16}/></Link>
               </div>
               <div className="promotion-art" aria-hidden="true">
-                <span className="promotion-spark promotion-spark-one">✦</span>
-                <span className="promotion-spark promotion-spark-two">✧</span>
                 <div className="promotion-ticket"><small>TRỌ ƠI</small><strong>0đ</strong><span>phí đăng tin</span></div>
-                <div className="promotion-art-note">Tìm phòng<br/>Dễ dàng hơn</div>
+                <div className="promotion-art-note">Thông tin rõ ràng<br/>Kết nối trực tiếp</div>
               </div>
             </div>
             <div className="promotion-programs" id="chuong-trinh-chi-tiet">
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true">⌂</span>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="building" size={20}/></span>
                 <div><span className="promotion-card-label">Dành cho chủ trọ</span><h3>Đăng tin cho thuê miễn phí</h3><p>Thêm ảnh, giá và tiện ích để người thuê dễ tìm thấy phòng của bạn. Tin đăng được duyệt trước khi hiển thị.</p><Link to={landlordProgramUrl}>Bắt đầu đăng tin <Icon name="chevron" size={15}/></Link></div>
               </article>
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true">♡</span>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="heart" size={20}/></span>
                 <div><span className="promotion-card-label">Dành cho người thuê</span><h3>Tìm và lưu phòng yêu thích</h3><p>Lọc theo khu vực, giá và diện tích; lưu lại những lựa chọn phù hợp để xem sau.</p><Link to="/tim-phong">Khám phá phòng <Icon name="chevron" size={15}/></Link></div>
               </article>
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true">↗</span>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="share" size={20}/></span>
                 <div><span className="promotion-card-label">Chia sẻ Trọ Ơi</span><h3>Rủ bạn cùng tìm nơi ở</h3><p>Gửi đường dẫn đăng ký cho bạn bè đang tìm phòng hoặc muốn đăng tin cho thuê.</p><button type="button" onClick={shareTroOi}>Sao chép liên kết <Icon name="chevron" size={15}/></button></div>
               </article>
             </div>
@@ -326,7 +321,6 @@ function Home() {
 
       <section className="container community-preview">
         <SectionTitle
-          eyebrow="Từ diễn đàn"
           title="Kinh nghiệm thuê trọ gần đây"
           action="Vào diễn đàn"
           onAction={() => navigate("/dien-dan")}

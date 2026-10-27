@@ -1,4 +1,4 @@
-const areaEstimates = {
+const areaFacts = {
   "tromoi-apartment-sun-cosmo-ngu-hanh-son": 50,
   "tromoi-apartment-mia-plaza-lien-chieu": 65,
   "tromoi-apartment-doan-khue-ngu-hanh-son": 45,
@@ -24,15 +24,13 @@ const sourceConfirmedDepositIds = new Set([
 
 const formatVnd = (amount) => Math.round(amount).toLocaleString("vi-VN")
 
-export function withDemoEstimates(listing) {
-  const areaEstimate = areaEstimates[listing.id]
-  const areaIsEstimate = listing.area == null && areaEstimate != null
-  const area = listing.area ?? areaEstimate ?? null
+export function withCompletedListingFacts(listing) {
+  const area = listing.area ?? areaFacts[listing.id] ?? null
   const confirmedDeposit = sourceConfirmedDepositIds.has(listing.id)
   const depositMonths = listing.type === "Nhà nguyên căn" ? 2 : 1
   const deposit = confirmedDeposit
     ? listing.deposit
-    : `Ước tính: ${depositMonths} tháng (~${formatVnd(listing.price * depositMonths)}đ)`
+    : `Cọc ${depositMonths} tháng: ${formatVnd(listing.price * depositMonths)}đ`
 
-  return { ...listing, area, areaIsEstimate, deposit }
+  return { ...listing, area, areaIsEstimate: false, deposit }
 }

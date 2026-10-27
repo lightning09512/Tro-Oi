@@ -5,10 +5,6 @@ import { optionalAuth, requireAuth, requireRole } from "../middleware/auth.js"
 import { queueNotification, flushNotificationOutbox } from "../services/notificationService.js"
 
 const router = Router()
-const demoOwnerAvatar = (id) => {
-  const hash = [...String(id)].reduce((value, char) => ((value * 31) + char.charCodeAt(0)) >>> 0, 0)
-  return `/images/avatars/demo-owner-${String((hash % 6) + 1).padStart(2, "0")}.svg`
-}
 const listingSelect = `SELECT l.*, u.name AS owner_name, u.phone AS owner_phone,
   u.avatar_url AS owner_avatar_url,
   CASE WHEN l.price_vnd >= 1000000 THEN round((l.price_vnd::numeric/1000000),1)::float ELSE (l.price_vnd::float/1000000) END AS price_value,
@@ -17,11 +13,11 @@ const listingSelect = `SELECT l.*, u.name AS owner_name, u.phone AS owner_phone,
   COALESCE((SELECT json_agg(r) FROM (SELECT id, author_id, stars, text, created_at FROM reviews WHERE listing_id=l.id ORDER BY created_at DESC) r), '[]'::json) AS reviews
   FROM listings l LEFT JOIN users u ON u.id=l.owner_id`
 const asListing = (row, includePhone = false) => ({
-  id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value, areaIsEstimate: row.area_is_estimate ?? false,
+  id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value,
   location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery,
   badge: row.status === "active" ? "Đang hiển thị" : row.status, mapX: 50, mapY: 50, latitude: row.latitude ?? undefined, longitude: row.longitude ?? undefined,
-  ownerId: row.owner_id ?? "", ownerName: row.owner_id ? row.owner_name ?? "Chủ trọ" : row.source_url ? "Chủ trọ mẫu" : "Chủ trọ",
-  ownerAvatarUrl: row.owner_id ? row.owner_avatar_url ?? undefined : row.source_url ? demoOwnerAvatar(row.id) : undefined,
+  ownerId: row.owner_id ?? "", ownerName: row.owner_name ?? "Chủ phòng",
+  ownerAvatarUrl: row.owner_avatar_url ?? undefined,
   isReferenceListing: Boolean(row.source_url), ...(includePhone && !row.source_url ? { phone: row.owner_phone } : {}), deposit: row.deposit_text, description: row.description,
   status: row.status, currentTenantId: row.current_tenant_id ?? null, views: row.views, contacts: row.contacts, createdAt: row.created_at,
 })

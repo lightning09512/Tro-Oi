@@ -6,6 +6,7 @@ import type { ChangeEvent } from "react"
 import { useNavigate } from "react-router"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 import LocationPicker from "@/components/common/LocationPicker"
+import { RoomCardSkeletonGrid } from "@/components/common/Skeletons"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
 
@@ -76,6 +77,7 @@ function Filters({
   onReset,
   roomTypes,
   amenities,
+  hideApplyButton = false,
 }: {
   filters: SearchFilters
   onChange: (next: Partial<SearchFilters>) => void
@@ -83,6 +85,7 @@ function Filters({
   onReset: () => void
   roomTypes: string[]
   amenities: string[]
+  hideApplyButton?: boolean
 }) {
   const updatePrice =
     (key: "minPrice" | "maxPrice") =>
@@ -120,6 +123,7 @@ function Filters({
             onChange={updatePrice("minPrice")}
             aria-label="Giá thấp nhất, triệu đồng"
             placeholder="Từ"
+            autoComplete="off"
           />
           <span>đến</span>
           <input
@@ -130,6 +134,7 @@ function Filters({
             onChange={updatePrice("maxPrice")}
             aria-label="Giá cao nhất, triệu đồng"
             placeholder="Đến"
+            autoComplete="off"
           />
         </div>
       </div>
@@ -173,7 +178,7 @@ function Filters({
           </label>
         ))}
       </div>
-      <Button onClick={onApply}>Áp dụng bộ lọc</Button>
+      {!hideApplyButton && <Button onClick={onApply}>Áp dụng bộ lọc</Button>}
     </aside>
   )
 }
@@ -320,7 +325,6 @@ export default function SearchPage() {
 
   const resetFilters = () => {
     setRemotePage(1)
-    setRemotePage(1)
     setDraftFilters(defaultFilters)
     setAppliedFilters(defaultFilters)
     setSort("newest")
@@ -346,16 +350,42 @@ export default function SearchPage() {
           <span>{isApiMode ? remoteTotal : matchingRooms.length} kết quả</span>
         </div>
         <div className="search-layout">
-          <div className={filterOpen ? "filter-mobile open" : "filter-mobile"}>
-            <Filters
-              filters={draftFilters}
-              onChange={updateDraft}
-              onApply={applyFilters}
-              onReset={resetFilters}
-              roomTypes={roomTypes}
-              amenities={amenities}
-            />
+          {filterOpen && (
+          <div className="filter-sheet-backdrop" onClick={() => setFilterOpen(false)}>
+            <div className="filter-sheet" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bộ lọc tìm kiếm">
+              <div className="filter-sheet-header">
+                <h3>Bộ lọc tìm kiếm</h3>
+                <button
+                  type="button"
+                  className="filter-sheet-close"
+                  onClick={() => setFilterOpen(false)}
+                  aria-label="Đóng bộ lọc"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              </div>
+              <div className="filter-sheet-body">
+                <Filters
+                  filters={draftFilters}
+                  onChange={updateDraft}
+                  onApply={() => { applyFilters(); setFilterOpen(false); }}
+                  onReset={resetFilters}
+                  roomTypes={roomTypes}
+                  amenities={amenities}
+                  hideApplyButton
+                />
+              </div>
+              <div className="filter-sheet-footer">
+                <Button variant="outline" onClick={resetFilters}>
+                  Đặt lại
+                </Button>
+                <Button onClick={() => { applyFilters(); setFilterOpen(false); }}>
+                  Áp dụng bộ lọc
+                </Button>
+              </div>
+            </div>
           </div>
+        )}
           <div className="desktop-filter">
             <Filters
               filters={draftFilters}
@@ -417,16 +447,25 @@ export default function SearchPage() {
                   ))}
                 </div>
               )
-            ) : loadingRooms ? <p className="result-count-note">Đang tải tin phòng…</p> : (
+            ) : loadingRooms ? <RoomCardSkeletonGrid count={6} /> : (
               <section className="empty-state search-empty-state">
                 <span className="placeholder-icon">
-                  <Icon name="search" size={26} />
+                  <Icon name="search" size={28} />
                 </span>
                 <h2>Chưa tìm thấy phòng phù hợp</h2>
-                <p>Thử mở rộng khu vực hoặc điều chỉnh giá và tiện ích.</p>
-                <Button variant="outline" onClick={resetFilters}>
-                  Xóa bộ lọc
-                </Button>
+                <p>Thử mở rộng khu vực hoặc điều chỉnh khoảng giá và các tiện ích đã chọn để xem nhiều lựa chọn hơn.</p>
+                <div style={{ display: "flex", gap: "10px", marginTop: "16px", flexWrap: "wrap", justifyContent: "center" }}>
+                  <Button variant="outline" onClick={resetFilters}>
+                    Xóa bộ lọc
+                  </Button>
+                  <Button onClick={() => {
+                    setDraftFilters(defaultFilters);
+                    setAppliedFilters(defaultFilters);
+                    navigate("/tim-phong");
+                  }}>
+                    Xem tất cả phòng trọ
+                  </Button>
+                </div>
               </section>
             )}
             {loadingRooms && matchingRooms.length > 0 && <p className="result-count-note">Đang tải thêm tin phòng…</p>}

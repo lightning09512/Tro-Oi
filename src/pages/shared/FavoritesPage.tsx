@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useNavigate } from "react-router"
-import { Button, RoomCard } from "@/components/common/legacy"
+import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform } from "@/contexts/PlatformContext"
 
@@ -38,14 +38,16 @@ export default function FavoritesPage() {
           </div>
         ) : (
           <section className="empty-state">
-            <span className="placeholder-icon">♡</span>
+            <span className="placeholder-icon">
+              <Icon name="heart" size={32} />
+            </span>
             <h2>Chưa có phòng nào được lưu</h2>
             <p>
-              Chạm vào biểu tượng trái tim trên tin đăng để lưu lại những phòng
-              bạn muốn xem sau.
+              Chạm vào biểu tượng trái tim trên bất kỳ tin đăng nào để lưu lại những căn phòng bạn quan tâm và dễ dàng so sánh sau này.
             </p>
+            <p className="empty-hint">Các tin được lưu sẽ luôn hiển thị tại đây khi bạn đăng nhập.</p>
             <Button onClick={() => navigate("/tim-phong")}>
-              Khám phá phòng trọ
+              Khám phá phòng trọ quanh đây
             </Button>
           </section>
         )}

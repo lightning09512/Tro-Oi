@@ -6,7 +6,7 @@ import { usePlatform, type PlatformUser } from "@/contexts/PlatformContext"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 
 type ProfileLoadState = "loading" | "ready" | "unavailable" | "error"
-type PublicProfile = Pick<PlatformUser, "id" | "name" | "role" | "status" | "initials">
+type PublicProfile = Pick<PlatformUser, "id" | "name" | "role" | "status" | "initials" | "avatarUrl">
 
 const roleName = (role: PlatformUser["role"]) => role === "landlord" ? "Chủ trọ" : "Người thuê"
 
@@ -114,7 +114,7 @@ export default function PublicProfilePage() {
         <section className="public-profile-card">
           <Link className="public-profile-back" to="/dien-dan"><Icon name="chevron" size={16}/>Quay lại diễn đàn</Link>
           <div className="public-profile-heading">
-            <span className="avatar xlarge">{profile.initials}</span>
+            {profile.avatarUrl ? <img className="avatar xlarge public-profile-avatar-image" src={profile.avatarUrl} alt={`Ảnh đại diện ${profile.name}`} /> : <span className="avatar xlarge">{profile.initials}</span>}
             <div className="public-profile-name">
               <span className="eyebrow">Hồ sơ công khai</span>
               <h1>{profile.name}</h1>

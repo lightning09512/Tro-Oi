@@ -3,12 +3,14 @@ import { useNavigate, useParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform, type RentalListing } from "@/contexts/PlatformContext"
+import { useToast } from "@/contexts/ToastContext"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 
 export default function ListingEditorPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { toast } = useToast()
   const { listings, saveListing, categories } = usePlatform()
   const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
   const amenities = categories.filter((item) => item.type === "Tiện ích" && item.status === "active").map((item) => item.name)
@@ -137,6 +139,7 @@ export default function ListingEditorPage() {
     try {
       await saveListing(item)
       setSaved(true)
+      toast(existing ? "Đã lưu thay đổi tin phòng thành công!" : "Tin phòng đã được gửi duyệt thành công!", "success")
       window.setTimeout(() => navigate("/chu-tro/quan-ly-tin"), 800)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể lưu tin phòng.")
@@ -149,35 +152,50 @@ export default function ListingEditorPage() {
         <button className="back-link" onClick={() => navigate("/chu-tro/quan-ly-tin")}><Icon name="chevron" size={15} /> Quay lại danh sách tin</button>
         <div className="page-heading-row editor-heading">
           <div><span className="eyebrow">Tin cho thuê</span><h1>{existing ? "Cập nhật thông tin phòng" : "Đăng tin cho thuê"}</h1><p>Thông tin rõ ràng giúp người thuê hiểu đúng về căn phòng trước khi liên hệ.</p></div>
-          <span className="editor-step">3 phần thông tin</span>
+          <span className="editor-step">4 phần thông tin</span>
         </div>
         {saved && <p className="form-message success" role="status">{existing ? "Đã lưu thay đổi." : "Tin đã gửi duyệt. Bạn sẽ thấy trạng thái trong danh sách tin."}</p>}
         {error && <p className="form-message error" role="alert">{error}</p>}
         <form className="listing-editor" onSubmit={submit}>
+          {/* Khối 1: Thông tin cơ bản & Vị trí */}
           <section className="editor-card">
-            <div className="editor-section-title"><span>01</span><div><h2>Thông tin cơ bản</h2><p>Tiêu đề và khu vực người thuê có thể tìm kiếm.</p></div></div>
-            <label className="form-field"><span>Tiêu đề tin <b>*</b></span><input maxLength={90} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ví dụ: Phòng ban công gần Đại học..."/><small>{form.title.length}/90 ký tự</small></label>
+            <div className="editor-section-title"><span>01</span><div><h2>Thông tin cơ bản & Vị trí</h2><p>Tiêu đề, địa chỉ và loại phòng giúp người thuê dễ dàng tìm kiếm.</p></div></div>
+            <label className="form-field"><span>Tiêu đề tin <b>*</b></span><input maxLength={90} value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="Ví dụ: Phòng ban công thoáng mát gần Đại học Bách Khoa..." autoComplete="off"/><small>{form.title.length}/90 ký tự</small></label>
             <div className="editor-fields-two">
-              <label className="form-field"><span>Khu vực <b>*</b></span><input value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Quận, phường hoặc địa chỉ gần nhất"/></label>
-              {isApiMode && <><label className="form-field"><span>Vĩ độ bản đồ (tùy chọn)</span><input type="number" min="-90" max="90" step="any" value={form.latitude} onChange={(event) => update("latitude", event.target.value)} placeholder="Ví dụ: 10.7769"/></label><label className="form-field"><span>Kinh độ bản đồ (tùy chọn)</span><input type="number" min="-180" max="180" step="any" value={form.longitude} onChange={(event) => update("longitude", event.target.value)} placeholder="Ví dụ: 106.7009"/><small>Chỉ nhập tọa độ đã kiểm tra tại vị trí phòng.</small></label></>}
+              <label className="form-field"><span>Khu vực / Địa chỉ <b>*</b></span><input value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Quận, phường hoặc địa chỉ cụ thể" autoComplete="off"/></label>
               <label className="form-field"><span>Loại phòng</span><select value={form.type} onChange={(event) => update("type", event.target.value)}>{roomTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
-              <label className="form-field"><span>Giá thuê (triệu đồng/tháng) <b>*</b></span><input type="number" min="0.1" step="0.1" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="3.5"/></label>
-              <label className="form-field"><span>Diện tích (m²) <b>*</b></span><input type="number" min="1" value={form.area} onChange={(event) => update("area", event.target.value)} placeholder="25"/></label>
-              <label className="form-field"><span>Tiền cọc</span><input value={form.deposit} onChange={(event) => update("deposit", event.target.value)} placeholder="Ví dụ: 1 tháng tiền thuê"/></label>
-              <label className="form-field"><span>Số điện thoại liên hệ</span><input value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="09xx xxx xxx"/></label>
+              {isApiMode && <><label className="form-field"><span>Vĩ độ bản đồ (tùy chọn)</span><input type="number" min="-90" max="90" step="any" value={form.latitude} onChange={(event) => update("latitude", event.target.value)} placeholder="Ví dụ: 10.7769"/></label><label className="form-field"><span>Kinh độ bản đồ (tùy chọn)</span><input type="number" min="-180" max="180" step="any" value={form.longitude} onChange={(event) => update("longitude", event.target.value)} placeholder="Ví dụ: 106.7009"/><small>Chỉ nhập tọa độ đã kiểm tra chính xác tại vị trí phòng.</small></label></>}
             </div>
           </section>
+
+          {/* Khối 2: Chi phí & Diện tích */}
           <section className="editor-card">
-            <div className="editor-section-title"><span>02</span><div><h2>Mô tả và tiện ích</h2><p>Chia sẻ những chi tiết hữu ích, cả ưu điểm lẫn khoản phí phát sinh.</p></div></div>
-            <label className="form-field"><span>Mô tả phòng <b>*</b></span><textarea rows={6} maxLength={1200} value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Mô tả tình trạng phòng, nội thất, giờ giấc, chi phí điện nước..."/><small>{form.description.length}/1200 ký tự</small></label>
-            <fieldset className="amenity-picker"><legend>Tiện ích có sẵn</legend>{amenities.map((item) => <label key={item}><input type="checkbox" checked={form.amenities.includes(item)} onChange={() => toggleAmenity(item)}/>{item}</label>)}</fieldset>
+            <div className="editor-section-title"><span>02</span><div><h2>Chi phí & Diện tích</h2><p>Giá thuê hàng tháng, số tiền đặt cọc và diện tích sử dụng thực tế.</p></div></div>
+            <div className="editor-fields-two">
+              <label className="form-field"><span>Giá thuê (triệu đồng/tháng) <b>*</b></span><input type="number" min="0.1" step="0.1" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="Ví dụ: 3.5"/></label>
+              <label className="form-field"><span>Tiền cọc</span><input value={form.deposit} onChange={(event) => update("deposit", event.target.value)} placeholder="Ví dụ: 1 tháng tiền thuê (hoặc Thỏa thuận)" autoComplete="off"/></label>
+              <label className="form-field"><span>Diện tích (m²) <b>*</b></span><input type="number" min="1" value={form.area} onChange={(event) => update("area", event.target.value)} placeholder="Ví dụ: 25"/></label>
+            </div>
           </section>
+
+          {/* Khối 3: Hình ảnh & Tiện ích */}
           <section className="editor-card">
-            <div className="editor-section-title"><span>03</span><div><h2>Ảnh phòng</h2><p>Tải 2–6 ảnh chụp các góc khác nhau của cùng một phòng. Ảnh đầu tiên làm ảnh đại diện.</p></div></div>
-            <label className="form-field"><span>Chọn nhiều ảnh từ thiết bị</span><input type="file" accept="image/*" multiple disabled={uploading || form.gallery.length >= 6} onChange={(event) => { void uploadImages(event.currentTarget.files); event.currentTarget.value = "" }}/><small>{uploading ? uploadProgress : uploadProgress || (isApiMode ? "Mỗi ảnh dưới 3 MB; máy local lưu trong server/uploads, production cần Cloudinary." : "Tối đa 6 ảnh, mỗi ảnh dưới 500 KB; ảnh được lưu trong trình duyệt.")}</small></label>
-            <label className="form-field"><span>Đường dẫn ảnh đại diện (tùy chọn)</span><input value={form.image} onChange={(event) => setCoverImageUrl(event.target.value)} placeholder="https://..."/></label>
+            <div className="editor-section-title"><span>03</span><div><h2>Hình ảnh & Tiện ích</h2><p>Tải từ 2–6 ảnh thực tế của phòng và chọn các tiện ích phòng có sẵn.</p></div></div>
+            <label className="form-field"><span>Chọn ảnh từ thiết bị (tối đa 6 ảnh)</span><input type="file" accept="image/*" multiple disabled={uploading || form.gallery.length >= 6} onChange={(event) => { void uploadImages(event.currentTarget.files); event.currentTarget.value = "" }}/><small>{uploading ? uploadProgress : uploadProgress || (isApiMode ? "Mỗi ảnh dưới 3 MB; ảnh được tải lên an toàn." : "Tối đa 6 ảnh, mỗi ảnh dưới 500 KB; ảnh được lưu trong trình duyệt.")}</small></label>
+            <label className="form-field"><span>Đường dẫn ảnh đại diện (tùy chọn)</span><input value={form.image} onChange={(event) => setCoverImageUrl(event.target.value)} placeholder="https://..." autoComplete="off"/></label>
             {form.gallery.length > 0 && <div className="listing-gallery-preview" aria-label="Ảnh của tin phòng">{form.gallery.map((photo, index) => <div className="listing-gallery-preview-item" key={photo}><img src={photo} alt={`Ảnh ${index + 1} của phòng`}/><div><button type="button" onClick={() => makeCoverImage(photo)} disabled={form.image === photo}>{form.image === photo ? "Ảnh đại diện" : "Đặt làm ảnh đại diện"}</button><button type="button" onClick={() => removeGalleryImage(photo)} aria-label={`Xóa ảnh ${index + 1}`}>Xóa</button></div></div>)}</div>}
+            <fieldset className="amenity-picker" style={{ marginTop: "24px" }}><legend>Tiện ích có sẵn</legend>{amenities.map((item) => <label key={item}><input type="checkbox" checked={form.amenities.includes(item)} onChange={() => toggleAmenity(item)}/>{item}</label>)}</fieldset>
           </section>
+
+          {/* Khối 4: Mô tả chi tiết & Liên hệ */}
+          <section className="editor-card">
+            <div className="editor-section-title"><span>04</span><div><h2>Mô tả chi tiết & Liên hệ</h2><p>Số điện thoại liên lạc trực tiếp và ghi chú chi tiết cho khách thuê.</p></div></div>
+            <div className="editor-fields-two" style={{ marginBottom: "16px" }}>
+              <label className="form-field"><span>Số điện thoại liên hệ <b>*</b></span><input value={form.phone} onChange={(event) => update("phone", event.target.value)} placeholder="09xx xxx xxx" autoComplete="off"/></label>
+            </div>
+            <label className="form-field"><span>Mô tả chi tiết phòng <b>*</b></span><textarea rows={6} maxLength={1200} value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Mô tả cụ thể tình trạng phòng, nội thất có sẵn, giờ giấc sinh hoạt, các khoản phí phát sinh (điện, nước, internet, rác, gửi xe)..."/><small>{form.description.length}/1200 ký tự</small></label>
+          </section>
+
           <div className="editor-submit"><span>{existing ? "Kiểm tra lại nội dung trước khi lưu thay đổi." : "Tin mới sẽ ở trạng thái chờ duyệt trước khi hiển thị."}</span><Button icon="send">{existing ? "Lưu cập nhật" : "Gửi duyệt tin"}</Button></div>
         </form>
       </div>

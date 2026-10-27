@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
+import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform, type ListingStatus, type RentalListing } from "@/contexts/PlatformContext"
 
@@ -15,6 +16,7 @@ const statusLabels: Record<ListingStatus, string> = {
 export default function MyListingsPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { toast } = useToast()
   const { listings, users, saveListing, deleteListing, setListingStatus } = usePlatform()
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("all")
@@ -70,7 +72,7 @@ export default function MyListingsPage() {
         <div className="workspace-toolbar">
           <label className="workspace-search">
             <Icon name="search" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên phòng hoặc khu vực" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo tên phòng hoặc khu vực" autoComplete="off" spellCheck={false} />
           </label>
           <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Lọc trạng thái tin">
             <option value="all">Tất cả trạng thái</option>
@@ -117,7 +119,11 @@ export default function MyListingsPage() {
                     ).map((value) => <option value={value} key={value}>{item.status === "rejected" && value === "pending" ? "Gửi lại duyệt" : statusLabels[value as ListingStatus]}</option>)}
                   </select>
                   <button className="danger-action" onClick={() => {
-                    if (window.confirm(`Xóa tin “${item.title}”?`)) void deleteListing(item.id).catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể xóa tin."))
+                    if (window.confirm(`Xóa tin “${item.title}”?`)) {
+                      deleteListing(item.id)
+                        .then(() => toast("Đã xóa tin cho thuê.", "info"))
+                        .catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể xóa tin."))
+                    }
                   }}><Icon name="trash" size={16} /> Xóa</button>
                 </div>
               </article>
@@ -125,9 +131,9 @@ export default function MyListingsPage() {
           </div>
         ) : (
           <section className="empty-state">
-            <span className="placeholder-icon"><Icon name="building" size={24} /></span>
+            <span className="placeholder-icon"><Icon name="building" size={28} /></span>
             <h2>{mine.length ? "Không tìm thấy tin phù hợp" : "Bạn chưa đăng phòng nào"}</h2>
-            <p>Đăng tin đầu tiên để người đang tìm phòng trong khu vực biết đến chỗ ở của bạn.</p>
+            <p>{mine.length ? "Thử tìm kiếm với từ khóa khác hoặc chuyển bộ lọc sang “Tất cả trạng thái”." : "Đăng tin đầu tiên để người đang tìm phòng trong khu vực biết đến chỗ ở của bạn và dễ dàng liên hệ."}</p>
             <Button onClick={() => navigate("/chu-tro/dang-tin")}>Đăng phòng mới</Button>
           </section>
         )}
