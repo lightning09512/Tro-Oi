@@ -228,6 +228,24 @@ function Home() {
       buttonText: "Tìm phòng ngay",
       link: "/tim-phong",
     },
+    {
+      id: "community-campaign",
+      tag: "Cộng đồng & Tìm ở ghép",
+      image: "/images/banners/banner-roommate-community.jpg",
+      title: "Tìm bạn ở ghép & Pass phòng trên Diễn đàn Trọ Ơi",
+      description: "Kết nối bạn cùng phòng lý tưởng, pass phòng sang nhượng cọc nhanh chóng và chia sẻ kinh nghiệm thuê trọ thực tế từ cộng đồng.",
+      buttonText: "Tham gia diễn đàn",
+      link: "/dien-dan",
+    },
+    {
+      id: "verified-campaign",
+      tag: "Phòng trọ xác thực 100%",
+      image: "/images/banners/banner-verified-safety.jpg",
+      title: "Phòng trọ chính chủ xác thực - An tâm đặt cọc, không lo tin ảo",
+      description: "Trọ Ơi cam kết 100% tin phòng được kiểm duyệt thông tin, giá thuê minh bạch, hỗ trợ xem phòng trực tiếp và bảo vệ quyền lợi người thuê.",
+      buttonText: "Khám phá ngay",
+      link: "/tim-phong",
+    },
   ], [landlordProgramUrl])
 
   const [activeCampaignIndex, setActiveCampaignIndex] = useState(0)
