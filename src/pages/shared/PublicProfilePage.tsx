@@ -91,15 +91,6 @@ export default function PublicProfilePage() {
     [listings, id],
   )
 
-  const hasPassPost = useMemo(
-    () =>
-      publicPosts.some((post) => {
-        const lower = post.content.toLowerCase()
-        return lower.includes("pass") || lower.includes("chuyển nhượng") || lower.includes("sang nhượng")
-      }),
-    [publicPosts],
-  )
-
   useEffect(() => {
     if (publicListings.length === 0 && publicPosts.length > 0) {
       setActiveTab("posts")
@@ -240,9 +231,6 @@ export default function PublicProfilePage() {
               <div className="nhatot-name-line">
                 <h1 className="nhatot-name-heading">{profile.name}</h1>
                 <span className="nhatot-badge-tag">{profile.role === "landlord" ? "Chủ trọ" : "Người thuê"}</span>
-                {hasPassPost && (
-                  <span className="nhatot-badge-transfer">🔄 Đang pass phòng trên Diễn đàn</span>
-                )}
               </div>
 
               <div className="nhatot-details-grid">
