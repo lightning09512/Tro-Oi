@@ -77,7 +77,7 @@ export default function RoomDetailPage() {
   const canReview = user?.role === "renter" && room.currentTenantId === user.id
   const contact = async () => {
     if (!user) { navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } }); return }
-    const conversation = await startConversation({ accountId: user.id, name: room.ownerName, avatar: room.ownerName.split(" ").map((part) => part[0]).slice(-2).join(""), userId: room.ownerId, roomId: room.id })
+    const conversation = await startConversation({ accountId: user.id, name: room.ownerName, avatar: room.ownerName.split(" ").map((part) => part[0]).slice(-2).join(""), avatarUrl: room.ownerAvatarUrl, userId: room.ownerId, roomId: room.id })
     if (!conversation) return
     incrementListingContacts(room.id)
     navigate(`/tin-nhan?conversation=${conversation}`)
@@ -225,7 +225,9 @@ export default function RoomDetailPage() {
           </div>
           {roomReviews.map((review) => (
             <article className="comment review-card" key={review.id}>
-              <Link className="avatar peach profile-avatar-link" to={`/nguoi-dung/${review.authorId}`} aria-label={`Xem hồ sơ ${review.author}`}>{review.initials}</Link>
+              <Link className="avatar peach profile-avatar-link" to={`/nguoi-dung/${review.authorId}`} aria-label={`Xem hồ sơ ${review.author}`}>
+                {users.find((u) => u.id === review.authorId)?.avatarUrl ? <img className="user-avatar-image" src={users.find((u) => u.id === review.authorId)?.avatarUrl} alt="" /> : review.initials}
+              </Link>
               <div className="review-copy">
                 <div className="review-meta">
                   <Link className="review-author-link" to={`/nguoi-dung/${review.authorId}`}>{review.author}</Link>

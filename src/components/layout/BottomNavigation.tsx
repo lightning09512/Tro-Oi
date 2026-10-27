@@ -24,7 +24,9 @@ export default function BottomNavigation() {
       </NavLink>
       <NavLink to={user ? "/tai-khoan/ho-so" : "/dang-nhap"}>
         {user ? (
-          <span className="avatar">{user.initials}</span>
+          <span className="avatar">
+            {user.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : user.initials}
+          </span>
         ) : (
           <Icon name="users" />
         )}

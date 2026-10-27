@@ -17,7 +17,7 @@ const registerSchema = z.object({
   role: z.enum(["renter", "landlord"]),
   verificationCode: z.string().regex(/^\d{6}$/),
 })
-const publicUser = (row) => ({ id: row.id, name: row.name, email: row.email, phone: row.phone, role: row.role, initials: row.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(), status: row.status })
+const publicUser = (row) => ({ id: row.id, name: row.name, email: row.email, phone: row.phone, role: row.role, initials: row.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(), status: row.status, avatarUrl: row.avatar_url ?? undefined })
 const session = (row) => ({ user: publicUser(row), token: createToken(row) })
 const hashRegistrationCode = (email, salt, code) => crypto.createHmac("sha256", process.env.JWT_SECRET).update(salt + ":" + email + ":" + code).digest("hex")
 

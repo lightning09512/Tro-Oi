@@ -191,13 +191,17 @@ export default function MainHeader() {
                   aria-label="Mở menu tài khoản"
                   title="Mở menu tài khoản"
                 >
-                  <span className="inline-grid size-10 shrink-0 place-items-center rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">{user.initials}</span>
+                  <span className="inline-grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">
+                    {user.avatarUrl ? <img className="size-full object-cover" src={user.avatarUrl} alt="" /> : user.initials}
+                  </span>
                   <Icon name="down" size={15} />
                 </button>
                 {avatarOpen && (
                   <div className="absolute right-0 top-[calc(100%+8px)] z-[90] w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[#e1e8e2] bg-white p-2 shadow-[0_16px_36px_rgb(29_58_38_/_0.14)]">
                     <div className="mb-1.5 flex items-center gap-3 border-b border-[#e5ece6] px-2 py-2.5">
-                      <span className="inline-grid size-10 shrink-0 place-items-center rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">{user.initials}</span>
+                      <span className="inline-grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">
+                        {user.avatarUrl ? <img className="size-full object-cover" src={user.avatarUrl} alt="" /> : user.initials}
+                      </span>
                       <div>
                         <strong className="block text-[13px] font-bold text-[#26382e]">{user.name}</strong>
                         <small className="text-xs text-[#718078]">{roleLabels[user.role]}</small>

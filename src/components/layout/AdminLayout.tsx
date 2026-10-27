@@ -48,7 +48,7 @@ export default function AdminLayout() {
             <Icon name="bell" />
           </button>
           <NavLink to="/admin/ho-so" className="avatar" aria-label="Hồ sơ quản trị viên">
-            {user?.initials ?? "AD"}
+            {user?.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : (user?.initials ?? "AD")}
           </NavLink>
           <button
             className="admin-logout"

@@ -17,13 +17,13 @@ if (process.env.NODE_ENV === "production" && !process.env.SEED_PASSWORD) {
 const { Pool } = pg
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 const users = [
-  ["user-renter-01", "Hoàng Trang", "trang.nguyen@example.com", "0901234567", "renter"],
-  ["user-renter-02", "Nguyễn An", "nguyenan@example.com", "0901234568", "renter"],
-  ["user-renter-03", "Thu Hà", "thuha@example.com", "0901234569", "renter"],
-  ["user-renter-04", "Quang Minh", "quangminh@example.com", "0901234570", "renter"],
-  ["user-landlord-01", "Minh Ngọc", "minhngoc@example.com", "0987654321", "landlord"],
-  ["user-landlord-02", "Anh Khoa", "anhkhoa@example.com", "0987654322", "landlord"],
-  ["user-admin-01", "Quản trị viên", "admin@phongtroplus.vn", "0909000001", "admin"],
+  ["user-renter-01", "Hoàng Trang", "trang.nguyen@example.com", "0901234567", "renter", "/images/avatars/demo-owner-01.jpg"],
+  ["user-renter-02", "Nguyễn An", "nguyenan@example.com", "0901234568", "renter", "/images/avatars/demo-owner-05.jpg"],
+  ["user-renter-03", "Thu Hà", "thuha@example.com", "0901234569", "renter", "/images/avatars/demo-owner-02.jpg"],
+  ["user-renter-04", "Quang Minh", "quangminh@example.com", "0901234570", "renter", "/images/avatars/demo-owner-06.jpg"],
+  ["user-landlord-01", "Minh Ngọc", "minhngoc@example.com", "0987654321", "landlord", "/images/avatars/demo-owner-03.jpg"],
+  ["user-landlord-02", "Anh Khoa", "anhkhoa@example.com", "0987654322", "landlord", "/images/avatars/demo-owner-04.jpg"],
+  ["user-admin-01", "Quản trị viên", "admin@phongtroplus.vn", "0909000001", "admin", "/images/avatars/demo-owner-01.jpg"],
 ]
 
 const forumImages = [
@@ -62,14 +62,14 @@ async function seedPostgres() {
     await client.query("BEGIN")
     const passwordHash = await bcrypt.hash(seedPassword, 12)
 
-    for (const [id, name, email, phone, role] of users) {
+    for (const [id, name, email, phone, role, avatarUrl] of users) {
       await client.query(
-        `INSERT INTO users(id,name,email,phone,password_hash,role,status)
-         VALUES($1,$2,$3,$4,$5,$6,'active')
+        `INSERT INTO users(id,name,email,phone,password_hash,role,status,avatar_url)
+         VALUES($1,$2,$3,$4,$5,$6,'active',$7)
          ON CONFLICT(id) DO UPDATE SET
            name=EXCLUDED.name,email=EXCLUDED.email,phone=EXCLUDED.phone,
-           password_hash=EXCLUDED.password_hash,role=EXCLUDED.role,status='active',updated_at=now()`,
-        [id, name, email, phone, passwordHash, role],
+           password_hash=EXCLUDED.password_hash,role=EXCLUDED.role,status='active',avatar_url=EXCLUDED.avatar_url,updated_at=now()`,
+        [id, name, email, phone, passwordHash, role, avatarUrl],
       )
     }
 

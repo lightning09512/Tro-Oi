@@ -170,6 +170,34 @@ const initialUsers: PlatformUser[] = [
     phone: "0901 234 568",
     role: "renter",
     initials: "NA",
+    avatarUrl: "/images/avatars/demo-owner-05.jpg",
+  },
+  {
+    id: "user-renter-03",
+    name: "Thu Hà",
+    email: "thuha@example.com",
+    phone: "0901 234 569",
+    role: "renter",
+    initials: "TH",
+    avatarUrl: "/images/avatars/demo-owner-02.jpg",
+  },
+  {
+    id: "user-renter-04",
+    name: "Quang Minh",
+    email: "quangminh@example.com",
+    phone: "0901 234 570",
+    role: "renter",
+    initials: "QM",
+    avatarUrl: "/images/avatars/demo-owner-06.jpg",
+  },
+  {
+    id: "user-landlord-02",
+    name: "Anh Khoa",
+    email: "anhkhoa@example.com",
+    phone: "0987 654 322",
+    role: "landlord",
+    initials: "AK",
+    avatarUrl: "/images/avatars/demo-owner-04.jpg",
   },
 ].map((user) => ({
   ...user,
@@ -180,20 +208,28 @@ const initialUsers: PlatformUser[] = [
 
 const initialReviews: RoomReview[] = []
 
-const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversation, index) => ({
-  ...conversation,
-  accountId: index === 1 ? "user-landlord-01" : "user-renter-01",
-  name: ["Minh Ngọc", "Hoàng Trang", "Quản trị viên"][index],
-  avatar: ["MN", "HT", "AD"][index],
-  id: `conversation-${index + 1}`,
-  roomId: "room-thao-dien-studio",
-  userId: ["user-landlord-01", "user-renter-01", "user-admin-01"][index],
-  unread: index === 0,
-  messages: [
-    { id: `message-${index}-1`, from: "them", text: "Chào bạn, phòng bạn hỏi hiện vẫn còn nhé.", time: "10:20" },
-    { id: `message-${index}-2`, from: "me", text: "Mình có thể hẹn xem phòng chiều mai không ạ?", time: "10:32" },
-  ],
-}))
+const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversation, index) => {
+  const avatarUrls = [
+    "/images/avatars/demo-owner-03.jpg",
+    "/images/avatars/demo-owner-01.jpg",
+    "/images/avatars/demo-owner-05.jpg",
+  ]
+  return {
+    ...conversation,
+    accountId: index === 1 ? "user-landlord-01" : "user-renter-01",
+    name: ["Minh Ngọc", "Hoàng Trang", "Quản trị viên"][index],
+    avatar: ["MN", "HT", "AD"][index],
+    avatarUrl: avatarUrls[index],
+    id: `conversation-${index + 1}`,
+    roomId: "room-thao-dien-studio",
+    userId: ["user-landlord-01", "user-renter-01", "user-admin-01"][index],
+    unread: index === 0,
+    messages: [
+      { id: `message-${index}-1`, from: "them", text: "Chào bạn, phòng bạn hỏi hiện vẫn còn nhé.", time: "10:20" },
+      { id: `message-${index}-2`, from: "me", text: "Mình có thể hẹn xem phòng chiều mai không ạ?", time: "10:32" },
+    ],
+  }
+})
 
 const loadMessages = () => storage("messages", initialMessages).map((conversation) => ({
   ...conversation,
@@ -448,7 +484,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, comments: [...post.comments, result.item], commentsCount: post.commentsCount + 1 }))
         return
       }
-      setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, commentsCount: post.commentsCount + 1, comments: [...post.comments, { id: `comment-${Date.now()}`, authorId: actingUser.id, author: actingUser.name, initials: actingUser.initials, text, createdAt: new Date().toLocaleString("vi-VN") }] }))
+      setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, commentsCount: post.commentsCount + 1, comments: [...post.comments, { id: `comment-${Date.now()}`, authorId: actingUser.id, author: actingUser.name, initials: actingUser.initials, avatarUrl: actingUser.avatarUrl, text, createdAt: new Date().toLocaleString("vi-VN") }] }))
     },
     deleteComment: async (postId, commentId) => {
       if (isApiMode && !await platformRequest(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "DELETE" })) return

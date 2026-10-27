@@ -7,6 +7,7 @@ export interface AuthUser {
   phone: string
   role: UserRole
   initials: string
+  avatarUrl?: string
 }
 
 export interface LoginCredentials {

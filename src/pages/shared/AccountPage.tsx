@@ -76,7 +76,9 @@ export default function AccountPage({
     <main className="page-bg account-page">
       <div className="container account-layout">
         <aside className="account-summary">
-          <span className="avatar xlarge">{user?.initials}</span>
+          <span className="avatar xlarge">
+            {user?.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : user?.initials}
+          </span>
           <h2>{user?.name}</h2>
           <p>{user?.email}</p>
           <span className="role-badge">

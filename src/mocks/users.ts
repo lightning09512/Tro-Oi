@@ -8,6 +8,7 @@ export const mockUsers: Record<AuthUser["role"], AuthUser> = {
     phone: "0901 234 567",
     role: "renter",
     initials: "HT",
+    avatarUrl: "/images/avatars/demo-owner-01.jpg",
   },
   landlord: {
     id: "user-landlord-01",
@@ -16,6 +17,7 @@ export const mockUsers: Record<AuthUser["role"], AuthUser> = {
     phone: "0987 654 321",
     role: "landlord",
     initials: "MN",
+    avatarUrl: "/images/avatars/demo-owner-03.jpg",
   },
   admin: {
     id: "user-admin-01",
@@ -24,5 +26,6 @@ export const mockUsers: Record<AuthUser["role"], AuthUser> = {
     phone: "0909 000 001",
     role: "admin",
     initials: "AD",
+    avatarUrl: "/images/avatars/demo-owner-05.jpg",
   },
 }

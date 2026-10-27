@@ -32,7 +32,7 @@ function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
   const author = users.find((item) => item.id === post.authorId)
   const role = author?.role
   const authorAvatarUrl = post.avatarUrl ?? author?.avatarUrl
-  const currentUserAvatarUrl = users.find((item) => item.id === user?.id)?.avatarUrl
+  const currentUserAvatarUrl = user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
 
   const submitComment = async (event: FormEvent) => {
     event.preventDefault()
@@ -116,7 +116,7 @@ export default function ForumPage() {
   const publicPosts = useMemo(() => posts.filter((post) => post.status === "active" && (!id || post.id === id)).filter((post) => !query || `${post.content} ${post.name}`.toLocaleLowerCase("vi").includes(query.toLocaleLowerCase("vi"))), [posts, id, query])
   const trendingPosts = useMemo(() => [...posts].filter((post) => post.status === "active").sort((a, b) => (b.likes + b.commentsCount) - (a.likes + a.commentsCount)).slice(0, 3), [posts])
   const login = () => navigate("/dang-nhap", { state: { from: window.location.pathname } })
-  const currentUserAvatarUrl = users.find((item) => item.id === user?.id)?.avatarUrl
+  const currentUserAvatarUrl = user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
 
   const publish = async (event: FormEvent) => {
     event.preventDefault()

@@ -383,7 +383,9 @@ function Home() {
           <div className="story-list">
             {latestPosts.slice(1, 4).map((post) => (
               <Link to={`/bai-viet/${post.id}`} key={post.id}>
-                <span className="story-avatar">{post.initials}</span>
+                <span className="story-avatar">
+                  {post.avatarUrl ? <img className="user-avatar-image" src={post.avatarUrl} alt="" /> : post.initials}
+                </span>
                 <div>
                   <span>{post.name}</span>
                   <h3>{post.content}</h3>
