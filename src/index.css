@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Lora:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -9,8 +9,8 @@
   --color-muted: #657168;
   --color-line: #dfe7e1;
   --color-page: #f5f8f5;
-  --font-heading: "Lora", Georgia, serif;
-  --font-body: "Be Vietnam Pro", sans-serif;
+  --font-heading: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 :root {
@@ -27,8 +27,8 @@
   --shadow: 0 8px 24px rgba(30, 72, 43, 0.08);
   --shadow-sm: 0 2px 8px rgba(30, 72, 43, 0.05);
   --radius: 8px;
-  --font-display: "Lora", Georgia, serif;
-  --font-ui: "Be Vietnam Pro", sans-serif;
+  --font-display: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-ui: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 
@@ -43,7 +43,7 @@ button,input,select{font:inherit}button{cursor:pointer}.icon{display:inline-bloc
 .forum-page{min-height:0;padding:28px 0 36px}
 .forum-layout{display:grid;grid-template-columns:190px minmax(0,1fr) 270px;gap:22px;align-items:start;padding:0 0 28px}
 .forum-left{position:sticky;top:92px;height:max-content}
-.forum-left h3{font-family:var(--font-display);font-size:18px;font-weight:500;margin:0 0 8px;color:#294438}
+.forum-left h3{font-family:var(--font-display);font-size:16px;font-weight:700;margin:0 0 8px;color:#294438}
 .forum-left>button{width:100%;min-height:44px;border:0;background:transparent;border-radius:8px;display:flex;align-items:center;gap:11px;padding:0 12px;color:#52645a;font-weight:500;text-align:left}
 .forum-left>button.active,.forum-left>button:hover{background:#eaf4ec;color:#245f3b}
 .forum-banner{margin-top:22px;background:#edf5ef;color:#294438;border:1px solid #dce9de;border-radius:12px;padding:16px}
@@ -106,7 +106,7 @@ button,input,select{font:inherit}button{cursor:pointer}.icon{display:inline-bloc
 .feed-comment-edit button{min-height:36px;border:1px solid #dce8de;border-radius:8px;background:white;padding:0 10px;color:#245f3b}
 .forum-right{display:grid;gap:14px;height:max-content;min-width:0}
 .side-card{padding:16px}
-.forum-left>h3,.side-card h3{font-family:var(--font-display);font-weight:500;font-size:18px;color:#294438}
+.forum-left>h3,.side-card h3{font-family:var(--font-display);font-weight:700;font-size:16px;color:#294438}
 .side-card h3{margin:0 0 14px}
 .trending-post{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid #e7eee8;color:inherit;text-decoration:none;align-items:flex-start}
 .trending-post:first-of-type{border-top:none;padding-top:4px}
@@ -298,7 +298,7 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .eyebrow,.section-title>div>span{color:#6c806a;letter-spacing:1px;font-size:10px}
 .hero-copy .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.6px;text-transform:none}
 .hero-copy .eyebrow i{font-style:normal;color:#b96948}
-.hero h1{font-family:var(--font-display);font-weight:500;font-size:clamp(42px,5vw,62px);line-height:1.08;letter-spacing:-1.8px;color:#26382e;margin:18px 0 16px}
+.hero h1{font-family:var(--font-display);font-weight:750;font-size:clamp(36px,4.5vw,52px);line-height:1.15;letter-spacing:-1.2px;color:#26382e;margin:18px 0 16px}
 .hero-copy p{max-width:500px;font-size:15px;color:#646b62;line-height:1.8}
 .hero-proof-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:24px;color:#4c6254;font-size:12px}
 .hero-proof-row span{display:flex;align-items:center;gap:8px}
@@ -324,7 +324,7 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .chip span{color:var(--orange)}
 .chip.active,.chip:hover{border-color:#b5c4b5;background:#edf1e9;color:var(--teal-dark)}
 .section-title{margin-bottom:20px}
-.section-title h2{font-family:var(--font-display);font-weight:500;font-size:28px;letter-spacing:-.5px;color:#303b32}
+.section-title h2{font-family:var(--font-display);font-weight:700;font-size:24px;letter-spacing:-.5px;color:#233529}
 .section-title>button{color:#79543f;font-weight:600}
 .room-grid,.result-grid{gap:20px}
 .room-card{border-color:#e5e1d8;border-radius:6px;box-shadow:none}
@@ -348,7 +348,7 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .featured-story img{width:100%;height:100%;min-height:225px;max-height:275px;object-fit:cover;border-radius:4px}
 .featured-story>div{padding:8px 0;align-self:center}
 .featured-story>div>span,.story-list>a>div>span{color:#8b654d;font-size:10px;letter-spacing:.6px;text-transform:uppercase}
-.featured-story h2{margin:9px 0;font-family:var(--font-display);font-size:23px;font-weight:500;line-height:1.42}
+.featured-story h2{margin:9px 0;font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.38}
 .featured-story p{color:#6d7169;line-height:1.7;font-size:12px}
 .featured-story small,.story-list small{color:#85867e;font-size:10px}
 .story-list{display:grid;align-content:start;gap:0}
@@ -356,14 +356,14 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .story-list>a:first-child{border-top:1px solid #e5e1d8}
 .story-list>a:hover h3,.featured-story:hover h2{color:#8c583f}
 .story-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#e3e6dc;color:#526451;font-size:10px;font-weight:700}
-.story-list h3{margin:4px 0 5px;font-family:var(--font-display);font-size:15px;font-weight:500;line-height:1.45}
+.story-list h3{margin:4px 0 5px;font-family:var(--font-display);font-size:15px;font-weight:600;line-height:1.45}
 .home-forum-empty{display:flex;align-items:center;justify-content:space-between;border-block:1px solid var(--line);padding:20px 0;color:var(--muted)}
 .home-forum-empty button{display:inline-flex;align-items:center;gap:3px;border:0;background:none;color:#79543f;font-weight:600}
 
 /* Shared screens use the same paper-like surfaces and restrained borders. */
 .page-bg,.workspace-page,.messages-page,.admin-resource-page{background:#f6f4ee}
 .workspace-container{width:min(1040px,calc(100% - 40px));padding-top:34px;padding-bottom:72px}
-.workspace-page h1,.message-title h1,.account-heading h1,.resource-page-heading h2,.favorites-heading h1{font-family:var(--font-display);font-weight:500;letter-spacing:-.45px;color:#2e3b31}
+.workspace-page h1,.message-title h1,.account-heading h1,.resource-page-heading h2,.favorites-heading h1{font-family:var(--font-display);font-weight:700;letter-spacing:-.45px;color:#2e3b31}
 .page-heading-row{margin-bottom:24px}
 .page-heading-row h1{font-size:32px;margin:7px 0 8px}
 .page-heading-row p{color:#72756e;line-height:1.7}
@@ -375,24 +375,24 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .owned-listings{gap:12px}
 .owned-listing{grid-template-columns:128px minmax(0,1fr) auto;padding:13px;border:1px solid #e5e1d8;border-radius:6px;background:#fbfaf7;box-shadow:none}
 .owned-listing>img{border-radius:3px}
-.owned-listing h3{font-family:var(--font-display);font-size:18px;font-weight:500;letter-spacing:0}
+.owned-listing h3{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:0}
 .owned-listing-meta{color:#73766f}
 .contact-panel{padding:22px}
 .trust-note{background:#f1efe7;border-color:#e5e1d8;color:#61695f}
 .listing-editor{gap:18px}
 .editor-card{padding:22px}
-.editor-section-title h3{font-family:var(--font-display);font-weight:500;font-size:20px}
+.editor-section-title h3{font-family:var(--font-display);font-weight:600;font-size:20px}
 .amenity-picker label{border:1px solid #e1ddd4;border-radius:4px;background:#fff}
 .metric-grid{gap:14px}
 .metric-card{padding:18px}
 .metric-card>span{border-radius:5px;background:#e8eee8;color:var(--teal-dark)}
 .report-list,.notification-list,.resource-list{gap:10px}
 .report-item,.notification-item,.resource-row{padding:15px 17px}
-.report-item h3,.notification-item h3,.resource-row h3{font-family:var(--font-display);font-size:17px;font-weight:500}
+.report-item h3,.notification-item h3,.resource-row h3{font-family:var(--font-display);font-size:17px;font-weight:600}
 .notification-item.unread{background:#eef6ef}
 .dialog-backdrop{background:rgba(26,34,28,.48);backdrop-filter:blur(2px)}
 .action-dialog{width:min(540px,calc(100% - 28px));border:1px solid #e5e1d8;border-radius:7px;box-shadow:0 18px 50px rgba(24,31,25,.18);background:#fbfaf7}
-.action-dialog h2{font-family:var(--font-display);font-weight:500}
+.action-dialog h2{font-family:var(--font-display);font-weight:700}
 .dialog-close{border-radius:4px}
 .dialog-actions .btn{min-width:108px}
 .danger-action{color:#9e5145}
@@ -434,14 +434,14 @@ body{background:#fbfaf7;color:var(--ink);font-size:14px}
 .empty-state .placeholder-icon,.placeholder-icon{border-radius:5px;background:#e8eee8;color:#416b59}
 .auth-page{background:#fbfaf7}
 .auth-card{max-width:600px}
-.auth-logo{font-family:var(--font-display);font-weight:600;letter-spacing:-.5px}
-.auth-heading h1,.account-heading h1{font-family:var(--font-display);font-weight:500}
+.auth-logo{font-family:var(--font-display);font-weight:700;letter-spacing:-.5px}
+.auth-heading h1,.account-heading h1{font-family:var(--font-display);font-weight:700}
 .auth-aside{background:#344c3b}
 .auth-scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
 .auth-aside:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(25,42,30,.85),rgba(25,42,30,.54))}
 .auth-aside:after{display:none}
 .auth-aside>div{max-width:470px}
-.auth-aside h2{font-family:var(--font-display);font-size:44px;font-weight:500}
+.auth-aside h2{font-family:var(--font-display);font-size:38px;font-weight:750;line-height:1.2;letter-spacing:-0.02em}
 .auth-aside p{max-width:400px}
 .auth-proof{display:grid;grid-template-columns:1fr;gap:12px;margin-top:30px}
 .auth-proof span{display:flex;align-items:center;gap:10px;color:#f0eee4;font-size:12px;font-weight:500}
@@ -3616,8 +3616,9 @@ body,
 
 .hero-room-details h2 {
   margin: 0;
-  font-family: "Lora", Georgia, serif;
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -8251,7 +8252,7 @@ a,
 .similar-listings-heading h2,
 .reviews h2 {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: -.02em;
 }
 
@@ -8823,7 +8824,7 @@ a,
   .filter-sheet-header h3 {
     font-size: 18px;
     font-family: var(--font-heading);
-    font-weight: 500;
+    font-weight: 700;
     margin: 0;
     color: #26382e;
   }
@@ -8910,7 +8911,7 @@ a,
 .empty-state h2 {
   font-family: var(--font-heading);
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 700;
   color: #26382e;
   margin: 0 0 10px;
 }
@@ -8981,7 +8982,7 @@ a,
 .editor-section-title h2 {
   font-family: var(--font-heading);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 700;
   color: #26382e;
   margin: 0 0 4px;
 }
