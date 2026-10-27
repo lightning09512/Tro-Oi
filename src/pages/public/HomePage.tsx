@@ -290,27 +290,69 @@ function Home() {
           <div className="promotion-panel">
             <div className="promotion-banner">
               <div className="promotion-copy">
+                <span className="promotion-badge">Nền tảng tìm & cho thuê phòng trọ</span>
                 <h2 id="home-promotions-title">Khởi đầu dễ dàng cùng Trọ Ơi</h2>
-                <p>Tìm phòng, đăng tin và kết nối ngay trên một nền tảng. Các tính năng hiện có của Trọ Ơi đang được sử dụng miễn phí.</p>
-                <Link className="promotion-primary" to={landlordProgramUrl}>Đăng tin miễn phí <Icon name="chevron" size={16}/></Link>
+                <p>Tìm phòng ưng ý, đăng tin cho thuê và kết nối trực tiếp chủ trọ – người thuê hoàn toàn miễn phí trên một nền tảng an toàn, minh bạch.</p>
+                <div className="promotion-actions">
+                  <Link className="promotion-primary" to={landlordProgramUrl}>
+                    Đăng tin miễn phí <Icon name="chevron" size={16}/>
+                  </Link>
+                  <Link className="promotion-secondary" to="/tim-phong">
+                    Khám phá phòng ngay <Icon name="chevron" size={16}/>
+                  </Link>
+                </div>
               </div>
               <div className="promotion-art" aria-hidden="true">
-                <div className="promotion-ticket"><small>TRỌ ƠI</small><strong>0đ</strong><span>phí đăng tin</span></div>
-                <div className="promotion-art-note">Thông tin rõ ràng<br/>Kết nối trực tiếp</div>
+                <div className="promotion-showcase-card">
+                  <div className="promotion-showcase-header">
+                    <span className="promotion-pill">Ưu đãi nền tảng</span>
+                    <strong className="promotion-brand">TRỌ ƠI</strong>
+                  </div>
+                  <div className="promotion-showcase-price">
+                    <span className="price-big">0đ</span>
+                    <span className="price-label">phí đăng tin & tìm kiếm</span>
+                  </div>
+                  <ul className="promotion-feature-list">
+                    <li><Icon name="check" size={15}/> Đăng tin nhanh chóng, duyệt tin uy tín</li>
+                    <li><Icon name="check" size={15}/> Nhắn tin trực tiếp không qua trung gian</li>
+                    <li><Icon name="check" size={15}/> Lọc phòng theo bản đồ & tiện ích xung quanh</li>
+                  </ul>
+                </div>
               </div>
             </div>
             <div className="promotion-programs" id="chuong-trinh-chi-tiet">
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="building" size={20}/></span>
-                <div><span className="promotion-card-label">Dành cho chủ trọ</span><h3>Đăng tin cho thuê miễn phí</h3><p>Thêm ảnh, giá và tiện ích để người thuê dễ tìm thấy phòng của bạn. Tin đăng được duyệt trước khi hiển thị.</p><Link to={landlordProgramUrl}>Bắt đầu đăng tin <Icon name="chevron" size={15}/></Link></div>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="building" size={22}/></span>
+                <div>
+                  <span className="promotion-card-label">Dành cho chủ trọ</span>
+                  <h3>Đăng tin cho thuê miễn phí</h3>
+                  <p>Thêm ảnh, giá và tiện ích để người thuê dễ tìm thấy phòng của bạn. Tin đăng được duyệt trước khi hiển thị.</p>
+                </div>
+                <Link to={landlordProgramUrl} className="promotion-card-link">
+                  Bắt đầu đăng tin <Icon name="chevron" size={15}/>
+                </Link>
               </article>
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="heart" size={20}/></span>
-                <div><span className="promotion-card-label">Dành cho người thuê</span><h3>Tìm và lưu phòng yêu thích</h3><p>Lọc theo khu vực, giá và diện tích; lưu lại những lựa chọn phù hợp để xem sau.</p><Link to="/tim-phong">Khám phá phòng <Icon name="chevron" size={15}/></Link></div>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="heart" size={22}/></span>
+                <div>
+                  <span className="promotion-card-label">Dành cho người thuê</span>
+                  <h3>Tìm và lưu phòng yêu thích</h3>
+                  <p>Lọc theo khu vực, giá và diện tích; lưu lại những lựa chọn phù hợp để so sánh và hẹn xem phòng.</p>
+                </div>
+                <Link to="/tim-phong" className="promotion-card-link">
+                  Khám phá phòng <Icon name="chevron" size={15}/>
+                </Link>
               </article>
               <article className="promotion-card">
-                <span className="promotion-card-icon" aria-hidden="true"><Icon name="share" size={20}/></span>
-                <div><span className="promotion-card-label">Chia sẻ Trọ Ơi</span><h3>Rủ bạn cùng tìm nơi ở</h3><p>Gửi đường dẫn đăng ký cho bạn bè đang tìm phòng hoặc muốn đăng tin cho thuê.</p><button type="button" onClick={shareTroOi}>Sao chép liên kết <Icon name="chevron" size={15}/></button></div>
+                <span className="promotion-card-icon" aria-hidden="true"><Icon name="share" size={22}/></span>
+                <div>
+                  <span className="promotion-card-label">Chia sẻ Trọ Ơi</span>
+                  <h3>Rủ bạn cùng tìm nơi ở</h3>
+                  <p>Gửi đường dẫn đăng ký cho bạn bè đang tìm phòng hoặc người quen có phòng trống muốn cho thuê.</p>
+                </div>
+                <button type="button" onClick={shareTroOi} className="promotion-card-link">
+                  Sao chép liên kết <Icon name="chevron" size={15}/>
+                </button>
               </article>
             </div>
             {shareMessage && <p className="promotion-share-message" role="status">{shareMessage}</p>}
