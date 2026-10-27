@@ -34,6 +34,23 @@ export default function PublicProfilePage() {
   const [reportDescription, setReportDescription] = useState("")
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewImage(null)
+    }
+    if (previewImage) {
+      window.addEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = ""
+    }
+  }, [previewImage])
 
   useEffect(() => {
     if (!id) return
@@ -352,8 +369,30 @@ export default function PublicProfilePage() {
                     <p className="post-content-body">{post.content}</p>
 
                     {post.image && (
-                      <div className="post-photo-wrap">
-                        <img src={post.image} alt="Ảnh bài viết" />
+                      <div
+                        className="post-photo-wrap"
+                        onClick={() => setPreviewImage(post.image ?? null)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setPreviewImage(post.image ?? null)
+                          }
+                        }}
+                        title="Bấm để xem ảnh phóng to đầy đủ"
+                      >
+                        <img
+                          src={post.image}
+                          alt="Ảnh bài viết"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
+                          }}
+                        />
+                        <span className="post-photo-zoom-hint">
+                          <Icon name="search" size={13} />
+                          <span>Xem ảnh phóng to</span>
+                        </span>
                       </div>
                     )}
 
@@ -477,6 +516,38 @@ export default function PublicProfilePage() {
                 </button>
               </div>
             </section>
+          </div>
+        )}
+        {/* Lightbox Image Preview Modal */}
+        {previewImage && (
+          <div
+            className="nhatot-image-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Xem ảnh phóng to"
+            onClick={() => setPreviewImage(null)}
+          >
+            <button
+              type="button"
+              className="nhatot-lightbox-close"
+              onClick={() => setPreviewImage(null)}
+              aria-label="Đóng ảnh"
+            >
+              <Icon name="close" size={20} />
+            </button>
+            <div className="nhatot-lightbox-content" onClick={(e) => e.stopPropagation()}>
+              <img src={previewImage} alt="Ảnh phóng to" className="nhatot-lightbox-img" />
+              <div className="nhatot-lightbox-bar">
+                <span>Bấm phím ESC hoặc chạm ra ngoài để đóng</span>
+                <button
+                  type="button"
+                  className="nhatot-lightbox-btn"
+                  onClick={() => window.open(previewImage, "_blank")}
+                >
+                  Mở ảnh gốc
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -12920,17 +12920,143 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .post-photo-wrap {
-  max-height: 280px;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #f8fafc;
+  position: relative;
+  width: 100%;
+  margin: 10px 0 14px;
+  border-radius: 10px;
+  background: #f1f5f9;
   border: 1px solid #e2e8f0;
+  overflow: hidden;
+  cursor: zoom-in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .post-photo-wrap img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 640px;
+  object-fit: contain;
+  display: block;
+  background: #f8fafc;
+  transition: opacity 0.15s ease;
+}
+
+.post-photo-wrap:hover img {
+  opacity: 0.95;
+}
+
+.post-photo-zoom-hint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+}
+
+.post-photo-wrap:hover .post-photo-zoom-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Lightbox Image Preview Modal */
+.nhatot-image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 15, 25, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: lightboxFadeIn 0.2s ease-out;
+}
+
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nhatot-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.nhatot-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.nhatot-lightbox-content {
+  max-width: 94vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.nhatot-lightbox-img {
+  max-width: 92vw;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  background: #000;
+}
+
+.nhatot-lightbox-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.nhatot-lightbox-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.nhatot-lightbox-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .post-footer-line {
