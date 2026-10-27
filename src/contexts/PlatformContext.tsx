@@ -181,64 +181,75 @@ const initialListings: RentalListing[] = rooms.map((room, index) => ({
   ownerName: "Minh Ngọc",
   phone: "0987 654 321",
   deposit: index === 1 ? "2.800.000đ" : "1 tháng tiền thuê",
-  description: [
-    "Studio sáng thoáng với cửa sổ lớn, đầy đủ nội thất cơ bản. Hẻm yên tĩnh, gần cửa hàng tiện lợi và tuyến xe buýt.",
-    "Phòng mới xây, ban công đón gió. Khu vực an ninh, có chỗ để xe trong nhà và giờ giấc tự do.",
-    "Căn hộ mini gần trường, có máy giặt và khu bếp riêng. Phù hợp sinh viên hoặc người đi làm cần không gian yên tĩnh.",
-    "Phòng gác lửng rộng rãi, giờ giấc tự do. Chủ nhà hỗ trợ xem phòng buổi tối và cuối tuần.",
-  ][index],
   status: "active",
   currentTenantId: index === 0 ? "user-renter-01" : null,
-  views: [214, 176, 142, 98][index],
-  contacts: [18, 12, 9, 6][index],
-  createdAt: new Date(Date.now() - [3, 1, 4, 2][index] * 24 * 60 * 60 * 1000).toISOString(),
+  views: [214, 176, 142, 98, 87, 68, 51, 43, 39, 31][index],
+  contacts: [18, 12, 9, 6, 7, 4, 3, 2, 3, 2][index],
+  createdAt: new Date(Date.now() - [3, 1, 4, 2, 1, 2, 3, 4, 1, 5][index] * 24 * 60 * 60 * 1000).toISOString(),
 }))
 
-const loadListings = () => storage("listings", initialListings).map((listing) =>
-  listing.currentTenantId === undefined
-    ? { ...listing, currentTenantId: listing.id === rooms[0].id ? "user-renter-01" : null }
-    : listing,
-)
+const loadListings = () => {
+  const saved = storage("listings", initialListings)
+  const savedById = new Map(saved.map((listing) => [listing.id, listing]))
+  const initialIds = new Set(initialListings.map((listing) => listing.id))
+  return [
+    ...initialListings.map((listing) => {
+      const previous = savedById.get(listing.id)
+      return {
+        ...listing,
+        status: previous?.status ?? listing.status,
+        currentTenantId: previous ? previous.currentTenantId : listing.currentTenantId,
+        views: previous?.views ?? listing.views,
+        contacts: previous?.contacts ?? listing.contacts,
+      }
+    }),
+    ...saved.filter((listing) => !initialIds.has(listing.id)),
+  ].map((listing) =>
+    listing.currentTenantId === undefined
+      ? { ...listing, currentTenantId: listing.id === rooms[0].id ? "user-renter-01" : null }
+      : listing,
+  )
+}
 
-const initialPosts: ForumPost[] = posts.map((post, index) => ({
+const initialPosts: ForumPost[] = posts.map((post) => ({
   ...post,
-  id: `post-${index + 1}`,
-  authorId: index === 0 ? "user-renter-01" : "user-landlord-01",
-  name: index === 0 ? "Hoàng Trang" : "Minh Ngọc",
-  initials: index === 0 ? "HT" : "MN",
-  likes: index === 0 ? 8 : 13,
+  commentsCount: post.comments.length,
   likedBy: [],
-  commentsCount: 1,
-  comments: index === 0
-    ? [
-        { id: "comment-seed-1", authorId: "user-landlord-01", author: "Minh Ngọc", initials: "MN", text: "Bạn nhớ hỏi kỹ phí điện nước và giờ giấc nhé. Khu gần trường thường có nhiều lựa chọn trong tầm giá này.", createdAt: "Hôm qua" },
-      ]
-    : [
-        { id: "comment-seed-3", authorId: "user-renter-01", author: "Hoàng Trang", initials: "HT", text: "Bạn có thể chia sẻ chỗ mua đồ decor giá ổn không? Góc phòng trông ấm áp quá.", createdAt: "Hôm qua" },
-      ],
   status: "active",
   createdAt: savedAt,
 }))
 
 const loadFeedPosts = () => {
   const saved = storage("posts", initialPosts)
-  return saved.map((post) => {
-    const seed = initialPosts.find((item) => item.id === post.id)
-    if (!seed || ![24, 46].includes(post.commentsCount)) return post
-    const comments = post.comments.length ? post.comments : seed.comments
-    return {
-      ...post,
-      authorId: seed.authorId,
-      name: seed.name,
-      initials: seed.initials,
-      likes: seed.likes + post.likedBy.length,
-      comments,
-      commentsCount: comments.length,
-    }
-  })
+  const savedById = new Map(saved.map((post) => [post.id, post]))
+  const initialIds = new Set(initialPosts.map((post) => post.id))
+  return [
+    ...initialPosts.map((post) => {
+      const previous = savedById.get(post.id)
+      return {
+        ...post,
+        likes: previous?.likes ?? post.likes,
+        likedBy: previous?.likedBy ?? post.likedBy,
+        comments: previous?.comments?.length ? previous.comments : post.comments,
+        status: previous?.status ?? post.status,
+        createdAt: previous?.createdAt ?? post.createdAt,
+      }
+    }),
+    ...saved.filter((post) => !initialIds.has(post.id)),
+  ].map((post) => ({ ...post, commentsCount: post.comments.length }))
 }
 
-const initialUsers: PlatformUser[] = Object.values(mockUsers).map((user) => ({
+const initialUsers: PlatformUser[] = [
+  ...Object.values(mockUsers),
+  {
+    id: "user-renter-02",
+    name: "Nguyễn An",
+    email: "nguyenan@example.com",
+    phone: "0901 234 568",
+    role: "renter",
+    initials: "NA",
+  },
+].map((user) => ({
   ...user,
   status: "active",
   createdAt: savedAt,

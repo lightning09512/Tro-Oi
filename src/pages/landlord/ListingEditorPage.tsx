@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform, type RentalListing } from "@/contexts/PlatformContext"
-import { photos } from "@/mocks/content"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 
 export default function ListingEditorPage() {
@@ -14,63 +13,86 @@ export default function ListingEditorPage() {
   const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
   const amenities = categories.filter((item) => item.type === "Tiện ích" && item.status === "active").map((item) => item.name)
   const existing = listings.find((item) => item.id === id && item.ownerId === user?.id)
-  const [form, setForm] = useState({ title: "", location: "", price: "", area: "", type: "Phòng trọ", deposit: "", phone: user?.phone ?? "", description: "", image: isApiMode ? "" : photos[0], amenities: ["Máy lạnh"] as string[], latitude: "", longitude: "" })
+  const [form, setForm] = useState({ title: "", location: "", price: "", area: "", type: "Phòng trọ", deposit: "", phone: user?.phone ?? "", description: "", image: "", gallery: [] as string[], amenities: ["Máy lạnh"] as string[], latitude: "", longitude: "" })
   const [error, setError] = useState("")
   const [saved, setSaved] = useState(false)
-  const [imageFileName, setImageFileName] = useState("")
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState("")
 
   useEffect(() => {
     if (!existing) return
+    const gallery = [...new Set([existing.image, ...(existing.gallery ?? [])].filter((photo) => photo && !photo.startsWith("/images/rooms/")))].slice(0, 6)
     setForm({
       title: existing.title, location: existing.location,
       price: String(existing.priceValue), area: String(existing.areaValue),
       type: existing.type, deposit: existing.deposit, phone: existing.phone ?? user?.phone ?? "",
-      description: existing.description, image: existing.image,
+      description: existing.description, image: gallery[0] ?? "", gallery,
       amenities: existing.amenities,
       latitude: existing.latitude === undefined ? "" : String(existing.latitude),
       longitude: existing.longitude === undefined ? "" : String(existing.longitude),
     })
-    setImageFileName(existing.image.startsWith("data:image/") ? "Ảnh đã tải lên" : "")
   }, [existing])
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }))
   const toggleAmenity = (value: string) => setForm((current) => ({ ...current, amenities: current.amenities.includes(value) ? current.amenities.filter((item) => item !== value) : [...current.amenities, value] }))
-  const uploadImage = async (file?: File) => {
-    if (!file) return
-    if (!file.type.startsWith("image/")) {
-      setError("Vui lòng chọn một tệp hình ảnh.")
+  const uploadImages = async (fileList?: FileList | null) => {
+    const files = Array.from(fileList ?? [])
+    if (!files.length) return
+    if (form.gallery.length + files.length > 6) {
+      setError("Mỗi tin được thêm tối đa 6 ảnh. Hãy bỏ bớt ảnh trước khi chọn thêm.")
       return
     }
-    if (file.size > (isApiMode ? 3_000_000 : 1_000_000)) {
-      setError(isApiMode ? "Ảnh tải lên cần nhỏ hơn 3 MB." : "Ảnh tải lên cần nhỏ hơn 1 MB để lưu ổn định trong trình duyệt.")
+    if (files.some((file) => !file.type.startsWith("image/"))) {
+      setError("Vui lòng chỉ chọn tệp hình ảnh.")
       return
     }
-    if (isApiMode) {
-      setUploading(true)
-      setError("")
-      const body = new FormData()
-      body.append("file", file)
-      try {
-        const result = await apiRequest<{ url: string }>("uploads/image", { method: "POST", body })
-        update("image", result.url)
-        setImageFileName(file.name)
-      } catch (caught) {
-        setError(caught instanceof Error ? caught.message : "Không thể tải ảnh lên.")
-      } finally { setUploading(false) }
+    const maxFileSize = isApiMode ? 3_000_000 : 500_000
+    if (files.some((file) => file.size > maxFileSize)) {
+      setError(isApiMode ? "Mỗi ảnh tải lên cần nhỏ hơn 3 MB." : "Mỗi ảnh demo cần nhỏ hơn 500 KB để lưu ổn định trong trình duyệt.")
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        update("image", reader.result)
-        setImageFileName(file.name)
-        setError("")
+    setUploading(true)
+    setError("")
+    try {
+      for (const [index, file] of files.entries()) {
+        setUploadProgress(`Đang xử lý ảnh ${index + 1}/${files.length}…`)
+        let url: string
+        if (isApiMode) {
+          const body = new FormData()
+          body.append("file", file)
+          const result = await apiRequest<{ url: string }>("uploads/image", { method: "POST", body })
+          url = result.url
+        } else {
+          url = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Không thể đọc ảnh này."))
+            reader.onerror = () => reject(new Error("Không thể đọc ảnh này. Hãy thử một tệp khác."))
+            reader.readAsDataURL(file)
+          })
+        }
+        setForm((current) => {
+          const gallery = [...new Set([...current.gallery, url])].slice(0, 6)
+          return { ...current, gallery, image: current.image || gallery[0] || "" }
+        })
       }
+      setUploadProgress(`${files.length} ảnh đã được thêm vào tin.`)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Không thể tải ảnh lên.")
+    } finally {
+      setUploading(false)
     }
-    reader.onerror = () => setError("Không thể đọc ảnh này. Hãy thử một tệp khác.")
-    reader.readAsDataURL(file)
   }
+
+  const setCoverImageUrl = (value: string) => setForm((current) => {
+    const others = current.gallery.filter((photo) => photo !== current.image)
+    const gallery = value.trim() ? [...new Set([value.trim(), ...others])].slice(0, 6) : others
+    return { ...current, image: value, gallery }
+  })
+  const removeGalleryImage = (photo: string) => setForm((current) => {
+    const gallery = current.gallery.filter((item) => item !== photo)
+    return { ...current, gallery, image: current.image === photo ? gallery[0] ?? "" : current.image }
+  })
+  const makeCoverImage = (photo: string) => setForm((current) => ({ ...current, image: photo, gallery: [photo, ...current.gallery.filter((item) => item !== photo)] }))
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -82,7 +104,7 @@ export default function ListingEditorPage() {
       setError("Nhập cả vĩ độ và kinh độ hợp lệ, hoặc để trống cả hai.")
       return
     }
-    if (isApiMode && !form.image.trim()) { setError("Thêm ảnh thực tế của phòng trước khi gửi tin."); return }
+    if (form.gallery.length < 2 || !form.image.trim()) { setError("Thêm ít nhất 2 ảnh thực tế của cùng phòng trước khi gửi tin."); return }
     if (uploading) { setError("Đợi ảnh tải lên xong rồi lưu tin."); return }
     const item: RentalListing = {
       id: existing?.id ?? `room-${Date.now()}`,
@@ -94,6 +116,7 @@ export default function ListingEditorPage() {
       areaValue: Number(form.area),
       type: form.type,
       image: form.image,
+      gallery: [...new Set([form.image, ...form.gallery].filter(Boolean))].slice(0, 6),
       badge: existing?.badge ?? "Mới đăng",
       amenities: form.amenities,
       mapX: existing?.mapX ?? 50,
@@ -150,10 +173,10 @@ export default function ListingEditorPage() {
             <fieldset className="amenity-picker"><legend>Tiện ích có sẵn</legend>{amenities.map((item) => <label key={item}><input type="checkbox" checked={form.amenities.includes(item)} onChange={() => toggleAmenity(item)}/>{item}</label>)}</fieldset>
           </section>
           <section className="editor-card">
-            <div className="editor-section-title"><span>03</span><div><h2>Ảnh đại diện</h2><p>Dùng ảnh thực tế, chụp đủ sáng và không dùng ảnh minh họa sai phòng.</p></div></div>
-            <label className="form-field"><span>Tải ảnh từ thiết bị</span><input type="file" accept="image/*" onChange={(event) => void uploadImage(event.target.files?.[0])}/><small>{uploading ? "Đang tải ảnh lên..." : imageFileName || (isApiMode ? "Ảnh sẽ lưu trên Cloudinary khi dịch vụ được cấu hình." : "Chọn ảnh dưới 1 MB; ảnh được lưu trong trình duyệt.")}</small></label>
-            <label className="form-field"><span>Đường dẫn ảnh</span><input value={form.image} onChange={(event) => update("image", event.target.value)} placeholder="https://..."/></label>
-            {form.image && <img className="listing-image-preview" src={form.image} alt="Xem trước ảnh phòng"/>}
+            <div className="editor-section-title"><span>03</span><div><h2>Ảnh phòng</h2><p>Tải 2–6 ảnh chụp các góc khác nhau của cùng một phòng. Ảnh đầu tiên làm ảnh đại diện.</p></div></div>
+            <label className="form-field"><span>Chọn nhiều ảnh từ thiết bị</span><input type="file" accept="image/*" multiple disabled={uploading || form.gallery.length >= 6} onChange={(event) => { void uploadImages(event.currentTarget.files); event.currentTarget.value = "" }}/><small>{uploading ? uploadProgress : uploadProgress || (isApiMode ? "Mỗi ảnh dưới 3 MB; máy local lưu trong server/uploads, production cần Cloudinary." : "Tối đa 6 ảnh, mỗi ảnh dưới 500 KB; ảnh được lưu trong trình duyệt.")}</small></label>
+            <label className="form-field"><span>Đường dẫn ảnh đại diện (tùy chọn)</span><input value={form.image} onChange={(event) => setCoverImageUrl(event.target.value)} placeholder="https://..."/></label>
+            {form.gallery.length > 0 && <div className="listing-gallery-preview" aria-label="Ảnh của tin phòng">{form.gallery.map((photo, index) => <div className="listing-gallery-preview-item" key={photo}><img src={photo} alt={`Ảnh ${index + 1} của phòng`}/><div><button type="button" onClick={() => makeCoverImage(photo)} disabled={form.image === photo}>{form.image === photo ? "Ảnh đại diện" : "Đặt làm ảnh đại diện"}</button><button type="button" onClick={() => removeGalleryImage(photo)} aria-label={`Xóa ảnh ${index + 1}`}>Xóa</button></div></div>)}</div>}
           </section>
           <div className="editor-submit"><span>{existing ? "Kiểm tra lại nội dung trước khi lưu thay đổi." : "Tin mới sẽ ở trạng thái chờ duyệt trước khi hiển thị."}</span><Button icon="send">{existing ? "Lưu cập nhật" : "Gửi duyệt tin"}</Button></div>
         </form>

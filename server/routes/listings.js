@@ -22,7 +22,7 @@ const listingFields = {
   title: z.string().trim().min(8).max(180), location: z.string().trim().min(2).max(300),
   priceValue: z.coerce.number().positive().max(500), areaValue: z.coerce.number().positive().max(10000),
   type: z.string().trim().min(2).max(100), description: z.string().trim().min(10).max(5000),
-  amenities: z.array(z.string().max(100)).max(40), image: z.string().min(1).max(2048), gallery: z.array(z.string().max(2048)).max(20).optional(),
+  amenities: z.array(z.string().max(100)).max(40), image: z.string().min(1).max(2048), gallery: z.array(z.string().trim().min(1).max(2048)).min(2).max(6),
   latitude: z.coerce.number().min(-90).max(90).optional(), longitude: z.coerce.number().min(-180).max(180).optional(),
   deposit: z.string().max(100), phone: z.string().trim().min(9).max(20).optional(),
 }

@@ -13,6 +13,7 @@
     "format": "oxfmt",
     "db:migrate": "node server/migrate.js",
     "db:seed": "node database/seed.js",
+    "db:seed:showcase": "node database/seed.js --showcase-only",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
     "admin:create": "node server/create-admin.js"
   },

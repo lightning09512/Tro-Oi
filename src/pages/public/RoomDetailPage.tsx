@@ -5,7 +5,6 @@ import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform, type RoomReview } from "@/contexts/PlatformContext"
 import ReportDialog from "@/components/common/ReportDialog"
 import useAuth from "@/hooks/useAuth"
-import { photos } from "@/mocks/content"
 import { isApiMode } from "@/services/apiClient"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
@@ -19,7 +18,7 @@ export default function RoomDetailPage() {
   const [showPhone, setShowPhone] = useState(false)
   const [contactPhone, setContactPhone] = useState("")
   const [reportOpen, setReportOpen] = useState(false)
-  const [galleryExpanded, setGalleryExpanded] = useState(false)
+  const [galleryIndex, setGalleryIndex] = useState(0)
   const [text, setText] = useState("")
   const [stars, setStars] = useState(5)
   const [editingReview, setEditingReview] = useState<RoomReview | null>(null)
@@ -29,9 +28,11 @@ export default function RoomDetailPage() {
     (item.status === "rented" && user?.role === "renter" && item.currentTenantId === user.id)
   ))
   const roomReviews = useMemo(() => reviews.filter((review) => review.listingId === id), [reviews, id])
-  const galleryImages = room?.gallery?.length ? room.gallery : (isApiMode ? [] : photos.filter((photo) => photo !== room?.image))
+  const galleryPhotos = room ? [...new Set([room.image, ...(room.gallery ?? [])])].slice(0, 6) : []
+  const activeGalleryPhoto = galleryPhotos[galleryIndex] ?? galleryPhotos[0]
 
   useEffect(() => { if (id && room) incrementListingViews(room.id) }, [id])
+  useEffect(() => { setGalleryIndex(0) }, [id])
   if (!room) return <main className="workspace-page"><div className="container workspace-container"><section className="empty-state"><span className="placeholder-icon"><Icon name="building"/></span><h1>Phòng này không còn hiển thị</h1><p>Có thể tin đã được cho thuê hoặc chủ trọ đã tạm ẩn.</p><Button onClick={() => navigate("/tim-phong")}>Tìm phòng khác</Button></section></div></main>
 
   const saved = isFavorite(room.id)
@@ -65,7 +66,17 @@ export default function RoomDetailPage() {
   return (
     <main className="page-bg detail-page"><div className="container workspace-container">
       <div className="breadcrumbs"><button onClick={() => navigate("/tim-phong")}>Tìm phòng</button><span>/</span>{room.location}<span>/</span>{room.title}</div>
-      <div className="gallery"><img className="gallery-main" src={room.image} alt={room.title}/>{galleryImages.filter((photo) => photo !== room.image).slice(0, galleryExpanded ? 5 : 4).map((photo, index) => <div className="gallery-small" key={photo}><img src={photo} alt="Ảnh không gian phòng"/>{index === 3 && <button onClick={() => setGalleryExpanded((value) => !value)}>{galleryExpanded ? "− Thu gọn" : "+ ảnh"}</button>}</div>)}</div>
+      {activeGalleryPhoto && <section className="room-gallery-carousel" aria-label={`Thư viện ảnh của ${room.title}`}>
+        <div className="room-gallery-stage">
+          <img className="room-gallery-main" src={activeGalleryPhoto} alt={`${room.title} — ảnh ${galleryIndex + 1}`}/>
+          <span className="room-gallery-count">{galleryIndex + 1}/{galleryPhotos.length}</span>
+          {galleryPhotos.length > 1 && <>
+            <button className="room-gallery-arrow room-gallery-previous" type="button" aria-label="Ảnh trước" onClick={() => setGalleryIndex((index) => (index - 1 + galleryPhotos.length) % galleryPhotos.length)}>‹</button>
+            <button className="room-gallery-arrow room-gallery-next" type="button" aria-label="Ảnh tiếp theo" onClick={() => setGalleryIndex((index) => (index + 1) % galleryPhotos.length)}>›</button>
+          </>}
+        </div>
+        {galleryPhotos.length > 1 && <div className="room-gallery-thumbnails" aria-label="Chọn ảnh phòng">{galleryPhotos.map((photo, index) => <button className={index === galleryIndex ? "room-gallery-thumb active" : "room-gallery-thumb"} type="button" key={photo} aria-label={`Xem ảnh ${index + 1}`} aria-pressed={index === galleryIndex} onClick={() => setGalleryIndex(index)}><img src={photo} alt=""/></button>)}</div>}
+      </section>}
       <div className="detail-layout"><article className="detail-content"><div className="detail-title"><div><span className="verified">{room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : `✓ ${room.badge}`}</span><h1>{room.title}</h1><p><Icon name="pin" size={17}/>{room.location}</p></div>{user?.role !== "admin" && room.status === "active" && <button className={saved ? "save-big saved" : "save-big"} aria-pressed={saved} onClick={() => { if (!user) { navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } }); return } toggleFavorite(room.id) }}><Icon name="heart"/>{saved ? "Đã lưu" : "Lưu tin"}</button>}</div>
         <div className="key-info"><div><small>Giá thuê</small><strong>{room.price}<em>/tháng</em></strong></div><div><small>Diện tích</small><strong>{room.area}</strong></div><div><small>Tiền cọc</small><strong>{room.deposit}</strong></div><div><small>Loại phòng</small><strong>{room.type}</strong></div></div>
         <section className="detail-section"><h2>Tiện ích</h2><div className="amenities">{room.amenities.map((item) => <span key={item}>✓ {item}</span>)}</div></section>

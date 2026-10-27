@@ -134,6 +134,16 @@ pnpm db:seed
 
 Seed dùng MongoDB và chỉ dành cho dữ liệu phát triển. Không cần chạy seed để tạo cấu trúc bảng.
 
+Để thêm/cập nhật riêng 10 tin phòng mẫu cùng các bài viết và bình luận mẫu trong diễn đàn mà không đặt lại mật khẩu tài khoản hoặc ghi vào MongoDB, chạy:
+
+~~~powershell
+pnpm db:seed:showcase
+~~~
+
+Lệnh này cần các tài khoản demo đã được tạo trước bằng `pnpm db:seed`. Ảnh dùng cho dữ liệu mẫu được lưu trong `public/images/rooms/`; chúng chỉ là ảnh minh họa, không phải ảnh xác thực của phòng thật. Danh sách nguồn ảnh có trong [docs/demo-image-sources.md](docs/demo-image-sources.md).
+
+Khi chủ trọ tạo tin thật, có thể tải tối đa 6 ảnh của cùng một phòng. Ở môi trường phát triển, ảnh được lưu trong `server/uploads/` và thư mục này không được đưa lên Git. Môi trường production cần cấu hình Cloudinary trong `.env` để ảnh tồn tại ổn định sau khi triển khai.
+
 ### 6. Kết nối MongoDB Compass
 
 1. Mở MongoDB Compass và nhấn **Add new connection**.

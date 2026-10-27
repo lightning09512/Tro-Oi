@@ -46,6 +46,7 @@ react(),
       proxy: {
         '/api': { target: process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001', changeOrigin: true },
         '/socket.io': { target: process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001', changeOrigin: true, ws: true },
+        '/uploads': { target: process.env.API_PROXY_TARGET || 'http://127.0.0.1:3001', changeOrigin: true },
       },
       watch: {
         ignored: [

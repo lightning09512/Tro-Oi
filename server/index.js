@@ -1,5 +1,7 @@
 import "dotenv/config"
 import http from "node:http"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"
@@ -27,6 +29,7 @@ import { flushNotificationOutbox } from "./services/notificationService.js"
 
 const app = express()
 const server = http.createServer(app)
+const serverDirectory = path.dirname(fileURLToPath(import.meta.url))
 const configuredOrigins = (process.env.WEB_ORIGIN || "http://localhost:8443").split(",").map((value) => value.trim())
 const io = new SocketServer(server, { cors: { origin: configuredOrigins, credentials: true }, maxHttpBufferSize: 1e6 })
 app.set("io", io)
@@ -36,6 +39,9 @@ app.use(cors({ origin(origin, done) {
   if (!origin || configuredOrigins.includes(origin)) return done(null, true)
   done(new Error("Origin không được phép."))
 }, credentials: true }))
+if (process.env.NODE_ENV !== "production") {
+  app.use("/uploads", express.static(path.join(serverDirectory, "uploads"), { immutable: true, maxAge: "30d", fallthrough: false }))
+}
 app.use(express.json({ limit: "1mb" }))
 app.use(express.urlencoded({ extended: false, limit: "1mb" }))
 
@@ -47,7 +53,8 @@ app.get("/api/health", async (_req, res) => {
   const databases = await databaseStatus()
   const configured = Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.length >= 32)
   const ready = databases.postgres === "connected" && databases.mongo === "connected" && configured
-  res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "configuration_required", databases, authConfigured: configured, emailConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM), uploadsConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) })
+  const cloudinaryConfigured = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+  res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "configuration_required", databases, authConfigured: configured, emailConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM), uploadsConfigured: cloudinaryConfigured || process.env.NODE_ENV !== "production", uploadStorage: cloudinaryConfigured ? "cloudinary" : process.env.NODE_ENV === "production" ? "unconfigured" : "local" })
 })
 
 app.use("/api/auth", authLimiter, (req, res, next) => ["/password-reset/request", "/register/request-code"].includes(req.path) ? emailCodeLimiter(req, res, next) : next(), requirePostgres, authRoutes)
