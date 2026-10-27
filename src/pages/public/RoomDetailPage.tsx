@@ -7,16 +7,9 @@ import ReportDialog from "@/components/common/ReportDialog"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { isApiMode } from "@/services/apiClient"
+import { resolveLocationCoordinates } from "@/utils/mapCoordinates"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
-
-const getValidMapCenter = (latitude: unknown, longitude: unknown): [number, number] | null => {
-  const lat = typeof latitude === "number" ? latitude : Number(latitude)
-  const lng = typeof longitude === "number" ? longitude : Number(longitude)
-  return Number.isFinite(lat) && lat >= -90 && lat <= 90 && Number.isFinite(lng) && lng >= -180 && lng <= 180
-    ? [lat, lng]
-    : null
-}
 
 export default function RoomDetailPage() {
   const navigate = useNavigate()
@@ -41,7 +34,10 @@ export default function RoomDetailPage() {
       (item.status === "rented" && user?.role === "renter" && item.currentTenantId === user.id)
     )
   })
-  const mapCenter = room ? getValidMapCenter(room.latitude, room.longitude) : null
+  const mapInfo = useMemo(() => {
+    if (!room) return null
+    return resolveLocationCoordinates(room.location, room.latitude, room.longitude)
+  }, [room])
   const similarListings = useMemo(() => {
     if (!room) return []
 
@@ -183,20 +179,35 @@ export default function RoomDetailPage() {
             </div>
             <p className="room-detail-full-address"><Icon name="pin" size={17} />{room.location}</p>
             <div className="room-detail-map-wrap">
-              {isApiMode ? mapCenter ? (
+              {mapInfo ? (
                 <Suspense fallback={<div className="room-detail-map map-loading">Đang tải bản đồ…</div>}>
                   <RoomMap
                     className="room-detail-map"
-                    listings={[{ id: room.id, title: room.title, price: room.price, area: room.area, location: room.location, latitude: mapCenter[0], longitude: mapCenter[1] }]}
-                    center={mapCenter}
-                    zoom={15}
-                    note="Vị trí hiển thị gần đúng theo địa chỉ tin đăng. Xác nhận địa chỉ trước khi hẹn xem."
+                    listings={[{
+                      id: room.id,
+                      title: room.title,
+                      price: room.price,
+                      area: room.area,
+                      location: room.location,
+                      latitude: mapInfo.center[0],
+                      longitude: mapInfo.center[1],
+                    }]}
+                    center={mapInfo.center}
+                    zoom={mapInfo.isExact ? 15 : 14}
+                    note={mapInfo.isExact
+                      ? "Vị trí hiển thị gần đúng theo địa chỉ tin đăng. Xác nhận địa chỉ trước khi hẹn xem."
+                      : `Vị trí hiển thị ước tính theo khu vực ${room.location}. Hãy liên hệ người đăng để xác nhận địa chỉ cụ thể.`
+                    }
                   />
                 </Suspense>
               ) : (
-                <div className="room-location-unavailable"><Icon name="pin" size={20} /><div><strong>Chưa có vị trí bản đồ cho phòng này</strong><span>Hãy nhắn người đăng để xác nhận địa chỉ cụ thể trước khi đi xem.</span></div></div>
-              ) : (
-                <div className="mini-map room-detail-demo-map"><span className="river"/><div className="location-pin"><Icon name="pin"/></div><b>{room.location}</b><small>Vị trí hiển thị tương đối để bảo vệ riêng tư.</small></div>
+                <div className="room-location-unavailable">
+                  <Icon name="pin" size={20} />
+                  <div>
+                    <strong>Chưa có vị trí bản đồ cho phòng này</strong>
+                    <span>Hãy nhắn người đăng để xác nhận địa chỉ cụ thể trước khi đi xem.</span>
+                  </div>
+                </div>
               )}
             </div>
           </section>

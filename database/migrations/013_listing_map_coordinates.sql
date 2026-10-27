@@ -1,0 +1,26 @@
+-- Ensure all reference listings have map coordinates for Leaflet / OpenStreetMap
+UPDATE listings SET latitude = 10.8015, longitude = 106.6472 WHERE id = 'tromoi-mini-cong-nghiep-tan-binh';
+UPDATE listings SET latitude = 21.0366, longitude = 105.8118 WHERE id = 'tromoi-mini-phan-ke-binh-ba-dinh';
+UPDATE listings SET latitude = 16.0368, longitude = 108.2195 WHERE id = 'tromoi-nha-ta-hien-hai-chau';
+UPDATE listings SET latitude = 10.8142, longitude = 106.6285 WHERE id = 'tromoi-ktx-huit-tay-thanh';
+UPDATE listings SET latitude = 10.8165, longitude = 106.8152 WHERE id = 'tromoi-ktx-long-truong';
+UPDATE listings SET latitude = 16.0289, longitude = 108.2435 WHERE id = 'tromoi-apartment-doan-khue-ngu-hanh-son';
+UPDATE listings SET latitude = 10.8267, longitude = 106.6432 WHERE id = 'tromoi-phong-tro-huynh-van-nghe-tan-binh';
+UPDATE listings SET latitude = 21.0305, longitude = 105.7876 WHERE id = 'tromoi-apartment-n01-d17-cau-giay';
+UPDATE listings SET latitude = 16.0645, longitude = 108.1518 WHERE id = 'tromoi-apartment-mia-plaza-lien-chieu';
+UPDATE listings SET latitude = 10.8178, longitude = 106.6923 WHERE id = 'tromoi-ktx-phan-van-tri';
+UPDATE listings SET latitude = 10.7492, longitude = 106.7028 WHERE id = 'tromoi-o-ghep-duong-so-21-tan-hung';
+UPDATE listings SET latitude = 21.0312, longitude = 105.7885 WHERE id = 'tromoi-o-ghep-tran-thai-tong-cau-giay';
+UPDATE listings SET latitude = 10.7925, longitude = 106.6782 WHERE id = 'tromoi-hcm-nguyen-van-troi';
+UPDATE listings SET latitude = 16.0882, longitude = 108.2435 WHERE id = 'tromoi-danang-nguyen-sang-son-tra';
+UPDATE listings SET latitude = 21.0215, longitude = 105.8312 WHERE id = 'tromoi-o-ghep-ton-duc-thang-dong-da';
+UPDATE listings SET latitude = 20.9856, longitude = 105.8564 WHERE id = 'tromoi-phong-hoang-mai-ha-noi';
+UPDATE listings SET latitude = 21.0028, longitude = 105.8525 WHERE id = 'tromoi-o-ghep-hong-mai-hai-ba-trung';
+UPDATE listings SET latitude = 16.0515, longitude = 108.2285 WHERE id = 'tromoi-apartment-sun-cosmo-ngu-hanh-son';
+UPDATE listings SET latitude = 21.0682, longitude = 105.8315 WHERE id = 'tromoi-hanoi-au-co-tay-ho';
+UPDATE listings SET latitude = 16.0642, longitude = 108.2425 WHERE id = 'tromoi-danang-phuoc-my-r602';
+UPDATE listings SET latitude = 21.0375, longitude = 105.7985 WHERE id = 'tromoi-hanoi-nguyen-khanh-toan';
+UPDATE listings SET latitude = 21.0835, longitude = 105.7725 WHERE id = 'tromoi-phong-dong-ngac-bac-tu-liem';
+UPDATE listings SET latitude = 16.0675, longitude = 108.1565 WHERE id = 'tromoi-nha-tran-nguyen-dan-lien-chieu';
+UPDATE listings SET latitude = 21.0025, longitude = 105.7380 WHERE id = 'tromoi-hanoi-vinhomes-smart-city-tay-mo';
+UPDATE listings SET latitude = 16.0685, longitude = 108.2395 WHERE id = 'tromoi-nha-san-vuon-chinh-huu-son-tra';

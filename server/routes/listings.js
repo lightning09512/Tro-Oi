@@ -3,6 +3,7 @@ import { z } from "zod"
 import { pool } from "../config/db.js"
 import { optionalAuth, requireAuth, requireRole } from "../middleware/auth.js"
 import { queueNotification, flushNotificationOutbox } from "../services/notificationService.js"
+import { inferCoordinates } from "../services/geoService.js"
 
 const router = Router()
 const listingSelect = `SELECT l.*, u.name AS owner_name, u.phone AS owner_phone,
@@ -94,8 +95,17 @@ router.get("/:id", optionalAuth, async (req, res) => {
 router.post("/", requireAuth, requireRole("landlord"), async (req, res) => {
   const input = listingInput.parse(req.body)
   if (hasInlineImage(input)) return res.status(400).json({ error: "Ảnh cần được tải lên dịch vụ lưu trữ trước khi đăng tin." })
+  let lat = input.latitude ?? null
+  let lng = input.longitude ?? null
+  if (lat === null || lng === null) {
+    const [inferredLat, inferredLng] = inferCoordinates(input.location)
+    if (inferredLat !== null && inferredLng !== null) {
+      lat = inferredLat
+      lng = inferredLng
+    }
+  }
   const { rows } = await pool.query(`INSERT INTO listings(owner_id,title,description,price_vnd,deposit_text,area_m2,location,room_type,amenities,image_url,gallery,latitude,longitude,contact_phone,status)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending') RETURNING id`, [req.user.id, input.title, input.description, Math.round(input.priceValue * 1_000_000), input.deposit, input.areaValue, input.location, input.type, JSON.stringify(input.amenities), input.image, JSON.stringify(input.gallery || [input.image]), input.latitude ?? null, input.longitude ?? null, input.phone?.replace(/\s/g, "") || null])
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,'pending') RETURNING id`, [req.user.id, input.title, input.description, Math.round(input.priceValue * 1_000_000), input.deposit, input.areaValue, input.location, input.type, JSON.stringify(input.amenities), input.image, JSON.stringify(input.gallery || [input.image]), lat, lng, input.phone?.replace(/\s/g, "") || null])
   const created = await lookup(rows[0].id)
   res.status(201).json({ item: asListing(created.rows[0], true) })
 })
@@ -107,8 +117,17 @@ router.patch("/:id", requireAuth, async (req, res) => {
   if (hasInlineImage(input)) return res.status(400).json({ error: "Ảnh cần được tải lên dịch vụ lưu trữ trước khi lưu." })
   const old = found.rows[0]
   if (req.user.role !== "admin" && old.status === "rented") return res.status(409).json({ error: "Hãy kết thúc trạng thái đã thuê trước khi sửa tin." })
+  let lat = input.latitude ?? old.latitude
+  let lng = input.longitude ?? old.longitude
+  if (lat === null || lng === null) {
+    const [inferredLat, inferredLng] = inferCoordinates(input.location ?? old.location)
+    if (inferredLat !== null && inferredLng !== null) {
+      lat = inferredLat
+      lng = inferredLng
+    }
+  }
   const { rows } = await pool.query(`UPDATE listings SET title=$2,location=$3,price_vnd=$4,area_m2=$5,room_type=$6,description=$7,amenities=$8,image_url=$9,gallery=$10,latitude=$11,longitude=$12,deposit_text=$13,contact_phone=$14,status=$15,updated_at=now()
-    WHERE id=$1 AND ($16='admin' OR (owner_id=$17 AND status<>'rented')) RETURNING id`, [old.id, input.title ?? old.title, input.location ?? old.location, input.priceValue === undefined ? old.price_vnd : Math.round(input.priceValue * 1_000_000), input.areaValue ?? old.area_m2, input.type ?? old.room_type, input.description ?? old.description, JSON.stringify(input.amenities ?? old.amenities), input.image ?? old.image_url, JSON.stringify(input.gallery ?? old.gallery), input.latitude ?? old.latitude, input.longitude ?? old.longitude, input.deposit ?? old.deposit_text, input.phone === undefined ? old.contact_phone : input.phone.replace(/\s/g, "") || null, req.user.role === "admin" ? old.status : "pending", req.user.role, req.user.id])
+    WHERE id=$1 AND ($16='admin' OR (owner_id=$17 AND status<>'rented')) RETURNING id`, [old.id, input.title ?? old.title, input.location ?? old.location, input.priceValue === undefined ? old.price_vnd : Math.round(input.priceValue * 1_000_000), input.areaValue ?? old.area_m2, input.type ?? old.room_type, input.description ?? old.description, JSON.stringify(input.amenities ?? old.amenities), input.image ?? old.image_url, JSON.stringify(input.gallery ?? old.gallery), lat, lng, input.deposit ?? old.deposit_text, input.phone === undefined ? old.contact_phone : input.phone.replace(/\s/g, "") || null, req.user.role === "admin" ? old.status : "pending", req.user.role, req.user.id])
   if (!rows[0]) return res.status(409).json({ error: "Tin đã thay đổi trạng thái. Vui lòng tải lại trang." })
   const updated = await lookup(rows[0].id)
   res.json({ item: asListing(updated.rows[0], true) })

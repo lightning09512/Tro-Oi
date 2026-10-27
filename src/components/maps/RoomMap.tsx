@@ -1,6 +1,9 @@
 import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 import { Link } from "react-router"
+import { isValidMapPosition } from "@/utils/mapCoordinates"
+
+export { isValidMapPosition, resolveLocationCoordinates, DISTRICT_COORDINATES } from "@/utils/mapCoordinates"
 
 export interface RoomMapListing {
   id: string
@@ -11,10 +14,6 @@ export interface RoomMapListing {
   latitude?: number
   longitude?: number
 }
-
-export const isValidMapPosition = (latitude: unknown, longitude: unknown): latitude is number =>
-  typeof latitude === "number" && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
-  typeof longitude === "number" && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
 
 export default function RoomMap({ listings, center, zoom = 11, note, className = "map-view" }: {
   listings: RoomMapListing[]
