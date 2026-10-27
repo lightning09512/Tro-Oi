@@ -4799,12 +4799,24 @@ select:focus-visible, textarea:focus-visible {
   box-shadow: none;
 }
 
+.auth-form .form-field:has(> input:not(:placeholder-shown)) > input,
+.auth-form .form-field:has(.password-input input:not(:placeholder-shown)) .password-input,
+.password-input:has(input:-webkit-autofill),
+.password-input:has(input:autofill) {
+  background-color: #e8f0fe;
+}
+
 .form-field > input:autofill,
 .form-field > input:-webkit-autofill,
+.form-field > input:-webkit-autofill:hover,
+.form-field > input:-webkit-autofill:focus,
 .password-input input:autofill,
-.password-input input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #fff inset;
-  -webkit-text-fill-color: var(--ink);
+.password-input input:-webkit-autofill,
+.password-input input:-webkit-autofill:hover,
+.password-input input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #e8f0fe inset !important;
+  box-shadow: 0 0 0 1000px #e8f0fe inset !important;
+  -webkit-text-fill-color: var(--ink) !important;
   caret-color: var(--ink);
 }
 
