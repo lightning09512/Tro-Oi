@@ -5518,36 +5518,42 @@ select:focus-visible, textarea:focus-visible {
 }
 
 .location-picker-popover {
-  position: absolute;
+  position: fixed;
   z-index: 101;
-  top: calc(100% + 12px);
-  left: 0;
-  width: min(430px, calc(100vw - 28px));
-  max-height: min(680px, calc(100vh - 36px));
+  top: 50%;
+  left: 50%;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
   overflow: auto;
-  border: 1px solid #e2e7e1;
-  border-top: 4px solid #2b6945;
-  border-radius: 14px;
-  padding: 18px;
+  transform: translate(-50%, -50%);
+  border: 1px solid #e1e8e2;
+  border-radius: 16px;
+  padding: 18px 20px 20px;
   background: #fff;
-  box-shadow: 0 18px 48px rgba(23, 43, 31, 0.2);
+  box-shadow: 0 18px 46px rgba(23, 43, 31, 0.17);
   color: #26372e;
 }
 
 .location-picker-popover h3 {
-  margin: 0 0 16px;
-  font-size: 17px;
+  margin: 0 0 15px;
+  color: #294438;
+  font-size: 19px;
   text-align: center;
 }
 
 .location-picker-select {
   display: grid;
-  gap: 6px;
-  margin-bottom: 10px;
-  border: 1px solid #d9dfd9;
-  border-radius: 10px;
-  padding: 8px 12px;
+  gap: 4px;
+  margin-bottom: 9px;
+  border: 1px solid #dce5de;
+  border-radius: 11px;
+  padding: 9px 13px 8px;
   background: #fff;
+}
+
+.hero-fields .location-picker-popover .location-picker-select {
+  border-right: 1px solid #dce5de;
+  padding: 9px 13px 8px;
 }
 
 .location-picker-select:focus-within {
@@ -5556,21 +5562,22 @@ select:focus-visible, textarea:focus-visible {
 }
 
 .location-picker-select > span {
-  color: #6b756d;
-  font-size: 10px;
+  color: #66756b;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .location-picker-select select,
 .location-picker-nearby select {
   width: 100%;
-  min-height: 24px;
+  min-height: 26px;
   border: 0;
   padding: 0;
   color: #26372e;
   background: transparent;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .location-picker-select select:disabled,
@@ -5614,17 +5621,115 @@ select:focus-visible, textarea:focus-visible {
   background: #fff;
 }
 
+.location-picker-nearby > .location-picker-nearby-toggle {
+  display: flex;
+  justify-content: flex-start;
+  gap: 11px;
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid #e0e9e2;
+  border-radius: 11px;
+  padding: 9px 12px;
+  background: #f8faf8;
+}
+
+.hero-fields .location-picker-popover .location-picker-nearby-toggle {
+  border-right: 1px solid #e0e9e2;
+  padding: 9px 12px;
+}
+
+.location-picker-nearby.is-enabled > .location-picker-nearby-toggle {
+  border-color: #a8c9b0;
+  background: #f1f7f2;
+}
+
+.location-picker-nearby > .location-picker-nearby-toggle input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #2b6945;
+}
+
+.location-picker-nearby-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  background: #e8f1e9;
+  color: #2b6945;
+}
+
+.location-picker-nearby-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.location-picker-nearby-copy strong {
+  color: #2e3a32;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.location-picker-nearby-copy small {
+  color: #66756b;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.location-picker-radius {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: #66756b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.location-picker-radius > span {
+  white-space: nowrap;
+}
+
+.hero-fields .location-picker-popover .location-picker-radius {
+  border-right: 0;
+  padding: 0;
+}
+
+.location-picker-radius select {
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid #dce5de;
+  border-radius: 10px;
+  padding: 0 12px;
+  color: #293c31;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.location-picker-radius select:disabled {
+  border-color: #e5e9e5;
+  color: #748078;
+  background: #f5f7f5;
+}
+
 .location-picker-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 15px;
 }
 
 .location-picker-actions button {
-  min-height: 42px;
-  border: 1px solid #d9dfd9;
-  border-radius: 9px;
+  min-height: 44px;
+  border: 1px solid #dce5de;
+  border-radius: 10px;
   background: #fff;
   color: #26372e;
   font: inherit;
@@ -5636,6 +5741,23 @@ select:focus-visible, textarea:focus-visible {
   border-color: #2b6945;
   background: #2b6945;
   color: #fff;
+}
+
+.location-picker-actions button:hover {
+  border-color: #9dbba3;
+  background: #f4f8f4;
+}
+
+.location-picker-actions button:last-child:hover {
+  border-color: #205638;
+  background: #205638;
+}
+
+.location-picker-actions button:focus-visible,
+.location-picker-nearby-toggle:focus-within,
+.location-picker-radius select:focus-visible {
+  outline: 2px solid #4c9563;
+  outline-offset: 2px;
 }
 
 .filter-label {
@@ -5655,8 +5777,7 @@ select:focus-visible, textarea:focus-visible {
     padding: 9px 12px;
   }
 
-  .location-picker-popover {
-    position: fixed;
+.location-picker-popover {
     top: auto;
     right: 12px;
     bottom: 12px;
@@ -5664,6 +5785,7 @@ select:focus-visible, textarea:focus-visible {
     width: auto;
     max-height: calc(100dvh - 24px);
     border-radius: 15px;
+    transform: none;
   }
 }
 

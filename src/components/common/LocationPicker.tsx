@@ -161,15 +161,18 @@ export default function LocationPicker({
               </select>
             </label>
             {showNearby && onSearchNearby && (
-              <div className="location-picker-nearby">
-                <label>
+              <div className={`location-picker-nearby${nearby ? " is-enabled" : ""}`}>
+                <label className="location-picker-nearby-toggle">
                   <input type="checkbox" checked={nearby} onChange={(event) => setNearby(event.target.checked)} />
-                  <Icon name="pin" size={18} />
-                  <strong>Tìm phòng gần tôi</strong>
+                  <span className="location-picker-nearby-icon"><Icon name="pin" size={17} /></span>
+                  <span className="location-picker-nearby-copy"><strong>Tìm phòng gần tôi</strong></span>
                 </label>
-                <select aria-label="Bán kính tìm kiếm" value={radiusKm} disabled={!nearby} onChange={(event) => setRadiusKm(event.target.value)}>
-                  {nearbyRadii.map((item) => <option key={item} value={item}>Trong bán kính {item} km</option>)}
-                </select>
+                <label className="location-picker-radius">
+                  <span>Bán kính tìm kiếm</span>
+                  <select aria-label="Bán kính tìm kiếm" value={radiusKm} disabled={!nearby} onChange={(event) => setRadiusKm(event.target.value)}>
+                    {nearbyRadii.map((item) => <option key={item} value={item}>{item} km</option>)}
+                  </select>
+                </label>
               </div>
             )}
             <div className="location-picker-actions">
