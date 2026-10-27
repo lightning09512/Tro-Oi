@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
+import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform, type PlatformUser } from "@/contexts/PlatformContext"
 import { useToast } from "@/contexts/ToastContext"
 import { apiRequest, isApiMode } from "@/services/apiClient"
@@ -22,13 +23,21 @@ export default function PublicProfilePage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { favoriteIds } = useFavorites()
   const { toast } = useToast()
   const { users, posts, listings, addReport, startConversation } = usePlatform()
+
+  const isPersonalRoute = !id || id === "me" || window.location.pathname === "/trang-ca-nhan"
+  const isOwner = Boolean(user && (isPersonalRoute || user.id === id))
+  const targetId = isOwner && user ? user.id : id
+
   const [remoteProfile, setRemoteProfile] = useState<PublicProfile | null>(null)
-  const [loadState, setLoadState] = useState<ProfileLoadState>(isApiMode ? "loading" : "ready")
+  const [loadState, setLoadState] = useState<ProfileLoadState>(
+    isOwner ? "ready" : isApiMode ? "loading" : "ready"
+  )
   const [retryKey, setRetryKey] = useState(0)
   const [messageError, setMessageError] = useState("")
-  const [activeTab, setActiveTab] = useState<"listings" | "posts">("listings")
+  const [activeTab, setActiveTab] = useState<"listings" | "posts" | "favorites">("posts")
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [reportReason, setReportReason] = useState("Tài khoản có dấu hiệu lừa đảo / cọc ảo")
   const [reportDescription, setReportDescription] = useState("")
@@ -53,11 +62,15 @@ export default function PublicProfilePage() {
   }, [previewImage])
 
   useEffect(() => {
-    if (!id) return
-    if (user?.id === id) {
-      navigate(user.role === "admin" ? "/admin/ho-so" : "/tai-khoan/ho-so", { replace: true })
+    if (isPersonalRoute && !user) {
+      navigate("/dang-nhap", { state: { from: "/trang-ca-nhan" } })
       return
     }
+    if (isOwner) {
+      setLoadState("ready")
+      return
+    }
+    if (!targetId) return
     if (!isApiMode) {
       setLoadState("ready")
       return
@@ -66,7 +79,7 @@ export default function PublicProfilePage() {
     let active = true
     setLoadState("loading")
     setRemoteProfile(null)
-    apiRequest<{ item: PublicProfile }>(`members/${encodeURIComponent(id)}`)
+    apiRequest<{ item: PublicProfile }>(`members/${encodeURIComponent(targetId)}`)
       .then(({ item }) => {
         if (!active) return
         setRemoteProfile(item)
@@ -75,31 +88,53 @@ export default function PublicProfilePage() {
       .catch((error: unknown) => {
         if (!active) return
         const message = error instanceof Error ? error.message : ""
-        setLoadState(message.includes("(404)") || message.includes("không tồn tại") || message.includes("không còn hoạt động") ? "unavailable" : "error")
+        setLoadState(
+          message.includes("(404)") || message.includes("không tồn tại") || message.includes("không còn hoạt động")
+            ? "unavailable"
+            : "error"
+        )
       })
     return () => { active = false }
-  }, [id, user?.id, user?.role, navigate, retryKey])
+  }, [targetId, isOwner, isPersonalRoute, user, navigate, retryKey])
 
-  const profile = isApiMode ? remoteProfile : (users.find((item) => item.id === id) as PublicProfile | undefined) ?? null
+  const profile = useMemo(() => {
+    if (isOwner && user) {
+      return {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        status: user.status,
+        initials: user.initials,
+        avatarUrl: user.avatarUrl,
+        phone: user.phone,
+        createdAt: user.createdAt,
+      } as PublicProfile
+    }
+    return isApiMode ? remoteProfile : (users.find((item) => item.id === targetId) as PublicProfile | undefined) ?? null
+  }, [isOwner, user, isApiMode, remoteProfile, users, targetId])
 
   const publicPosts = useMemo(
-    () => posts.filter((post) => post.authorId === id && post.status === "active"),
-    [posts, id],
+    () => posts.filter((post) => post.authorId === targetId && post.status === "active"),
+    [posts, targetId],
   )
   const publicListings = useMemo(
-    () => listings.filter((listing) => listing.ownerId === id && listing.status === "active"),
-    [listings, id],
+    () => listings.filter((listing) => listing.ownerId === targetId && listing.status === "active"),
+    [listings, targetId],
+  )
+  const favoriteRooms = useMemo(
+    () => listings.filter((listing) => favoriteIds.includes(listing.id) && listing.status === "active"),
+    [listings, favoriteIds],
   )
 
   useEffect(() => {
-    if (publicListings.length === 0 && publicPosts.length > 0) {
-      setActiveTab("posts")
-    } else {
+    if (profile?.role === "landlord" && publicListings.length > 0) {
       setActiveTab("listings")
+    } else {
+      setActiveTab("posts")
     }
-  }, [publicListings.length, publicPosts.length])
+  }, [profile?.role, publicListings.length])
 
-  const contactPhone = profile?.phone || publicListings[0]?.phone || ""
+  const contactPhone = profile?.phone || user?.phone || publicListings[0]?.phone || ""
   const joinDate = useMemo(() => {
     if (!profile?.createdAt) return "Tháng 10/2026"
     const d = new Date(profile.createdAt)
@@ -126,7 +161,7 @@ export default function PublicProfilePage() {
   const openMessage = async () => {
     if (!profile) return
     if (!user) {
-      navigate("/dang-nhap", { state: { from: `/nguoi-dung/${id}` } })
+      navigate("/dang-nhap", { state: { from: `/nguoi-dung/${targetId}` } })
       return
     }
     setMessageError("")
@@ -147,7 +182,8 @@ export default function PublicProfilePage() {
   }
 
   const handleShareProfile = () => {
-    navigator.clipboard?.writeText(window.location.href)
+    const url = isOwner ? `${window.location.origin}/nguoi-dung/${profile?.id}` : window.location.href
+    navigator.clipboard?.writeText(url)
     toast("Đã sao chép liên kết trang cá nhân!", "success")
   }
 
@@ -201,9 +237,15 @@ export default function PublicProfilePage() {
         <nav className="nhatot-breadcrumb" aria-label="Đường dẫn">
           <Link to="/" className="breadcrumb-link"><Icon name="home" size={14} /> Trang chủ</Link>
           <span className="breadcrumb-separator">/</span>
-          <Link to="/dien-dan" className="breadcrumb-link">Cộng đồng</Link>
-          <span className="breadcrumb-separator">/</span>
-          <span className="breadcrumb-current">{profile.name}</span>
+          {isOwner ? (
+            <span className="breadcrumb-current">Trang cá nhân của tôi</span>
+          ) : (
+            <>
+              <Link to="/dien-dan" className="breadcrumb-link">Cộng đồng</Link>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">{profile.name}</span>
+            </>
+          )}
         </nav>
 
         {/* Profile Card (Nhà Tốt / Chợ Tốt Style) */}
@@ -217,6 +259,7 @@ export default function PublicProfilePage() {
                     src={profile.avatarUrl}
                     alt={profile.name}
                     className="nhatot-avatar-image"
+                    loading="lazy"
                     onError={() => setAvatarFailed(true)}
                   />
                 ) : (
@@ -230,7 +273,10 @@ export default function PublicProfilePage() {
             <div className="nhatot-info-column">
               <div className="nhatot-name-line">
                 <h1 className="nhatot-name-heading">{profile.name}</h1>
-                <span className="nhatot-badge-tag">{profile.role === "landlord" ? "Chủ trọ" : "Người thuê"}</span>
+                <span className="nhatot-badge-tag">
+                  {profile.role === "landlord" ? "Chủ trọ" : "Người thuê"}
+                  {isOwner && " (Bạn)"}
+                </span>
               </div>
 
               <div className="nhatot-details-grid">
@@ -242,6 +288,12 @@ export default function PublicProfilePage() {
                   <Icon name="pin" size={15} />
                   <span>Khu vực: <b>{userDistrict}</b></span>
                 </div>
+                {isOwner && user?.email && (
+                  <div className="nhatot-detail-cell">
+                    <Icon name="users" size={15} />
+                    <span>Email: <b>{user.email}</b></span>
+                  </div>
+                )}
                 <div className="nhatot-detail-cell">
                   <Icon name="chat" size={15} />
                   <span>Phản hồi chat: <b>Thường trong 15 phút</b></span>
@@ -251,24 +303,43 @@ export default function PublicProfilePage() {
 
             {/* Action Buttons */}
             <div className="nhatot-actions-column">
-              {user?.id !== profile.id && user?.role !== "admin" && (
-                <button type="button" className="nhatot-btn-chat" onClick={openMessage}>
-                  <Icon name="chat" size={16} />
-                  <span>Chat với {profile.name.split(" ").slice(-1)[0]}</span>
-                </button>
-              )}
+              {isOwner ? (
+                <>
+                  <Link to="/tai-khoan/ho-so" className="nhatot-btn-chat" title="Mở trang cài đặt và chỉnh sửa thông tin">
+                    <Icon name="edit" size={16} />
+                    <span>Cài đặt hồ sơ</span>
+                  </Link>
+                  <Link to="/tai-khoan/doi-mat-khau" className="nhatot-btn-phone" title="Đổi mật khẩu tài khoản">
+                    <Icon name="shield" size={15} />
+                    <span>Đổi mật khẩu</span>
+                  </Link>
+                  <button type="button" className="nhatot-btn-share" onClick={handleShareProfile} title="Sao chép liên kết trang cá nhân công khai">
+                    <Icon name="share" size={16} />
+                    <span>Chia sẻ</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {user?.role !== "admin" && (
+                    <button type="button" className="nhatot-btn-chat" onClick={openMessage}>
+                      <Icon name="chat" size={16} />
+                      <span>Chat với {profile.name.split(" ").slice(-1)[0]}</span>
+                    </button>
+                  )}
 
-              {contactPhone && (
-                <button type="button" className="nhatot-btn-phone" onClick={handleCopyPhone} title="Bấm để sao chép số">
-                  <Icon name="phone" size={15} />
-                  <span>{contactPhone}</span>
-                </button>
-              )}
+                  {contactPhone && (
+                    <button type="button" className="nhatot-btn-phone" onClick={handleCopyPhone} title="Bấm để sao chép số">
+                      <Icon name="phone" size={15} />
+                      <span>{contactPhone}</span>
+                    </button>
+                  )}
 
-              <button type="button" className="nhatot-btn-share" onClick={handleShareProfile} title="Sao chép liên kết">
-                <Icon name="share" size={16} />
-                <span>Chia sẻ</span>
-              </button>
+                  <button type="button" className="nhatot-btn-share" onClick={handleShareProfile} title="Sao chép liên kết">
+                    <Icon name="share" size={16} />
+                    <span>Chia sẻ</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -277,13 +348,13 @@ export default function PublicProfilePage() {
 
         {/* Tabs Bar */}
         <div className="nhatot-tabs-bar">
-          {publicListings.length > 0 && (
+          {profile.role === "landlord" && (
             <button
               type="button"
               className={`nhatot-tab-btn ${activeTab === "listings" ? "active" : ""}`}
               onClick={() => setActiveTab("listings")}
             >
-              <span>Phòng cho thuê</span>
+              <span>{isOwner ? "Tin phòng của tôi" : "Phòng cho thuê"}</span>
               <span className="tab-pill-count">{publicListings.length}</span>
             </button>
           )}
@@ -293,14 +364,40 @@ export default function PublicProfilePage() {
             className={`nhatot-tab-btn ${activeTab === "posts" ? "active" : ""}`}
             onClick={() => setActiveTab("posts")}
           >
-            <span>Bài viết diễn đàn</span>
+            <span>{isOwner ? "Bài viết của tôi" : "Bài viết diễn đàn"}</span>
             <span className="tab-pill-count">{publicPosts.length}</span>
           </button>
+
+          {isOwner && profile.role === "renter" && (
+            <button
+              type="button"
+              className={`nhatot-tab-btn ${activeTab === "favorites" ? "active" : ""}`}
+              onClick={() => setActiveTab("favorites")}
+            >
+              <span>Phòng yêu thích</span>
+              <span className="tab-pill-count">{favoriteRooms.length}</span>
+            </button>
+          )}
         </div>
 
-        {/* TAB 1: LISTINGS */}
+        {/* TAB 1: LISTINGS (LANDLORD) */}
         {activeTab === "listings" && (
           <section className="nhatot-listings-section">
+            {isOwner && profile.role === "landlord" && (
+              <div className="nhatot-owner-composer-card">
+                <div className="composer-card-left">
+                  <div className="composer-card-icon"><Icon name="building" size={20} /></div>
+                  <div>
+                    <strong>Quản lý phòng cho thuê</strong>
+                    <p>Đăng tin mới để tiếp cận hàng ngàn người thuê mỗi ngày trên Trọ Ơi.</p>
+                  </div>
+                </div>
+                <button type="button" className="nhatot-btn-chat" onClick={() => navigate("/chu-tro/dang-tin")}>
+                  <Icon name="plus" size={15} /> Đăng tin mới
+                </button>
+              </div>
+            )}
+
             {publicListings.length ? (
               <div className="nhatot-listings-stack">
                 {publicListings.map((listing) => (
@@ -309,13 +406,12 @@ export default function PublicProfilePage() {
                       <img
                         src={listing.image}
                         alt={listing.title}
+                        loading="lazy"
                         onError={(e) => {
                           e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
                         }}
                       />
-                      <span className={`listing-type-tag ${listing.type === "Chuyển nhượng" ? "transfer" : "normal"}`}>
-                        {listing.type === "Chuyển nhượng" ? "🔄 Chuyển nhượng" : listing.type}
-                      </span>
+                      <span className="listing-type-tag normal">{listing.type}</span>
                     </div>
 
                     <div className="listing-item-info">
@@ -348,7 +444,12 @@ export default function PublicProfilePage() {
             ) : (
               <div className="nhatot-empty-box">
                 <Icon name="building" size={32} />
-                <p>Thành viên này hiện không có tin phòng nào đang mở.</p>
+                <p>{isOwner ? "Bạn chưa đăng tin cho thuê phòng nào." : "Thành viên này hiện không có tin phòng nào đang mở."}</p>
+                {isOwner && (
+                  <Link to="/chu-tro/dang-tin" className="nhatot-btn-chat" style={{ marginTop: 8 }}>
+                    Đăng tin phòng đầu tiên
+                  </Link>
+                )}
               </div>
             )}
           </section>
@@ -357,6 +458,21 @@ export default function PublicProfilePage() {
         {/* TAB 2: POSTS */}
         {activeTab === "posts" && (
           <section className="nhatot-posts-section">
+            {isOwner && (
+              <div className="nhatot-owner-composer-card">
+                <div className="composer-card-left">
+                  <div className="composer-card-icon"><Icon name="edit" size={20} /></div>
+                  <div>
+                    <strong>Chia sẻ lên Diễn đàn Trọ Ơi</strong>
+                    <p>Chia sẻ kinh nghiệm thuê trọ, tìm ở ghép hoặc chuyển nhượng cọc phòng...</p>
+                  </div>
+                </div>
+                <button type="button" className="nhatot-btn-chat" onClick={() => navigate("/dien-dan")}>
+                  <Icon name="plus" size={15} /> Viết bài mới
+                </button>
+              </div>
+            )}
+
             {publicPosts.length ? (
               <div className="nhatot-posts-stack">
                 {publicPosts.map((post) => (
@@ -404,8 +520,8 @@ export default function PublicProfilePage() {
                         <span><Icon name="heart" size={14} /> {post.likes} thích</span>
                         <span><Icon name="chat" size={14} /> {post.commentsCount} bình luận</span>
                       </div>
-                      <Link to="/dien-dan" className="post-read-link">
-                        Xem trên Diễn đàn <Icon name="chevron" size={13} />
+                      <Link to={`/bai-viet/${post.id}`} className="post-read-link">
+                        Xem chi tiết bài viết <Icon name="chevron" size={13} />
                       </Link>
                     </div>
                   </article>
@@ -414,23 +530,88 @@ export default function PublicProfilePage() {
             ) : (
               <div className="nhatot-empty-box">
                 <Icon name="chat" size={32} />
-                <p>Thành viên này chưa có bài viết nào trên Diễn đàn.</p>
+                <p>{isOwner ? "Bạn chưa có bài viết nào trên Diễn đàn." : "Thành viên này chưa có bài viết nào trên Diễn đàn."}</p>
+                {isOwner && (
+                  <Link to="/dien-dan" className="nhatot-btn-chat" style={{ marginTop: 8 }}>
+                    Viết bài ngay
+                  </Link>
+                )}
               </div>
             )}
           </section>
         )}
 
-        {/* Subtle Footer Report Link */}
-        <div className="nhatot-profile-footer">
-          <button
-            type="button"
-            className="nhatot-report-link"
-            onClick={() => setReportModalOpen(true)}
-          >
-            <Icon name="flag" size={14} />
-            <span>Báo cáo tài khoản nếu có dấu hiệu gian lận</span>
-          </button>
-        </div>
+        {/* TAB 3: FAVORITES (RENTER OWNER) */}
+        {activeTab === "favorites" && isOwner && (
+          <section className="nhatot-listings-section">
+            {favoriteRooms.length ? (
+              <div className="nhatot-listings-stack">
+                {favoriteRooms.map((listing) => (
+                  <Link to={`/phong/${listing.id}`} className="nhatot-listing-item" key={listing.id}>
+                    <div className="listing-item-cover">
+                      <img
+                        src={listing.image}
+                        alt={listing.title}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
+                        }}
+                      />
+                      <span className="listing-type-tag normal">{listing.type}</span>
+                    </div>
+
+                    <div className="listing-item-info">
+                      <h2 className="listing-item-title">{listing.title}</h2>
+                      <div className="listing-item-price-line">
+                        <strong className="listing-price-text">{listing.price}</strong>
+                        <span className="listing-period-text">/tháng</span>
+                        <span className="listing-dot-separator">·</span>
+                        <span className="listing-area-text">{listing.area || "25 m²"}</span>
+                      </div>
+
+                      <p className="listing-item-address">
+                        <Icon name="pin" size={14} />
+                        <span>{listing.location}</span>
+                      </p>
+
+                      <div className="listing-item-footer">
+                        <span className="listing-deposit-tag">
+                          <Icon name="shield" size={13} />
+                          <span>{listing.deposit || "Cọc thỏa thuận"}</span>
+                        </span>
+                        <span className="listing-cta-link">
+                          Xem chi tiết <Icon name="chevron" size={13} />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="nhatot-empty-box">
+                <Icon name="heart" size={32} />
+                <p>Bạn chưa lưu phòng trọ nào vào danh sách yêu thích.</p>
+                <Link to="/tim-phong" className="nhatot-btn-chat" style={{ marginTop: 8 }}>
+                  Khám phá phòng trọ ngay
+                </Link>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Subtle Footer Report Link (Only for other users) */}
+        {!isOwner && (
+          <div className="nhatot-profile-footer">
+            <button
+              type="button"
+              className="nhatot-report-link"
+              onClick={() => setReportModalOpen(true)}
+            >
+              <Icon name="flag" size={14} />
+              <span>Báo cáo tài khoản nếu có dấu hiệu gian lận</span>
+            </button>
+          </div>
+        )}
 
         {/* Report Modal */}
         {reportModalOpen && (
@@ -491,7 +672,7 @@ export default function PublicProfilePage() {
                   disabled={isSubmittingReport}
                   onClick={async () => {
                     if (!user) {
-                      navigate("/dang-nhap", { state: { from: `/nguoi-dung/${id}` } })
+                      navigate("/dang-nhap", { state: { from: `/nguoi-dung/${targetId}` } })
                       return
                     }
                     setIsSubmittingReport(true)
@@ -521,6 +702,7 @@ export default function PublicProfilePage() {
             </section>
           </div>
         )}
+
         {/* Lightbox Image Preview Modal */}
         {previewImage && (
           <div

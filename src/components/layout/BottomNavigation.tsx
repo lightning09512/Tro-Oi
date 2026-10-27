@@ -22,7 +22,7 @@ export default function BottomNavigation() {
         <Icon name="chat" />
         <span>Tin nhắn</span>
       </NavLink>
-      <NavLink to={user ? "/tai-khoan/ho-so" : "/dang-nhap"}>
+      <NavLink to={user ? "/trang-ca-nhan" : "/dang-nhap"}>
         {user ? (
           <span className="avatar">
             {user.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : user.initials}
@@ -30,7 +30,7 @@ export default function BottomNavigation() {
         ) : (
           <Icon name="users" />
         )}
-        <span>Tôi</span>
+        <span>Cá nhân</span>
       </NavLink>
     </nav>
   )

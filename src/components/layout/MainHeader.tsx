@@ -270,10 +270,16 @@ export default function MainHeader() {
                         <small className="text-xs text-[#718078]">{roleLabels[user.role]}</small>
                       </div>
                     </div>
+                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate(user.role === "admin" ? "/admin" : "/trang-ca-nhan"); }}>
+                      <Icon name="users" size={18} />
+                      Trang cá nhân
+                    </button>
                     <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate(user.role === "admin" ? "/admin/ho-so" : "/tai-khoan/ho-so"); }}>
-                      Hồ sơ
+                      <Icon name="edit" size={18} />
+                      Cài đặt tài khoản
                     </button>
                     <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate(user.role === "admin" ? "/admin/doi-mat-khau" : "/tai-khoan/doi-mat-khau"); }}>
+                      <Icon name="shield" size={18} />
                       Đổi mật khẩu
                     </button>
                     {user.role !== "admin" && (

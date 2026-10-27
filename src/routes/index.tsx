@@ -68,6 +68,7 @@ export const router = createBrowserRouter([
         path: "/bai-viet/:id",
         Component: ForumRouteWrapper,
       },
+      { path: "/trang-ca-nhan", Component: PublicProfilePage },
       { path: "/nguoi-dung/:id", Component: PublicProfilePage },
       { path: "/dang-nhap", Component: LoginPage },
       { path: "/dang-ky", Component: RegisterPage },

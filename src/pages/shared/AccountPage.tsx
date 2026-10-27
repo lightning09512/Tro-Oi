@@ -181,15 +181,24 @@ export default function AccountPage({
           >
             <Icon name="camera" size={14} /> Đổi ảnh đại diện
           </button>
+
+          <Link
+            to="/trang-ca-nhan"
+            className="account-view-profile-link"
+            title="Xem giao diện trang cá nhân của bạn"
+          >
+            <Icon name="users" size={15} />
+            <span>Xem trang cá nhân</span>
+          </Link>
         </aside>
         <section className="account-card">
           <div className="account-heading">
             <span>Tài khoản của tôi</span>
-            <h1>{passwordMode ? "Đổi mật khẩu" : "Hồ sơ cá nhân"}</h1>
+            <h1>{passwordMode ? "Đổi mật khẩu" : "Cài đặt thông tin tài khoản"}</h1>
             <p>
               {passwordMode
                 ? "Cập nhật mật khẩu định kỳ để bảo vệ tài khoản."
-                : "Thông tin này giúp mọi người nhận biết và liên hệ với bạn."}
+                : "Chỉnh sửa họ tên, số điện thoại và ảnh đại diện hiển thị của bạn trên hệ thống."}
             </p>
           </div>
 
