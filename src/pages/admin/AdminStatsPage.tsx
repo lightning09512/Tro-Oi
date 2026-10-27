@@ -7,15 +7,13 @@ type ApiStats = {
   users: { role: string; count: number }[]
   listings: { count: number; views: number; contacts: number }
   listingStatuses: { status: string; count: number }[]
-  transfers: { count: number }
-  transferStatuses: { status: string; count: number }[]
   community: { posts: number; comments: number; likes: number }
   pendingReports: number
   interactions: { favorites: number; reviews: number }
 }
 
 export default function AdminStatsPage() {
-  const { users, listings, transfers, posts, reports } = usePlatform()
+  const { users, listings, posts, reports } = usePlatform()
   const [period, setPeriod] = useState("30")
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(isApiMode)
@@ -37,14 +35,12 @@ export default function AdminStatsPage() {
   const withinPeriod = <T extends { createdAt: string }>(items: T[]) => items.filter((item) => new Date(item.createdAt).getTime() >= cutoff)
   const periodUsers = withinPeriod(users)
   const periodListings = withinPeriod(listings)
-  const periodTransfers = withinPeriod(transfers)
   const periodPosts = withinPeriod(posts)
   const periodReports = withinPeriod(reports)
   const activeRooms = periodListings.filter((item) => item.status === "active").length
   const pendingReports = periodReports.filter((item) => item.status === "pending").length
   const totalViews = periodListings.reduce((sum, item) => sum + item.views, 0)
   const totalContacts = periodListings.reduce((sum, item) => sum + item.contacts, 0)
-  const activeTransfers = periodTransfers.filter((item) => item.status === "active").length
   const apiStatusCount = (statuses: { status: string; count: number }[] | undefined, status: string) => statuses?.find((item) => item.status === status)?.count ?? 0
   const displayViews = isApiMode ? apiStats?.listings.views ?? 0 : totalViews
   const displayContacts = isApiMode ? apiStats?.listings.contacts ?? 0 : totalContacts
@@ -52,7 +48,6 @@ export default function AdminStatsPage() {
   const metrics = [
     { name: "Tài khoản mới", value: isApiMode ? apiStats?.users.reduce((sum, item) => sum + item.count, 0) ?? 0 : periodUsers.length, hint: `${isApiMode ? apiStats?.users.find((item) => item.role === "renter")?.count ?? 0 : periodUsers.filter((item) => item.role === "renter").length} người thuê · ${isApiMode ? apiStats?.users.find((item) => item.role === "landlord")?.count ?? 0 : periodUsers.filter((item) => item.role === "landlord").length} chủ trọ`, icon: "users" },
     { name: "Tin cho thuê", value: isApiMode ? apiStatusCount(apiStats?.listingStatuses, "active") : activeRooms, hint: `${isApiMode ? apiStatusCount(apiStats?.listingStatuses, "pending") : periodListings.filter((item) => item.status === "pending").length} tin chờ duyệt`, icon: "building" },
-    { name: "Tin chuyển nhượng", value: isApiMode ? apiStatusCount(apiStats?.transferStatuses, "active") : activeTransfers, hint: `${isApiMode ? apiStatusCount(apiStats?.transferStatuses, "pending") : periodTransfers.filter((item) => item.status === "pending").length} chờ duyệt · ${isApiMode ? apiStats?.transfers.count ?? 0 : periodTransfers.length} tổng trong kỳ`, icon: "building" },
     { name: "Bài viết diễn đàn", value: isApiMode ? apiStats?.community.posts ?? 0 : periodPosts.filter((item) => item.status === "active").length, hint: isApiMode ? `${apiStats?.community.comments ?? 0} bình luận` : `${periodPosts.filter((item) => item.status === "pending").length} bài chờ duyệt`, icon: "chat" },
     { name: "Báo cáo cần xử lý", value: isApiMode ? apiStats?.pendingReports ?? 0 : pendingReports, hint: isApiMode ? "Báo cáo mới trong kỳ" : `${periodReports.length} báo cáo trong kỳ`, icon: "shield" },
   ]
@@ -75,8 +70,6 @@ export default function AdminStatsPage() {
       ["Người dùng", "Chủ trọ", String(periodUsers.filter((item) => item.role === "landlord").length)],
       ["Tin cho thuê", "Đang hiển thị", String(activeRooms)],
       ["Tin cho thuê", "Chờ duyệt", String(periodListings.filter((item) => item.status === "pending").length)],
-      ["Tin chuyển nhượng", "Đang hiển thị", String(activeTransfers)],
-      ["Tin chuyển nhượng", "Chờ duyệt", String(periodTransfers.filter((item) => item.status === "pending").length)],
       ["Diễn đàn", "Bài viết đang hiển thị", String(periodPosts.filter((item) => item.status === "active").length)],
       ["Diễn đàn", "Lượt thích", String(periodPosts.reduce((sum, item) => sum + item.likes, 0))],
       ["Diễn đàn", "Bình luận", String(periodPosts.reduce((sum, item) => sum + item.commentsCount, 0))],

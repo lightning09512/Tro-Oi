@@ -23,7 +23,6 @@ import categoryRoutes from "./routes/categories.js"
 import uploadRoutes from "./routes/uploads.js"
 import memberRoutes from "./routes/members.js"
 import reviewRoutes from "./routes/reviews.js"
-import transferRoutes from "./routes/transfers.js"
 import { requireAuth } from "./middleware/auth.js"
 import { flushNotificationOutbox } from "./services/notificationService.js"
 
@@ -59,7 +58,6 @@ app.get("/api/health", async (_req, res) => {
 
 app.use("/api/auth", authLimiter, (req, res, next) => ["/password-reset/request", "/register/request-code"].includes(req.path) ? emailCodeLimiter(req, res, next) : next(), requirePostgres, authRoutes)
 app.use("/api/listings", requirePostgres, listingRoutes)
-app.use("/api/transfers", requirePostgres, transferRoutes)
 app.use("/api/favorites", requirePostgres, favoriteRoutes)
 app.use("/api/forum", requirePostgres, (req, res, next) => { if (req.get("authorization")) return requireAuth(req, res, next); next() }, forumRoutes)
 app.use("/api/messages", requirePostgres, requireMongo, messageRoutes)

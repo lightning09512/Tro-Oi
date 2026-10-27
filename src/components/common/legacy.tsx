@@ -209,7 +209,7 @@ export function RoomCard({
   room,
   onClick,
 }: {
-  room: Omit<(typeof rooms)[number], "latitude" | "longitude"> & { latitude?: number; longitude?: number; ownerName?: string }
+  room: Omit<(typeof rooms)[number], "latitude" | "longitude" | "areaValue"> & { latitude?: number; longitude?: number; areaValue: number | null; areaIsEstimate?: boolean; ownerAvatarUrl?: string; ownerName?: string }
   onClick: () => void
 }) {
   const navigate = useNavigate()
@@ -248,7 +248,7 @@ export function RoomCard({
         <div className="room-meta">
           <span className="room-area">
             <Icon name="building" size={14} />
-            {room.area}
+            {room.area}{room.areaIsEstimate && <small> · ước tính</small>}
           </span>
           <span className="room-location">
             <Icon name="pin" size={15} />
@@ -256,7 +256,7 @@ export function RoomCard({
           </span>
         </div>
         <div className="seller">
-          <span className="mini-avatar">{initials}</span>
+          {room.ownerAvatarUrl ? <img className="mini-avatar seller-avatar-image" src={room.ownerAvatarUrl} alt="" /> : <span className="mini-avatar">{initials}</span>}
           <span>{sellerName}</span>
           <button
             className="room-card-cta"

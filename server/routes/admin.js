@@ -5,7 +5,6 @@ import XLSX from "xlsx"
 import PDFDocument from "pdfkit"
 import { pool } from "../config/db.js"
 import { requireAuth, requireRole } from "../middleware/auth.js"
-import { asTransfer, findTransfer } from "./transfers.js"
 import { asForumPost, forumSelect } from "./forum.js"
 import { queueNotification, flushNotificationOutbox } from "../services/notificationService.js"
 
@@ -93,60 +92,8 @@ router.get("/listings", async (req, res) => {
   if (input.q) { values.push(`%${input.q}%`); filters.push(`(l.title ILIKE $${values.length} OR l.location ILIKE $${values.length})`) }
   if (input.status) { values.push(input.status); filters.push(`l.status=$${values.length}`) }
   const where = filters.length ? `WHERE ${filters.join(" AND ")}` : ""
-  const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,u.phone AS owner_phone,round(l.price_vnd::numeric/1000000,1)::float AS price_value,l.area_m2::float AS area_value,to_char(l.price_vnd,'FM999G999G999G990')||'đ' AS price_label FROM listings l JOIN users u ON u.id=l.owner_id ${where} ORDER BY l.created_at DESC`, values)
-  res.json({ items: rows.map((row) => ({ id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: `${row.area_value} m²`, areaValue: row.area_value, location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery, ownerId: row.owner_id, ownerName: row.owner_name, phone: row.contact_phone ?? row.owner_phone, deposit: row.deposit_text, description: row.description, status: row.status, views: row.views, contacts: row.contacts, createdAt: row.created_at })) })
-})
-
-router.get("/transfers", async (req, res) => {
-  const input = z.object({ q: z.string().max(200).optional(), status: z.enum(["pending", "active", "rejected", "closed", "removed"]).optional() }).parse(req.query)
-  const filters = []
-  const values = []
-  if (input.q) { values.push(`%${input.q}%`); filters.push(`(t.title ILIKE $${values.length} OR t.location ILIKE $${values.length} OR u.name ILIKE $${values.length})`) }
-  if (input.status) { values.push(input.status); filters.push(`t.status=$${values.length}`) }
-  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : ""
-  const { rows } = await pool.query(`SELECT t.*,u.name AS owner_name FROM transfers t JOIN users u ON u.id=t.owner_id ${where} ORDER BY t.created_at DESC`, values)
-  res.json({ items: rows.map(asTransfer) })
-})
-
-router.patch("/transfers/:id/status", async (req, res) => {
-  const input = z.object({ status: z.enum(["active", "rejected"]), note: z.string().trim().max(1000).optional().default("") }).parse(req.body)
-  const client = await pool.connect()
-  try {
-    await client.query("BEGIN")
-    const { rows } = await client.query(
-      "SELECT t.*,u.name AS owner_name FROM transfers t JOIN users u ON u.id=t.owner_id WHERE t.id=$1 FOR UPDATE OF t",
-      [req.params.id],
-    )
-    const old = rows[0]
-    if (!old || ["closed", "removed"].includes(old.status)) {
-      await client.query("ROLLBACK")
-      return res.status(404).json({ error: "Không tìm thấy tin cần kiểm duyệt." })
-    }
-    if (old.status === input.status) {
-      await client.query("ROLLBACK")
-      return res.status(409).json({ error: "Tin đã ở trạng thái này. Vui lòng tải lại trang." })
-    }
-    await client.query(
-      "UPDATE transfers SET status=$2,moderation_note=$3,updated_at=now() WHERE id=$1",
-      [req.params.id, input.status, input.status === "active" ? "" : input.note],
-    )
-    await queueNotification(client, old.owner_id, input.status === "active" ? "Tin chuyển nhượng đã được duyệt" : "Tin chuyển nhượng cần chỉnh sửa", input.status === "active" ? `Tin “${old.title}” hiện đã được hiển thị.` : input.note || `Tin “${old.title}” chưa được duyệt. Vui lòng rà soát lại thông tin.`)
-    const saved = await findTransfer(req.params.id, client)
-    await client.query("COMMIT")
-    await flushNotificationOutbox().catch(() => undefined)
-    res.json({ item: asTransfer(saved) })
-  } catch (error) {
-    await client.query("ROLLBACK")
-    throw error
-  } finally {
-    client.release()
-  }
-})
-
-router.delete("/transfers/:id", async (req, res) => {
-  const result = await pool.query("UPDATE transfers SET status='removed',updated_at=now() WHERE id=$1 AND status<>'removed' RETURNING id", [req.params.id])
-  if (!result.rowCount) return res.status(404).json({ error: "Không tìm thấy tin chuyển nhượng." })
-  res.json({ message: "Đã gỡ tin chuyển nhượng." })
+  const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,u.phone AS owner_phone,round(l.price_vnd::numeric/1000000,1)::float AS price_value,l.area_m2::float AS area_value,to_char(l.price_vnd,'FM999G999G999G990')||'đ' AS price_label FROM listings l LEFT JOIN users u ON u.id=l.owner_id ${where} ORDER BY l.created_at DESC`, values)
+  res.json({ items: rows.map((row) => ({ id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value, location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery, ownerId: row.owner_id ?? "", ownerName: row.source_name ?? row.owner_name ?? "Chủ trọ", sourceName: row.source_name, sourceUrl: row.source_url, sourceCheckedAt: row.source_checked_at, phone: row.source_url ? undefined : row.contact_phone ?? row.owner_phone, deposit: row.deposit_text, description: row.description, status: row.status, views: row.views, contacts: row.contacts, createdAt: row.created_at })) })
 })
 
 router.get("/forum", async (_req, res) => {
@@ -181,12 +128,10 @@ router.delete("/categories/:id", async (req, res) => {
 
 async function getStats(days = 30) {
   const interval = z.number().int().min(1).max(3650).parse(Number(days))
-  const [users, listings, statuses, transfers, transferStatuses, forum, reports, interactions] = await Promise.all([
+  const [users, listings, statuses, forum, reports, interactions] = await Promise.all([
     pool.query("SELECT role,count(*)::int AS count FROM users WHERE created_at>=now()-($1*interval '1 day') GROUP BY role", [interval]),
     pool.query("SELECT count(*)::int AS count,coalesce(sum(views),0)::int AS views,coalesce(sum(contacts),0)::int AS contacts FROM listings WHERE created_at>=now()-($1*interval '1 day')", [interval]),
     pool.query("SELECT status,count(*)::int AS count FROM listings WHERE created_at>=now()-($1*interval '1 day') GROUP BY status", [interval]),
-    pool.query("SELECT count(*)::int AS count FROM transfers WHERE created_at>=now()-($1*interval '1 day')", [interval]),
-    pool.query("SELECT status,count(*)::int AS count FROM transfers WHERE created_at>=now()-($1*interval '1 day') GROUP BY status", [interval]),
     pool.query(`SELECT
       (SELECT count(*)::int FROM forum_posts WHERE created_at>=now()-($1*interval '1 day')) AS posts,
       (SELECT count(*)::int FROM forum_comments WHERE created_at>=now()-($1*interval '1 day')) AS comments,
@@ -194,7 +139,7 @@ async function getStats(days = 30) {
     pool.query("SELECT count(*)::int AS count FROM reports WHERE status='pending' AND created_at>=now()-($1*interval '1 day')", [interval]),
     pool.query("SELECT (SELECT count(*)::int FROM favorites WHERE created_at>=now()-($1*interval '1 day')) AS favorites,(SELECT count(*)::int FROM reviews WHERE created_at>=now()-($1*interval '1 day')) AS reviews", [interval]),
   ])
-  return { days: interval, users: users.rows, listings: listings.rows[0], listingStatuses: statuses.rows, transfers: transfers.rows[0], transferStatuses: transferStatuses.rows, community: forum.rows[0] ?? { posts: 0, comments: 0, likes: 0 }, pendingReports: reports.rows[0].count, interactions: { favorites: interactions.rows[0].favorites, reviews: interactions.rows[0].reviews } }
+  return { days: interval, users: users.rows, listings: listings.rows[0], listingStatuses: statuses.rows, community: forum.rows[0] ?? { posts: 0, comments: 0, likes: 0 }, pendingReports: reports.rows[0].count, interactions: { favorites: interactions.rows[0].favorites, reviews: interactions.rows[0].reviews } }
 }
 router.get("/stats", async (req, res) => {
   const days = z.coerce.number().int().min(1).max(3650).default(30).parse(req.query.days)
@@ -208,10 +153,9 @@ router.get("/stats/export", async (req, res) => {
     const rows = [
       ["Hạng mục", "Giá trị"],
       ["Tổng tin cho thuê", stats.listings.count], ["Lượt xem tin", stats.listings.views], ["Lượt liên hệ", stats.listings.contacts],
-      ["Tổng tin chuyển nhượng", stats.transfers.count],
       ["Báo cáo chờ xử lý", stats.pendingReports], ["Bài viết diễn đàn", stats.community.posts], ["Bình luận", stats.community.comments], ["Lượt thích", stats.community.likes],
       ["Lượt lưu tin", stats.interactions.favorites], ["Đánh giá phòng", stats.interactions.reviews],
-      ...stats.users.map((item) => [`Tài khoản: ${item.role}`, item.count]), ...stats.listingStatuses.map((item) => [`Tin cho thuê: ${item.status}`, item.count]), ...stats.transferStatuses.map((item) => [`Tin chuyển nhượng: ${item.status}`, item.count]),
+      ...stats.users.map((item) => [`Tài khoản: ${item.role}`, item.count]), ...stats.listingStatuses.map((item) => [`Tin cho thuê: ${item.status}`, item.count]),
     ]
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), "Thong ke")
     const data = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" })
@@ -225,7 +169,6 @@ router.get("/stats/export", async (req, res) => {
   doc.pipe(res)
   doc.fontSize(18).text("Tro Oi - Platform report")
   doc.moveDown().fontSize(11).text(`Rental listings: ${stats.listings.count}`)
-  doc.text(`Transfer listings: ${stats.transfers.count}`)
   doc.text(`Listing views: ${stats.listings.views}`)
   doc.text(`Contact events: ${stats.listings.contacts}`)
   doc.text(`Pending reports: ${stats.pendingReports}`)
@@ -235,7 +178,6 @@ router.get("/stats/export", async (req, res) => {
   doc.text(`Saved listings: ${stats.interactions.favorites}`)
   doc.text(`Room reviews: ${stats.interactions.reviews}`)
   for (const item of stats.users) doc.text(`Users (${item.role}): ${item.count}`)
-  for (const item of stats.transferStatuses) doc.text(`Transfers (${item.status}): ${item.count}`)
   doc.end()
 })
 

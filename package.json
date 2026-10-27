@@ -13,7 +13,9 @@
     "format": "oxfmt",
     "db:migrate": "node server/migrate.js",
     "db:seed": "node database/seed.js",
-    "db:seed:showcase": "node database/seed.js --showcase-only",
+    "db:import-tromoi": "node database/import-tromoi-listings.js",
+    "db:download-tromoi-expansion": "node database/download-tromoi-expansion-images.js",
+    "db:import-tromoi-expansion": "node database/import-tromoi-expansion.js",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
     "admin:create": "node server/create-admin.js"
   },

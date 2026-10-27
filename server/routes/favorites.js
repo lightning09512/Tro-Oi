@@ -10,9 +10,9 @@ router.get("/", async (req, res) => {
   const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,
     round(l.price_vnd::numeric/1000000,1)::float AS price_value,
     to_char(l.price_vnd,'FM999G999G999G990')||'đ' AS price_label,l.area_m2::float AS area_value
-    FROM favorites f JOIN listings l ON l.id=f.listing_id JOIN users u ON u.id=l.owner_id
+    FROM favorites f JOIN listings l ON l.id=f.listing_id LEFT JOIN users u ON u.id=l.owner_id
     WHERE f.user_id=$1 ORDER BY f.created_at DESC`, [req.user.id])
-  res.json({ items: rows.map((row) => ({ id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: `${row.area_value} m²`, areaValue: row.area_value, location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery, latitude: row.latitude ?? undefined, longitude: row.longitude ?? undefined, mapX: 50, mapY: 50, badge: row.status, ownerId: row.owner_id, ownerName: row.owner_name, deposit: row.deposit_text, description: row.description, status: row.status, currentTenantId: row.current_tenant_id, views: row.views, contacts: row.contacts, createdAt: row.created_at })) })
+  res.json({ items: rows.map((row) => ({ id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value, location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery, latitude: row.latitude ?? undefined, longitude: row.longitude ?? undefined, mapX: 50, mapY: 50, badge: row.status, ownerId: row.owner_id ?? "", ownerName: row.owner_name ?? "Chủ trọ", deposit: row.deposit_text, description: row.description, status: row.status, currentTenantId: row.current_tenant_id, views: row.views, contacts: row.contacts, createdAt: row.created_at })) })
 })
 
 router.put("/:listingId", async (req, res) => {

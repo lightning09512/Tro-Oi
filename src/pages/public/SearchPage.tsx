@@ -5,6 +5,7 @@ import { usePlatform, type RentalListing } from "@/contexts/PlatformContext"
 import type { ChangeEvent } from "react"
 import { useNavigate } from "react-router"
 import { apiRequest, isApiMode } from "@/services/apiClient"
+import LocationPicker from "@/components/common/LocationPicker"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
 
@@ -28,7 +29,7 @@ const defaultFilters: SearchFilters = {
 
 function readFilters(params: URLSearchParams): SearchFilters {
   return {
-    location: params.get("location") ?? defaultFilters.location,
+    location: params.get("location") ?? (params.has("type") ? "" : defaultFilters.location),
     minPrice: params.get("minPrice") ?? "",
     maxPrice: params.get("maxPrice") ?? "",
     areaRange: params.get("areaRange") ?? "all",
@@ -45,7 +46,9 @@ function normalize(value: string) {
     .trim()
 }
 
-function matchesArea(area: number, range: string) {
+function matchesArea(area: number | null, range: string) {
+  if (range === "all") return true
+  if (area === null) return false
   if (range === "under20") return area < 20
   if (range === "20-30") return area >= 20 && area <= 30
   if (range === "30-50") return area > 30 && area <= 50
@@ -103,16 +106,8 @@ function Filters({
         </button>
       </div>
       <div className="filter-group">
-        <label htmlFor="filter-location">Khu vực</label>
-        <div className="input-box filter-text-input">
-          <Icon name="pin" size={17} />
-          <input
-            id="filter-location"
-            value={filters.location}
-            onChange={(event) => onChange({ location: event.target.value })}
-            placeholder="Nhập quận hoặc khu vực"
-          />
-        </div>
+        <span className="filter-label">Khu vực</span>
+        <LocationPicker variant="filter" value={filters.location} onChange={(location) => onChange({ location })} />
       </div>
       <div className="filter-group">
         <label>Khoảng giá (triệu đồng/tháng)</label>
@@ -202,6 +197,8 @@ export default function SearchPage() {
   const [loadingRooms, setLoadingRooms] = useState(false)
   const latitude = Number(searchParams.get("lat"))
   const longitude = Number(searchParams.get("lng"))
+  const requestedRadiusKm = Number(searchParams.get("radiusKm"))
+  const radiusKm = Number.isFinite(requestedRadiusKm) && requestedRadiusKm >= 1 && requestedRadiusKm <= 100 ? requestedRadiusKm : 20
   const isNearSearch =
     searchParams.has("lat") &&
     searchParams.has("lng") &&
@@ -223,7 +220,7 @@ export default function SearchPage() {
     if (appliedFilters.areaRange === "20-30") { params.set("minArea", "20"); params.set("maxArea", "30") }
     if (appliedFilters.areaRange === "30-50") { params.set("minArea", "30.01"); params.set("maxArea", "50") }
     if (appliedFilters.areaRange === "over50") params.set("minArea", "50.01")
-    if (isNearSearch) { params.set("lat", String(latitude)); params.set("lng", String(longitude)); params.set("radiusKm", "20") }
+    if (isNearSearch) { params.set("lat", String(latitude)); params.set("lng", String(longitude)); params.set("radiusKm", String(radiusKm)) }
     params.set("sort", isNearSearch ? "nearby" : sort === "price-low" ? "price_asc" : sort === "price-high" ? "price_desc" : "newest")
     setLoadingRooms(true)
     if (remotePage === 1) { setRemoteRooms([]); setRemoteTotal(0) }
@@ -236,7 +233,7 @@ export default function SearchPage() {
       .catch(() => undefined)
       .finally(() => { if (current) setLoadingRooms(false) })
     return () => { current = false }
-  }, [appliedFilters, sort, isNearSearch, latitude, longitude, remotePage])
+  }, [appliedFilters, sort, isNearSearch, latitude, longitude, radiusKm, remotePage])
 
   useEffect(() => {
     const params = new URLSearchParams(queryString)
@@ -255,6 +252,7 @@ export default function SearchPage() {
     return (isApiMode ? remoteRooms : listings)
       .filter((room) => room.status === "active")
       .filter((room) => !isNearSearch || (Number.isFinite(room.latitude) && Number.isFinite(room.longitude)))
+      .filter((room) => !isNearSearch || distanceInKm(latitude, longitude, room.latitude, room.longitude) <= radiusKm)
       .filter((room) => {
         const matchesLocation =
           !location ||
@@ -290,7 +288,7 @@ export default function SearchPage() {
         if (sort === "price-high") return b.priceValue - a.priceValue
         return 0
       })
-  }, [appliedFilters, isNearSearch, latitude, longitude, sort, listings, remoteRooms])
+  }, [appliedFilters, isNearSearch, latitude, longitude, radiusKm, sort, listings, remoteRooms])
   const locatedRooms = matchingRooms.filter((room): room is RentalListing & { latitude: number; longitude: number } => typeof room.latitude === "number" && typeof room.longitude === "number")
 
   const updateDraft = (next: Partial<SearchFilters>) => {
@@ -298,7 +296,6 @@ export default function SearchPage() {
   }
 
   const applyFilters = () => {
-    setRemotePage(1)
     setRemotePage(1)
     const params = new URLSearchParams()
     if (draftFilters.location) params.set("location", draftFilters.location)
@@ -313,6 +310,7 @@ export default function SearchPage() {
     if (isNearSearch) {
       params.set("lat", String(latitude))
       params.set("lng", String(longitude))
+      params.set("radiusKm", String(radiusKm))
     }
     if (sort !== "newest") params.set("sort", sort)
     setSearchParams(params)
@@ -373,7 +371,7 @@ export default function SearchPage() {
               <div>
                 <h1>Phòng trọ tại {locationLabel}</h1>
                 <p>
-                  {isNearSearch ? "Trong bán kính 20 km · " : "Tìm thấy "}
+                  {isNearSearch ? `Trong bán kính ${radiusKm} km · ` : "Tìm thấy "}
                   <strong>{isApiMode ? remoteTotal : matchingRooms.length}</strong> phòng phù hợp
                 </p>
               </div>

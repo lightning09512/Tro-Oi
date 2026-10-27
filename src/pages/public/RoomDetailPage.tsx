@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from "react"
 import { Link, useNavigate, useParams } from "react-router"
-import { Button, Icon } from "@/components/common/legacy"
+import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform, type RoomReview } from "@/contexts/PlatformContext"
 import ReportDialog from "@/components/common/ReportDialog"
@@ -8,6 +8,12 @@ import useAuth from "@/hooks/useAuth"
 import { isApiMode } from "@/services/apiClient"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
+
+const getValidMapCenter = (latitude: unknown, longitude: unknown): [number, number] | null =>
+  typeof latitude === "number" && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
+  typeof longitude === "number" && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
+    ? [latitude, longitude]
+    : null
 
 export default function RoomDetailPage() {
   const navigate = useNavigate()
@@ -27,6 +33,33 @@ export default function RoomDetailPage() {
     item.status === "active" ||
     (item.status === "rented" && user?.role === "renter" && item.currentTenantId === user.id)
   ))
+  const mapCenter = room ? getValidMapCenter(room.latitude, room.longitude) : null
+  const similarListings = useMemo(() => {
+    if (!room) return []
+
+    const roomLocation = room.location.split(",").map((part) => part.trim().toLocaleLowerCase("vi-VN")).filter(Boolean)
+    const roomDistrict = roomLocation.length > 1 ? roomLocation[roomLocation.length - 2] : ""
+    const roomCity = roomLocation[roomLocation.length - 1] ?? ""
+
+    return listings
+      .filter((listing) => listing.status === "active" && listing.id !== room.id)
+      .map((listing, index) => {
+        const listingLocation = listing.location.split(",").map((part) => part.trim().toLocaleLowerCase("vi-VN")).filter(Boolean)
+        const listingDistrict = listingLocation.length > 1 ? listingLocation[listingLocation.length - 2] : ""
+        const listingCity = listingLocation[listingLocation.length - 1] ?? ""
+        let score = 0
+
+        if (roomDistrict && listingDistrict === roomDistrict) score += 5
+        if (roomCity && listingCity === roomCity) score += 2
+        if (room.type.toLocaleLowerCase("vi-VN") === listing.type.toLocaleLowerCase("vi-VN")) score += 3
+        if (room.priceValue > 0 && listing.priceValue > 0 && Math.abs(room.priceValue - listing.priceValue) / room.priceValue <= 0.25) score += 1
+
+        return { listing, score, index }
+      })
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .slice(0, 4)
+      .map(({ listing }) => listing)
+  }, [listings, room])
   const roomReviews = useMemo(() => reviews.filter((review) => review.listingId === id), [reviews, id])
   const galleryPhotos = room ? [...new Set([room.image, ...(room.gallery ?? [])])].slice(0, 6) : []
   const activeGalleryPhoto = galleryPhotos[galleryIndex] ?? galleryPhotos[0]
@@ -36,6 +69,8 @@ export default function RoomDetailPage() {
   if (!room) return <main className="workspace-page"><div className="container workspace-container"><section className="empty-state"><span className="placeholder-icon"><Icon name="building"/></span><h1>Phòng này không còn hiển thị</h1><p>Có thể tin đã được cho thuê hoặc chủ trọ đã tạm ẩn.</p><Button onClick={() => navigate("/tim-phong")}>Tìm phòng khác</Button></section></div></main>
 
   const saved = isFavorite(room.id)
+  const isSampleHost = room.isReferenceListing ?? room.id.startsWith("tromoi-")
+  const ownerDisplayName = isSampleHost ? "Chủ trọ mẫu" : room.ownerName
   const average = roomReviews.length ? roomReviews.reduce((sum, item) => sum + item.stars, 0) / roomReviews.length : 0
   const myReview = roomReviews.find((review) => review.authorId === user?.id)
   const canReview = user?.role === "renter" && room.currentTenantId === user.id
@@ -77,11 +112,81 @@ export default function RoomDetailPage() {
         </div>
         {galleryPhotos.length > 1 && <div className="room-gallery-thumbnails" aria-label="Chọn ảnh phòng">{galleryPhotos.map((photo, index) => <button className={index === galleryIndex ? "room-gallery-thumb active" : "room-gallery-thumb"} type="button" key={photo} aria-label={`Xem ảnh ${index + 1}`} aria-pressed={index === galleryIndex} onClick={() => setGalleryIndex(index)}><img src={photo} alt=""/></button>)}</div>}
       </section>}
-      <div className="detail-layout"><article className="detail-content"><div className="detail-title"><div><span className="verified">{room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : `✓ ${room.badge}`}</span><h1>{room.title}</h1><p><Icon name="pin" size={17}/>{room.location}</p></div>{user?.role !== "admin" && room.status === "active" && <button className={saved ? "save-big saved" : "save-big"} aria-pressed={saved} onClick={() => { if (!user) { navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } }); return } toggleFavorite(room.id) }}><Icon name="heart"/>{saved ? "Đã lưu" : "Lưu tin"}</button>}</div>
-        <div className="key-info"><div><small>Giá thuê</small><strong>{room.price}<em>/tháng</em></strong></div><div><small>Diện tích</small><strong>{room.area}</strong></div><div><small>Tiền cọc</small><strong>{room.deposit}</strong></div><div><small>Loại phòng</small><strong>{room.type}</strong></div></div>
-        <section className="detail-section"><h2>Tiện ích</h2><div className="amenities">{room.amenities.map((item) => <span key={item}>✓ {item}</span>)}</div></section>
-        <section className="detail-section"><h2>Mô tả phòng</h2><p className={expanded ? "detail-description expanded" : "detail-description"}>{room.description}</p>{room.description.length > 160 && <button className="text-link" onClick={() => setExpanded((value) => !value)}>{expanded ? "Thu gọn" : "Đọc thêm"}</button>}</section>
-        <section className="detail-section"><h2>Vị trí</h2>{isApiMode ? room.latitude !== undefined && room.longitude !== undefined ? <Suspense fallback={<div className="room-detail-map map-loading">Đang tải bản đồ…</div>}><RoomMap className="room-detail-map" listings={[{ id: room.id, title: room.title, price: room.price, area: room.area, location: room.location, latitude: room.latitude, longitude: room.longitude }]} center={[room.latitude, room.longitude]} zoom={15} note="Vị trí do chủ trọ cung cấp. Xác nhận địa chỉ trước khi hẹn xem." /></Suspense> : <div className="mini-map"><Icon name="pin"/><b>{room.location}</b><small>Chủ trọ chưa cung cấp tọa độ bản đồ; hãy hỏi vị trí cụ thể trước khi đi xem.</small></div> : <div className="mini-map"><span className="river"/><div className="location-pin"><Icon name="pin"/></div><b>{room.location}</b><small>Vị trí hiển thị tương đối để bảo vệ riêng tư.</small></div>}</section>
+      <div className="detail-layout">
+        <article className="detail-content room-detail-content">
+          <header className="room-detail-summary">
+            <div className="room-detail-summary-top">
+              <span className="verified">{room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : "✓ " + room.badge}</span>
+              {user?.role !== "admin" && room.status === "active" && (
+                <button
+                  className={saved ? "save-big saved" : "save-big"}
+                  aria-pressed={saved}
+                  onClick={() => {
+                    if (!user) {
+                      navigate("/dang-nhap", { state: { from: "/phong/" + room.id } })
+                      return
+                    }
+                    toggleFavorite(room.id)
+                  }}
+                >
+                  <Icon name="heart" />{saved ? "Đã lưu" : "Lưu tin"}
+                </button>
+              )}
+            </div>
+            <h1>{room.title}</h1>
+            <p className="room-detail-address-line"><Icon name="pin" size={18} />{room.location}</p>
+            <div className="room-detail-quickfacts">
+              <div className="room-detail-price-fact"><small>Giá thuê</small><strong>{room.price}<em>/tháng</em></strong></div>
+              <div><small>Diện tích{room.areaIsEstimate ? " · ước tính" : ""}</small><strong>{room.area || "Chưa cập nhật"}</strong></div>
+              <div><small>Tiền cọc</small><strong>{room.deposit || "Trao đổi khi liên hệ"}</strong></div>
+              <div><small>Loại phòng</small><strong>{room.type}</strong></div>
+            </div>
+          </header>
+
+          <section className="room-detail-panel room-location-panel">
+            <div className="room-detail-panel-heading">
+              <div><span className="room-detail-eyebrow">ĐỊA CHỈ PHÒNG</span><h2>Vị trí và khu vực</h2></div>
+              <span className="room-detail-heading-icon"><Icon name="pin" size={20} /></span>
+            </div>
+            <p className="room-detail-full-address"><Icon name="pin" size={17} />{room.location}</p>
+            <div className="room-detail-map-wrap">
+              {isApiMode ? mapCenter ? (
+                <Suspense fallback={<div className="room-detail-map map-loading">Đang tải bản đồ…</div>}>
+                  <RoomMap
+                    className="room-detail-map"
+                    listings={[{ id: room.id, title: room.title, price: room.price, area: room.area, location: room.location, latitude: mapCenter[0], longitude: mapCenter[1] }]}
+                    center={mapCenter}
+                    zoom={15}
+                    note="Vị trí hiển thị gần đúng theo địa chỉ tin đăng. Xác nhận địa chỉ trước khi hẹn xem."
+                  />
+                </Suspense>
+              ) : (
+                <div className="room-location-unavailable"><Icon name="pin" size={20} /><div><strong>Chưa có vị trí bản đồ cho phòng này</strong><span>Hãy nhắn người đăng để xác nhận địa chỉ cụ thể trước khi đi xem.</span></div></div>
+              ) : (
+                <div className="mini-map room-detail-demo-map"><span className="river"/><div className="location-pin"><Icon name="pin"/></div><b>{room.location}</b><small>Vị trí hiển thị tương đối để bảo vệ riêng tư.</small></div>
+              )}
+            </div>
+          </section>
+
+          <section className="room-detail-panel room-features-panel">
+            <div className="room-detail-panel-heading"><div><span className="room-detail-eyebrow">THÔNG TIN PHÒNG</span><h2>Đặc điểm phòng</h2></div></div>
+            <dl className="room-detail-attributes">
+              <div><dt><Icon name="building" size={16} />Loại hình</dt><dd>{room.type}</dd></div>
+              <div><dt><Icon name="map" size={16} />Diện tích{room.areaIsEstimate ? " (ước tính)" : ""}</dt><dd>{room.area || "Chưa cập nhật"}</dd></div>
+              <div><dt><Icon name="shield" size={16} />Tiền cọc</dt><dd>{room.deposit || "Trao đổi khi liên hệ"}</dd></div>
+              <div><dt><Icon name="home" size={16} />Tình trạng</dt><dd>{room.status === "rented" ? "Đã cho thuê" : "Đang hiển thị"}</dd></div>
+            </dl>
+            <div className="room-amenities-block">
+              <h3>Tiện ích</h3>
+              {room.amenities.length ? <div className="room-amenities-list">{room.amenities.map((item) => <span key={item}><i aria-hidden="true">✓</i>{item}</span>)}</div> : <p className="room-detail-muted">Người đăng chưa cập nhật tiện ích.</p>}
+            </div>
+          </section>
+
+          <section className="room-detail-panel room-description-panel">
+            <div className="room-detail-panel-heading"><div><span className="room-detail-eyebrow">THÔNG TIN TỪ NGƯỜI ĐĂNG</span><h2>Mô tả chi tiết</h2></div></div>
+            <p className={expanded ? "room-description-copy expanded" : "room-description-copy"}>{room.description || "Người đăng chưa bổ sung mô tả cho phòng này."}</p>
+            {room.description.length > 240 && <button className="text-link room-description-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Thu gọn" : "Xem thêm"}</button>}
+          </section>
         <section className="detail-section reviews">
           <div className="review-head">
             <div className="review-heading-copy">
@@ -134,7 +239,37 @@ export default function RoomDetailPage() {
             <p className="review-login-hint">{!user ? "Đăng nhập bằng tài khoản người thuê được ghi nhận cho phòng để gửi đánh giá." : user.role !== "renter" ? "Chỉ người thuê mới có thể đánh giá phòng." : "Chủ trọ cần ghi nhận bạn là người thuê hiện tại của phòng này trước khi gửi đánh giá."}</p>
           )}
         </section>
-      </article><aside className="landlord-card"><div className="landlord-top"><Link className="profile-avatar-link" to={`/nguoi-dung/${room.ownerId}`} aria-label={`Xem hồ sơ ${room.ownerName}`}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link><div><small>Chủ trọ</small><Link className="landlord-profile-name" to={`/nguoi-dung/${room.ownerId}`}><h3>{room.ownerName}</h3></Link><span>● Đang hoạt động</span></div></div><div className="landlord-stats"><span><b>{room.views}</b> Lượt xem</span><span><b>{room.contacts}</b> Liên hệ</span><span><b>{roomReviews.length ? average.toFixed(1) : "—"}</b> Đánh giá</span></div>{room.status === "active" && user?.role !== "admin" && <Button icon="chat" onClick={contact}>Nhắn tin hỏi phòng</Button>}{room.status === "active" && <Button variant="outline" icon="phone" onClick={async () => { if (!showPhone) { const phone = isApiMode ? await incrementListingContacts(room.id) : room.phone; setContactPhone(phone ?? ""); setShowPhone(true) } }}> {showPhone ? contactPhone || "Chưa có số liên hệ" : "Hiện số điện thoại"}</Button>}<p><Icon name="shield" size={17}/>{room.status === "rented" ? "Thông tin phòng được giữ lại để người thuê hiện tại gửi đánh giá." : "Kiểm tra giấy tờ và chi phí trước khi đặt cọc."}</p>{room.status === "active" && user?.role !== "admin" && <button className="report" onClick={() => setReportOpen(true)}>Báo cáo tin đăng</button>}</aside></div>
+      </article>
+        <aside className="landlord-card room-contact-card">
+          <div className="landlord-top">
+            {room.ownerAvatarUrl ? <img className="avatar large landlord-avatar-image" src={room.ownerAvatarUrl} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
+            <div><small>Chủ trọ</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "● Đang hoạt động" : isSampleHost ? "Hồ sơ minh họa · chưa có liên hệ" : "Thông tin liên hệ đang cập nhật"}</span></div>
+          </div>
+          <div className="landlord-stats">
+            <span><b>{room.views}</b>Lượt xem</span>
+            <span><b>{room.ownerId ? room.contacts : galleryPhotos.length}</b>{room.ownerId ? "Lượt liên hệ" : "Ảnh phòng"}</span>
+            <span><b>{roomReviews.length ? average.toFixed(1) : "—"}</b>Đánh giá</span>
+          </div>
+          {room.ownerId && room.status === "active" && user?.role !== "admin" && <Button icon="chat" onClick={contact}>Nhắn tin hỏi phòng</Button>}
+          {room.ownerId && room.status === "active" && <Button variant="outline" icon="phone" onClick={async () => { if (!showPhone) { const phone = isApiMode ? await incrementListingContacts(room.id) : room.phone; setContactPhone(phone ?? ""); setShowPhone(true) } }}>{showPhone ? contactPhone || "Chưa có số liên hệ" : "Hiện số điện thoại"}</Button>}
+          {!room.ownerId && room.status === "active" && <p><Icon name="shield" size={17}/>{isSampleHost ? "Ảnh đại diện và hồ sơ chủ trọ chỉ dùng minh họa; thông tin liên hệ chưa được cung cấp." : "Thông tin liên hệ của tin này đang được cập nhật trên Trọ Ơi."}</p>}
+          {room.ownerId && <p><Icon name="shield" size={17}/>{room.status === "rented" ? "Thông tin phòng được giữ lại để người thuê hiện tại gửi đánh giá." : "Kiểm tra giấy tờ và chi phí trước khi đặt cọc."}</p>}
+          {room.status === "active" && user?.role !== "admin" && <button className="report" onClick={() => setReportOpen(true)}>Báo cáo tin đăng</button>}
+        </aside>
+      </div>
+      <section className="similar-listings-section" aria-labelledby="similar-listings-title">
+        <div className="similar-listings-heading">
+          <div><span className="room-detail-eyebrow">GỢI Ý DÀNH CHO BẠN</span><h2 id="similar-listings-title">Tin đăng tương tự</h2><p>Các phòng đang hiển thị có khu vực, loại phòng hoặc mức giá gần với tin này.</p></div>
+          <Link to="/tim-phong">Xem tất cả phòng <Icon name="chevron" size={16}/></Link>
+        </div>
+        {similarListings.length ? (
+          <div className="similar-listings-grid">
+            {similarListings.map((listing) => <RoomCard key={listing.id} room={listing} onClick={() => navigate("/phong/" + listing.id)} />)}
+          </div>
+        ) : (
+          <div className="similar-listings-empty"><Icon name="building" size={22}/><span>Chưa có tin đang hiển thị để gợi ý. Hãy xem tất cả phòng để khám phá thêm.</span><Link to="/tim-phong">Tìm phòng</Link></div>
+        )}
+      </section>
       {reportOpen && <ReportDialog targetType="Tin phòng" targetId={room.id} targetTitle={room.title} onClose={() => setReportOpen(false)}/>}
     </div></main>
   )

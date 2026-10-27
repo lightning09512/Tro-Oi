@@ -9,7 +9,6 @@ const messageSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
   participants: { type: [String], required: true, validate: (value) => value.length === 2 },
   listingId: { type: String, default: "" },
-  transferId: { type: String, default: "" },
   mutedBy: { type: [String], default: [] },
   messages: { type: [messageSchema], default: [] },
 }, { timestamps: true })

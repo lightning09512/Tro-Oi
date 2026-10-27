@@ -137,10 +137,10 @@ export default function ForumPage() {
               </div>
               <button className="composer-editor-close" type="button" aria-label="Đóng" onClick={() => setComposerOpen(false)}><Icon name="close"/></button>
             </div>
-            <textarea autoFocus rows={5} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Bạn đang tìm phòng ở khu vực nào, tầm giá bao nhiêu? Hoặc chia sẻ kinh nghiệm thuê trọ của mình..."/>
+            <textarea autoFocus rows={5} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Chia sẻ kinh nghiệm thuê trọ, tìm người ở ghép hoặc đăng pass phòng. Hãy ghi khu vực, giá thuê, tiền cọc và thời gian có thể nhận phòng..."/>
             <label className="form-field"><span>Ảnh minh họa (đường dẫn)</span><input value={image} onChange={(event) => setImage(event.target.value)} placeholder="https://..."/></label>
             {error && <p className="form-message error">{error}</p>}
-            <div className="composer-editor-actions"><span>Đừng đăng số giấy tờ, số điện thoại hoặc địa chỉ riêng tư.</span><Button icon="send">Đăng bài</Button></div>
+            <div className="composer-editor-actions"><span>Đừng đăng số giấy tờ hoặc địa chỉ riêng tư; có thể nhắn tin để trao đổi chi tiết.</span><Button icon="send">Đăng bài</Button></div>
           </form>}
           {publicPosts.map((post) => <PostCard key={post.id} post={post} onLogin={login}/>)}
           {!publicPosts.length && <section className="empty-state"><span className="placeholder-icon"><Icon name="search"/></span><h2>Chưa tìm thấy bài viết</h2><p>Thử từ khóa khác hoặc viết bài mở đầu cho cuộc trò chuyện.</p>{!id && <Button onClick={() => user ? setComposerOpen(true) : login()}>Viết bài</Button>}</section>}

@@ -1,6 +1,6 @@
 # Ảnh minh họa cho dữ liệu demo
 
-Các ảnh trong `public/images/rooms/` được tải từ Pexels và dùng làm ảnh minh họa cho dữ liệu phòng mẫu, không đại diện cho phòng cho thuê thật. Khi đăng tin thật, chủ trọ cần thay bằng ảnh chụp căn phòng thực tế.
+Các ảnh trong `public/images/rooms/` là tư liệu Pexels cũ, không đại diện cho phòng cho thuê thật và hiện không được dùng để tạo tin phòng hay bài diễn đàn mẫu. Tin phòng có nguồn thật dùng ảnh trong `public/images/tromoi/`; xem [danh sách tin và nguồn](tromoi-data-sources.md).
 
 | Tệp | Nội dung | Nguồn |
 | --- | --- | --- |
@@ -16,13 +16,3 @@ Các ảnh trong `public/images/rooms/` được tải từ Pexels và dùng là
 | `shared-dorm.jpg` | Giường tầng và không gian ở ghép | [Pexels photo 5158497](https://www.pexels.com/photo/clothes-hanging-on-a-bunk-bes-5158497/) |
 
 Các trang ảnh trên ghi ảnh được dùng miễn phí theo giấy phép Pexels. Xem thêm [Pexels License](https://www.pexels.com/license/).
-
-## Cập nhật dữ liệu PostgreSQL mẫu
-
-Sau khi migration và seed tài khoản demo đã chạy, cập nhật riêng danh sách phòng và nội dung diễn đàn bằng:
-
-```bash
-pnpm db:seed:showcase
-```
-
-Lệnh này chỉ thêm/cập nhật các tin phòng và bài diễn đàn mẫu. Lệnh không đặt lại mật khẩu tài khoản, không sửa dữ liệu nhắn tin MongoDB và không xóa dữ liệu người dùng.

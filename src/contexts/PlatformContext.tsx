@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { conversations, photos, posts, rooms } from "@/mocks/content"
+import { conversations } from "@/mocks/content"
 import { mockUsers } from "@/mocks/users"
 import type { AuthUser } from "@/types/auth"
 import useAuth from "@/hooks/useAuth"
@@ -15,14 +15,52 @@ import { apiRequest, isApiMode } from "@/services/apiClient"
 
 export type ListingStatus = "pending" | "active" | "hidden" | "rented" | "rejected"
 export type ContentStatus = "pending" | "active" | "hidden" | "rejected"
-export type TransferStatus = "pending" | "active" | "rejected" | "closed" | "removed"
 
-export type RentalListing = Omit<(typeof rooms)[number], "latitude" | "longitude"> & {
+const demoOwnerAvatar = (id: string) => {
+  const hash = [...id].reduce((value, char) => ((value * 31) + char.charCodeAt(0)) >>> 0, 0)
+  return `/images/avatars/demo-owner-${String((hash % 6) + 1).padStart(2, "0")}.svg`
+}
+
+const estimatedAreaListingIds = new Set([
+  "tromoi-apartment-sun-cosmo-ngu-hanh-son",
+  "tromoi-apartment-mia-plaza-lien-chieu",
+  "tromoi-apartment-doan-khue-ngu-hanh-son",
+  "tromoi-ktx-phan-van-tri",
+  "tromoi-ktx-long-truong",
+  "tromoi-ktx-huit-tay-thanh",
+  "tromoi-o-ghep-duong-so-21-tan-hung",
+  "tromoi-o-ghep-tran-thai-tong-cau-giay",
+  "tromoi-hanoi-au-co-tay-ho",
+  "tromoi-hoang-tang-bi-dong-ngac",
+  "tromoi-fpt-city-da-nang",
+  "tromoi-105-ung-van-khiem",
+  "tromoi-633-hong-bang",
+  "tromoi-binh-thanh-nguyen-van-dau",
+  "tromoi-341-bui-minh-truc",
+])
+
+export type RentalListing = {
+  id: string
+  title: string
+  price: string
+  priceValue: number
+  area: string
+  areaValue: number | null
+  areaIsEstimate?: boolean
+  location: string
+  type: string
+  amenities: string[]
+  mapX: number
+  mapY: number
+  image: string
+  badge: string
   latitude?: number
   longitude?: number
   gallery?: string[]
   ownerId: string
   ownerName: string
+  ownerAvatarUrl?: string
+  isReferenceListing?: boolean
   phone?: string
   deposit: string
   description: string
@@ -32,34 +70,6 @@ export type RentalListing = Omit<(typeof rooms)[number], "latitude" | "longitude
   contacts: number
   createdAt: string
 }
-
-export interface TransferListing {
-  id: string
-  ownerId: string
-  ownerName: string
-  title: string
-  description: string
-  location: string
-  priceValue: number
-  price: string
-  transferFeeValue: number | null
-  transferFee: string
-  deposit: string
-  areaValue: number
-  area: string
-  type: string
-  contractEndDate: string
-  availableFrom: string
-  amenities: string[]
-  image: string
-  gallery: string[]
-  status: TransferStatus
-  moderationNote: string
-  createdAt: string
-  updatedAt?: string
-}
-
-export type TransferInput = Pick<TransferListing, "title" | "description" | "location" | "priceValue" | "transferFeeValue" | "deposit" | "areaValue" | "type" | "contractEndDate" | "availableFrom" | "amenities" | "image" | "gallery">
 
 export interface PostComment {
   id: string
@@ -127,9 +137,7 @@ export interface MessageRecord {
   unread?: boolean
   muted?: boolean
   roomId: string
-  transferId?: string
   userId: string
-  relatedTransfer?: Pick<TransferListing, "id" | "title" | "location" | "price" | "transferFee" | "image"> | null
   messages: { id: string; from: "me" | "them"; text: string; time: string }[]
 }
 
@@ -149,96 +157,30 @@ export interface NotificationRecord {
   createdAt: string
 }
 
+const legacyDemoListingIds = new Set([
+  "room-binh-tan-budget",
+  "room-binh-thanh-mini",
+  "room-district-10-study",
+  "room-go-vap-balcony",
+  "room-go-vap-furnished",
+  "room-linh-trung-share",
+  "room-phu-nhuan-single",
+  "room-tan-phu-mezzanine",
+  "room-thao-dien-studio",
+  "room-thu-duc-metro",
+])
+const legacyDemoPostIds = new Set([
+  ...Array.from({ length: 10 }, (_, index) => `post-${index + 1}`),
+  ...Array.from({ length: 10 }, (_, index) => `forum-post-${String(index + 1).padStart(2, "0")}`),
+])
+
+const initialListings: RentalListing[] = []
+const loadListings = () => storage("listings", initialListings).filter((listing) => !legacyDemoListingIds.has(listing.id))
+
+const initialPosts: ForumPost[] = []
+const loadFeedPosts = () => storage("posts", initialPosts).filter((post) => !legacyDemoPostIds.has(post.id))
+
 const savedAt = new Date().toISOString()
-const initialTransfers: TransferListing[] = [
-  {
-    id: "transfer-demo-active-01", ownerId: "user-renter-02", ownerName: "Nguyễn An",
-    title: "Sang lại phòng studio gần Đại học Sư phạm Kỹ thuật",
-    description: "Phòng studio có cửa sổ lớn, máy lạnh, khu bếp riêng và chỗ để xe. Hợp đồng còn thời hạn, chủ nhà thân thiện; mình chuyển công tác nên cần sang lại sớm.",
-    location: "Linh Trung, Thủ Đức, TP. Hồ Chí Minh", priceValue: 4.2, price: "4,2 triệu",
-    transferFeeValue: 1.5, transferFee: "1,5 triệu", deposit: "Cọc 1 tháng tiền thuê", areaValue: 28, area: "28 m²",
-    type: "Căn hộ mini", contractEndDate: "2027-03-31", availableFrom: "2026-11-01",
-    amenities: ["Máy lạnh", "Bếp riêng", "Chỗ để xe"], image: photos[1], gallery: [photos[1]],
-    status: "active", moderationNote: "", createdAt: savedAt,
-  },
-  {
-    id: "transfer-demo-pending-01", ownerId: "user-renter-01", ownerName: "Hoàng Trang",
-    title: "Sang lại phòng trọ có gác, gần chợ Gò Vấp",
-    description: "Phòng có gác rộng, nhà vệ sinh riêng, giờ giấc tự do. Hợp đồng còn đến cuối năm và có thể nhận phòng trong tháng tới.",
-    location: "Phường 5, Gò Vấp, TP. Hồ Chí Minh", priceValue: 3.5, price: "3,5 triệu",
-    transferFeeValue: null, transferFee: "Thỏa thuận", deposit: "Đã cọc 3.500.000đ", areaValue: 24, area: "24 m²",
-    type: "Phòng trọ", contractEndDate: "2026-12-31", availableFrom: "2026-11-05",
-    amenities: ["Gác lửng", "Nhà vệ sinh riêng"], image: photos[2], gallery: [photos[2]],
-    status: "pending", moderationNote: "", createdAt: savedAt,
-  },
-]
-
-const loadTransfers = () => storage("transfers", initialTransfers)
-
-const initialListings: RentalListing[] = rooms.map((room, index) => ({
-  ...room,
-  ownerId: "user-landlord-01",
-  ownerName: "Minh Ngọc",
-  phone: "0987 654 321",
-  deposit: index === 1 ? "2.800.000đ" : "1 tháng tiền thuê",
-  status: "active",
-  currentTenantId: index === 0 ? "user-renter-01" : null,
-  views: [214, 176, 142, 98, 87, 68, 51, 43, 39, 31][index],
-  contacts: [18, 12, 9, 6, 7, 4, 3, 2, 3, 2][index],
-  createdAt: new Date(Date.now() - [3, 1, 4, 2, 1, 2, 3, 4, 1, 5][index] * 24 * 60 * 60 * 1000).toISOString(),
-}))
-
-const loadListings = () => {
-  const saved = storage("listings", initialListings)
-  const savedById = new Map(saved.map((listing) => [listing.id, listing]))
-  const initialIds = new Set(initialListings.map((listing) => listing.id))
-  return [
-    ...initialListings.map((listing) => {
-      const previous = savedById.get(listing.id)
-      return {
-        ...listing,
-        status: previous?.status ?? listing.status,
-        currentTenantId: previous ? previous.currentTenantId : listing.currentTenantId,
-        views: previous?.views ?? listing.views,
-        contacts: previous?.contacts ?? listing.contacts,
-      }
-    }),
-    ...saved.filter((listing) => !initialIds.has(listing.id)),
-  ].map((listing) =>
-    listing.currentTenantId === undefined
-      ? { ...listing, currentTenantId: listing.id === rooms[0].id ? "user-renter-01" : null }
-      : listing,
-  )
-}
-
-const initialPosts: ForumPost[] = posts.map((post) => ({
-  ...post,
-  commentsCount: post.comments.length,
-  likedBy: [],
-  status: "active",
-  createdAt: savedAt,
-}))
-
-const loadFeedPosts = () => {
-  const saved = storage("posts", initialPosts)
-  const savedById = new Map(saved.map((post) => [post.id, post]))
-  const initialIds = new Set(initialPosts.map((post) => post.id))
-  return [
-    ...initialPosts.map((post) => {
-      const previous = savedById.get(post.id)
-      return {
-        ...post,
-        likes: previous?.likes ?? post.likes,
-        likedBy: previous?.likedBy ?? post.likedBy,
-        comments: previous?.comments?.length ? previous.comments : post.comments,
-        status: previous?.status ?? post.status,
-        createdAt: previous?.createdAt ?? post.createdAt,
-      }
-    }),
-    ...saved.filter((post) => !initialIds.has(post.id)),
-  ].map((post) => ({ ...post, commentsCount: post.comments.length }))
-}
-
 const initialUsers: PlatformUser[] = [
   ...Object.values(mockUsers),
   {
@@ -255,9 +197,7 @@ const initialUsers: PlatformUser[] = [
   createdAt: savedAt,
 }))
 
-const initialReviews: RoomReview[] = [
-  { id: "review-1", listingId: rooms[0].id, authorId: "user-renter-01", author: "Hoàng Trang", initials: "HT", stars: 5, text: "Phòng đúng như ảnh, cô chủ nhiệt tình. Khu vực yên tĩnh và đi lại thuận tiện.", createdAt: "2 tuần trước" },
-]
+const initialReviews: RoomReview[] = []
 
 const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversation, index) => ({
   ...conversation,
@@ -265,7 +205,7 @@ const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversa
   name: ["Minh Ngọc", "Hoàng Trang", "Quản trị viên"][index],
   avatar: ["MN", "HT", "AD"][index],
   id: `conversation-${index + 1}`,
-  roomId: rooms[0].id,
+  roomId: "room-thao-dien-studio",
   userId: ["user-landlord-01", "user-renter-01", "user-admin-01"][index],
   unread: index === 0,
   messages: [
@@ -281,7 +221,7 @@ const loadMessages = () => storage("messages", initialMessages).map((conversatio
 
 const initialCategories: CategoryRecord[] = [
   ...["Thủ Đức", "Gò Vấp", "Bình Thạnh", "Tân Phú"].map((name, i) => ({ id: `district-${i}`, type: "Khu vực" as const, name, status: "active" as const })),
-  ...["Phòng trọ", "Căn hộ mini", "Ở ghép", "Ký túc xá", "Nhà nguyên căn"].map((name, i) => ({ id: `room-type-${i}`, type: "Loại phòng" as const, name, status: "active" as const })),
+  ...["Phòng trọ", "Căn hộ mini", "Căn hộ", "Ở ghép", "Ký túc xá", "Nhà nguyên căn"].map((name, i) => ({ id: `room-type-${i}`, type: "Loại phòng" as const, name, status: "active" as const })),
   ...["Máy lạnh", "Bãi đỗ xe", "Ban công", "Máy giặt", "Cho nuôi thú cưng"].map((name, i) => ({ id: `amenity-${i}`, type: "Tiện ích" as const, name, status: "active" as const })),
 ]
 
@@ -308,7 +248,6 @@ const listingPayload = (item: RentalListing) => ({
 
 interface PlatformContextValue {
   listings: RentalListing[]
-  transfers: TransferListing[]
   posts: ForumPost[]
   users: PlatformUser[]
   reports: ReportRecord[]
@@ -324,11 +263,6 @@ interface PlatformContextValue {
   setListingStatus: (id: string, status: ListingStatus, currentTenantId?: string | null) => Promise<void>
   incrementListingViews: (id: string) => Promise<void>
   incrementListingContacts: (id: string) => Promise<string | undefined>
-  saveTransfer: (value: TransferInput, id?: string) => Promise<TransferListing>
-  closeTransfer: (id: string) => Promise<void>
-  moderateTransfer: (id: string, status: "active" | "rejected", note?: string) => Promise<void>
-  removeTransfer: (id: string) => Promise<void>
-  loadTransfer: (id: string) => Promise<TransferListing | undefined>
   savePost: (value: ForumPost) => Promise<void>
   deletePost: (id: string) => Promise<void>
   setPostStatus: (id: string, status: ContentStatus) => Promise<void>
@@ -347,7 +281,7 @@ interface PlatformContextValue {
   sendMessage: (conversationId: string, accountId: string, text: string) => Promise<void>
   markConversationRead: (conversationId: string, accountId: string) => Promise<void>
   toggleConversationMute: (conversationId: string, accountId: string) => Promise<void>
-  startConversation: (person: { accountId: string; name: string; avatar: string; userId: string; roomId: string; transferId?: string }) => Promise<string>
+  startConversation: (person: { accountId: string; name: string; avatar: string; userId: string; roomId: string }) => Promise<string>
   saveReview: (review: RoomReview) => Promise<void>
   deleteReview: (id: string) => Promise<void>
 }
@@ -357,19 +291,17 @@ const PlatformContext = createContext<PlatformContextValue | null>(null)
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [listings, setListings] = useState(() => isApiMode ? [] as RentalListing[] : loadListings())
-  const [transfers, setTransfers] = useState(() => isApiMode ? [] as TransferListing[] : loadTransfers())
   const [feedPosts, setFeedPosts] = useState(() => isApiMode ? [] as ForumPost[] : loadFeedPosts())
   const [users, setUsers] = useState(() => isApiMode ? [] as PlatformUser[] : storage("users", initialUsers))
   const [reports, setReports] = useState(() => isApiMode ? [] as ReportRecord[] : storage("reports", [] as ReportRecord[]).filter((item) => ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType)))
   const [messages, setMessages] = useState(() => isApiMode ? [] as MessageRecord[] : loadMessages())
-  const [reviews, setReviews] = useState(() => isApiMode ? [] as RoomReview[] : storage("reviews", initialReviews))
+  const [reviews, setReviews] = useState(() => isApiMode ? [] as RoomReview[] : storage("reviews", initialReviews).filter((review) => review.id !== "review-1" && !legacyDemoListingIds.has(review.listingId)))
   const [categories, setCategories] = useState(() => isApiMode ? [] as CategoryRecord[] : storage("categories", initialCategories))
   const [notifications, setNotifications] = useState(() => isApiMode ? [] as NotificationRecord[] : storage("notifications", [] as NotificationRecord[]))
   const [connectionState, setConnectionState] = useState<PlatformContextValue["connectionState"]>(isApiMode ? "loading" : "demo")
   const [connectionError, setConnectionError] = useState("")
 
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_listings", JSON.stringify(listings)) }, [listings])
-  useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_transfers", JSON.stringify(transfers)) }, [transfers])
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_posts", JSON.stringify(feedPosts)) }, [feedPosts])
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_users", JSON.stringify(users)) }, [users])
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_reports", JSON.stringify(reports)) }, [reports])
@@ -387,14 +319,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       try {
         const admin = user?.role === "admin"
         const landlord = user?.role === "landlord"
-        const [publicListings, privateListings, rentalListings, favoriteListings, publicTransfers, privateTransfers, adminTransfers, postsResult, usersResult, categoriesResult, reportsResult, messagesResult, reviewsResult, notificationsResult] = await Promise.all([
-          admin ? apiRequest<{ items: RentalListing[] }>("admin/listings") : apiRequest<{ items: RentalListing[] }>("listings"),
+        const [publicListings, privateListings, rentalListings, favoriteListings, postsResult, usersResult, categoriesResult, reportsResult, messagesResult, reviewsResult, notificationsResult] = await Promise.all([
+            admin ? apiRequest<{ items: RentalListing[] }>("admin/listings") : apiRequest<{ items: RentalListing[] }>("listings?limit=60"),
           landlord ? apiRequest<{ items: RentalListing[] }>("listings/mine") : Promise.resolve({ items: [] as RentalListing[] }),
           user?.role === "renter" ? apiRequest<{ items: RentalListing[] }>("listings/rentals") : Promise.resolve({ items: [] as RentalListing[] }),
           user && user.role !== "admin" ? apiRequest<{ items: RentalListing[] }>("favorites") : Promise.resolve({ items: [] as RentalListing[] }),
-          user?.role === "renter" ? apiRequest<{ items: TransferListing[] }>("transfers") : Promise.resolve({ items: [] as TransferListing[] }),
-          user?.role === "renter" ? apiRequest<{ items: TransferListing[] }>("transfers/mine") : Promise.resolve({ items: [] as TransferListing[] }),
-          admin ? apiRequest<{ items: TransferListing[] }>("admin/transfers") : Promise.resolve({ items: [] as TransferListing[] }),
           admin ? apiRequest<{ items: ForumPost[] }>("admin/forum") : apiRequest<{ items: ForumPost[] }>("forum"),
           user ? (admin ? apiRequest<{ items: PlatformUser[] }>("admin/users") : apiRequest<{ items: PlatformUser[] }>("members")) : Promise.resolve({ items: [] as PlatformUser[] }),
           admin ? apiRequest<{ items: CategoryRecord[] }>("admin/categories") : apiRequest<{ items: CategoryRecord[] }>("categories"),
@@ -405,10 +334,19 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         ])
         if (!alive) return
         const listingSources = [publicListings.items, privateListings.items, rentalListings.items, favoriteListings.items]
-        const mergedListings = listingSources.flat().filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
+        const mergedListings = listingSources.flat()
+          .filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index)
+          .map((item) => {
+            const isReferenceListing = item.isReferenceListing ?? item.id.startsWith("tromoi-")
+            return {
+              ...item,
+              areaIsEstimate: item.areaIsEstimate ?? estimatedAreaListingIds.has(item.id),
+              isReferenceListing,
+              ownerName: isReferenceListing ? "Chủ trọ mẫu" : item.ownerName,
+              ownerAvatarUrl: item.ownerAvatarUrl ?? (isReferenceListing ? demoOwnerAvatar(item.id) : undefined),
+            }
+          })
         setListings(mergedListings)
-        const mergedTransfers = [...publicTransfers.items, ...privateTransfers.items, ...adminTransfers.items]
-        setTransfers(mergedTransfers.filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index))
         setFeedPosts(postsResult.items)
         setUsers(usersResult.items)
         setCategories(categoriesResult.items)
@@ -442,7 +380,6 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<PlatformContextValue>(() => ({
     listings,
-    transfers,
     posts: feedPosts,
     users,
     reports,
@@ -494,68 +431,6 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       }
       setListings((current) => current.map((item) => item.id === id ? { ...item, contacts: item.contacts + 1 } : item))
       return listings.find((item) => item.id === id)?.phone
-    },
-    saveTransfer: async (input, id) => {
-      if (isApiMode) {
-        const result = await apiRequest<{ item: TransferListing }>(id ? `transfers/${encodeURIComponent(id)}` : "transfers", {
-          method: id ? "PATCH" : "POST",
-          body: JSON.stringify({ ...input, availableFrom: input.availableFrom || null }),
-        })
-        setTransfers((current) => current.some((item) => item.id === result.item.id)
-          ? current.map((item) => item.id === result.item.id ? result.item : item)
-          : [result.item, ...current])
-        return result.item
-      }
-      const prior = id ? transfers.find((item) => item.id === id) : undefined
-      if (id && (!prior || prior.ownerId !== user?.id)) throw new Error("Bạn không có quyền sửa tin chuyển nhượng này.")
-      const price = `${input.priceValue.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} triệu`
-      const transferFee = input.transferFeeValue === null ? "Thỏa thuận" : `${input.transferFeeValue.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} triệu`
-      const now = new Date().toISOString()
-      const saved: TransferListing = {
-        ...input,
-        id: prior?.id ?? `transfer-${Date.now()}`,
-        ownerId: prior?.ownerId ?? user?.id ?? "",
-        ownerName: prior?.ownerName ?? user?.name ?? "Người thuê",
-        price,
-        transferFee,
-        area: `${input.areaValue} m²`,
-        status: "pending",
-        moderationNote: "",
-        createdAt: prior?.createdAt ?? now,
-        updatedAt: now,
-      }
-      setTransfers((current) => prior ? current.map((item) => item.id === saved.id ? saved : item) : [saved, ...current])
-      return saved
-    },
-    closeTransfer: async (id) => {
-      const existing = transfers.find((item) => item.id === id)
-      if (!existing || existing.ownerId !== user?.id) throw new Error("Bạn không có quyền đóng tin chuyển nhượng này.")
-      if (isApiMode) await apiRequest(`transfers/${encodeURIComponent(id)}`, { method: "DELETE" })
-      setTransfers((current) => current.map((item) => item.id === id ? { ...item, status: "closed", updatedAt: new Date().toISOString() } : item))
-    },
-    moderateTransfer: async (id, status, note = "") => {
-      const existing = transfers.find((item) => item.id === id)
-      if (isApiMode) {
-        const result = await apiRequest<{ item: TransferListing }>(`admin/transfers/${encodeURIComponent(id)}/status`, { method: "PATCH", body: JSON.stringify({ status, note }) })
-        setTransfers((current) => current.map((item) => item.id === id ? result.item : item))
-        return
-      }
-      if (existing) {
-        const now = new Date().toISOString()
-        setTransfers((current) => current.map((item) => item.id === id ? { ...item, status, moderationNote: note, updatedAt: now } : item))
-        setNotifications((current) => [{ userId: existing.ownerId, title: status === "active" ? "Tin chuyển nhượng đã được duyệt" : "Tin chuyển nhượng cần chỉnh sửa", detail: status === "active" ? `Tin “${existing.title}” hiện đã được hiển thị.` : note || `Tin “${existing.title}” chưa được duyệt. Vui lòng rà soát lại thông tin.`, id: `notification-${Date.now()}`, read: false, createdAt: now }, ...current])
-      }
-    },
-    removeTransfer: async (id) => {
-      if (isApiMode) await apiRequest(`admin/transfers/${encodeURIComponent(id)}`, { method: "DELETE" })
-      setTransfers((current) => current.map((item) => item.id === id ? { ...item, status: "removed", updatedAt: new Date().toISOString() } : item))
-    },
-    loadTransfer: async (id) => {
-      const cached = transfers.find((item) => item.id === id)
-      if (!isApiMode) return cached
-      const result = await apiRequest<{ item: TransferListing }>(`transfers/${encodeURIComponent(id)}`)
-      setTransfers((current) => current.some((item) => item.id === id) ? current.map((item) => item.id === id ? result.item : item) : [result.item, ...current])
-      return result.item
     },
     savePost: async (item) => {
       if (isApiMode) {
@@ -706,14 +581,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     },
     startConversation: async (person) => {
       if (isApiMode) {
-        const result = await apiRequest<{ item: MessageRecord }>("messages/conversations", { method: "POST", body: JSON.stringify({ otherUserId: person.userId, listingId: person.roomId, transferId: person.transferId ?? "" }) })
+        const result = await apiRequest<{ item: MessageRecord }>("messages/conversations", { method: "POST", body: JSON.stringify({ otherUserId: person.userId, listingId: person.roomId }) })
         setMessages((current) => [result.item, ...current.filter((item) => item.id !== result.item.id)])
         return result.item.id
       }
-      const existing = messages.find((conversation) => conversation.accountId === person.accountId && conversation.userId === person.userId && conversation.roomId === person.roomId && (conversation.transferId ?? "") === (person.transferId ?? ""))
+      const existing = messages.find((conversation) => conversation.accountId === person.accountId && conversation.userId === person.userId && conversation.roomId === person.roomId)
       const id = existing?.id ?? `conversation-${Date.now()}`
       const self = users.find((item) => item.id === person.accountId)
-      const relatedTransfer = transfers.find((item) => item.id === person.transferId)
       setMessages((current) => {
         const sender = current.find((item) => item.id === id && item.accountId === person.accountId) ?? {
           id,
@@ -721,11 +595,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           name: person.name,
           avatar: person.avatar,
           active: true,
-          text: person.transferId ? "Bắt đầu cuộc trò chuyện về tin chuyển nhượng" : person.roomId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện",
+          text: person.roomId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện",
           time: "Vừa xong",
           roomId: person.roomId,
-          transferId: person.transferId ?? "",
-          relatedTransfer: relatedTransfer ? { id: relatedTransfer.id, title: relatedTransfer.title, location: relatedTransfer.location, price: relatedTransfer.price, transferFee: relatedTransfer.transferFee, image: relatedTransfer.image } : null,
           userId: person.userId,
           messages: [],
         }
@@ -762,7 +634,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       }
       setReviews((current) => current.filter((item) => item.id !== id))
     },
-  }), [listings, transfers, feedPosts, users, reports, messages, categories, reviews, notifications, connectionState, connectionError, user, refreshMessages])
+  }), [listings, feedPosts, users, reports, messages, categories, reviews, notifications, connectionState, connectionError, user, refreshMessages])
 
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>
 }

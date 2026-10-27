@@ -1,18 +1,18 @@
 # Trọ Ơi
 
-Trọ Ơi kết nối người thuê phòng với chủ trọ, hỗ trợ tìm phòng, quản lý tin cho thuê, chuyển nhượng phòng, nhắn tin và tham gia cộng đồng.
+Trọ Ơi kết nối người thuê phòng với chủ trọ, hỗ trợ tìm phòng, quản lý tin cho thuê, nhắn tin và tham gia cộng đồng. Người thuê có thể đăng bài diễn đàn để chia sẻ hoặc pass phòng.
 
 ## Chức năng chính
 
-- Người thuê tìm và lọc phòng, xem chi tiết và bản đồ, lưu tin yêu thích, đánh giá phòng, đăng và quản lý tin chuyển nhượng, nhắn tin, nhận thông báo và tham gia diễn đàn.
+- Người thuê tìm và lọc phòng, xem chi tiết và bản đồ, lưu tin yêu thích, đánh giá phòng, nhắn tin, nhận thông báo và đăng bài diễn đàn, bao gồm bài pass phòng.
 - Chủ trọ đăng, sửa và quản lý tin phòng, xem thống kê.
-- Quản trị viên quản lý tài khoản, tin cho thuê, tin chuyển nhượng, diễn đàn, danh mục, báo cáo và thống kê.
+- Quản trị viên quản lý tài khoản, tin cho thuê, diễn đàn, danh mục, báo cáo và thống kê.
 
 ## Công nghệ
 
 - Giao diện: React 19, TypeScript, Vite, React Router và Tailwind CSS v4.
 - API: Node.js, Express, JWT và Socket.IO.
-- PostgreSQL/PostGIS lưu tài khoản, tin phòng, tin chuyển nhượng và dữ liệu quan hệ.
+- PostgreSQL/PostGIS lưu tài khoản, tin phòng và dữ liệu quan hệ.
 - MongoDB lưu cuộc trò chuyện, tin nhắn và thông báo.
 
 ## Yêu cầu
@@ -102,7 +102,7 @@ pnpm install
 pnpm db:migrate
 ~~~
 
-Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 5 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
+Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 7 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
 
    Để gửi OTP thật qua Gmail, điền các dòng sau vào `.env`:
 
@@ -132,15 +132,15 @@ Có thể xem hướng dẫn cài đặt trong [tài liệu PostGIS cho Windows]
 pnpm db:seed
 ~~~
 
-Seed dùng MongoDB và chỉ dành cho dữ liệu phát triển. Không cần chạy seed để tạo cấu trúc bảng.
+Seed dùng MongoDB và chỉ dành cho dữ liệu phát triển. Script tạo các tài khoản phát triển, 12 bài viết diễn đàn mẫu kèm bình luận và lượt thích để kiểm tra trang chủ và diễn đàn. Những bài này là nội dung minh họa do nhóm tạo, không phải bài đăng của người dùng thật.
 
-Để thêm/cập nhật riêng 10 tin phòng mẫu cùng các bài viết và bình luận mẫu trong diễn đàn mà không đặt lại mật khẩu tài khoản hoặc ghi vào MongoDB, chạy:
+Để nhập 15 tin phòng Trọ Mới được người dùng xác nhận cho phép sử dụng, chạy:
 
 ~~~powershell
-pnpm db:seed:showcase
+pnpm db:import-tromoi
 ~~~
 
-Lệnh này cần các tài khoản demo đã được tạo trước bằng `pnpm db:seed`. Ảnh dùng cho dữ liệu mẫu được lưu trong `public/images/rooms/`; chúng chỉ là ảnh minh họa, không phải ảnh xác thực của phòng thật. Danh sách nguồn ảnh có trong [docs/demo-image-sources.md](docs/demo-image-sources.md).
+Lệnh nhập có thể chạy lại an toàn: chỉ thêm các mã tin chưa có, không xóa hoặc ghi đè tin đã tồn tại. Bộ dữ liệu gồm 15 tin thuộc sáu loại phòng và 67 ảnh; có phòng tại TP. Hồ Chí Minh, Hà Nội và Đà Nẵng, từ phòng trọ đến căn hộ cao cấp. Vị trí bản đồ là gần đúng theo khu vực. Danh sách tin, ảnh và cách chọn ảnh được ghi tại [docs/tromoi-data-sources.md](docs/tromoi-data-sources.md).
 
 Khi chủ trọ tạo tin thật, có thể tải tối đa 6 ảnh của cùng một phòng. Ở môi trường phát triển, ảnh được lưu trong `server/uploads/` và thư mục này không được đưa lên Git. Môi trường production cần cấu hình Cloudinary trong `.env` để ảnh tồn tại ổn định sau khi triển khai.
 
