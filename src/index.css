@@ -9944,14 +9944,30 @@ select.search-sort-select:focus-visible,
   box-shadow: 0 8px 28px rgba(18, 48, 30, 0.08) !important;
 }
 
-.campaign-image-stage {
+.campaign-carousel-viewport {
   position: relative !important;
   width: 100% !important;
-  aspect-ratio: 16 / 4.5 !important;
-  max-height: 310px !important;
+  aspect-ratio: 16 / 5.2 !important;
+  max-height: 320px !important;
   min-height: 180px !important;
   overflow: hidden !important;
-  background: #144026 !important;
+  background: #0f172a !important;
+  touch-action: pan-y !important;
+}
+
+.campaign-carousel-track {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+  will-change: transform !important;
+}
+
+.campaign-carousel-slide {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 100% !important;
+  height: 100% !important;
 }
 
 .campaign-image-link {
@@ -9967,33 +9983,30 @@ select.search-sort-select:focus-visible,
   object-fit: cover !important;
   object-position: center !important;
   display: block !important;
-  transition: transform 0.35s ease !important;
-}
-
-.campaign-banner-card:hover .campaign-image-link img {
-  transform: scale(1.015) !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
 }
 
 .campaign-nav-arrow {
   position: absolute !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  width: 38px !important;
-  height: 38px !important;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.88) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   color: #1b3d27 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  opacity: 0 !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15) !important;
-  z-index: 5 !important;
+  opacity: 0.85 !important;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+  z-index: 6 !important;
 }
 
 .campaign-banner-card:hover .campaign-nav-arrow {
@@ -10001,7 +10014,7 @@ select.search-sort-select:focus-visible,
 }
 
 .campaign-nav-prev {
-  left: 16px !important;
+  left: 14px !important;
 }
 
 .campaign-nav-prev svg {
@@ -10009,13 +10022,14 @@ select.search-sort-select:focus-visible,
 }
 
 .campaign-nav-next {
-  right: 16px !important;
+  right: 14px !important;
 }
 
 .campaign-nav-arrow:hover {
   background: #ffffff !important;
-  color: #13aa8b !important;
-  transform: translateY(-50%) scale(1.08) !important;
+  color: #ff5722 !important;
+  transform: translateY(-50%) scale(1.1) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
 }
 
 .campaign-dots {
@@ -10025,30 +10039,51 @@ select.search-sort-select:focus-visible,
   transform: translateX(-50%) !important;
   display: flex !important;
   align-items: center !important;
-  gap: 7px !important;
-  background: rgba(0, 0, 0, 0.38) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  padding: 5px 12px !important;
+  gap: 6px !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  padding: 4px 10px !important;
   border-radius: 9999px !important;
-  z-index: 5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  z-index: 6 !important;
 }
 
 .campaign-dot {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.5) !important;
-  border: none !important;
-  padding: 0 !important;
+  all: unset !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px 3px !important;
   cursor: pointer !important;
-  transition: all 0.25s ease !important;
+  line-height: 0 !important;
 }
 
-.campaign-dot.is-active {
-  width: 22px !important;
+.campaign-dot-inner {
+  display: block !important;
+  height: 7px !important;
+  width: 7px !important;
   border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.campaign-dot.is-active .campaign-dot-inner {
+  width: 24px !important;
   background: #ffffff !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.75) !important;
+}
+
+@keyframes campaignCopyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .campaign-info-bar {
@@ -10066,6 +10101,7 @@ select.search-sort-select:focus-visible,
   flex-direction: column !important;
   gap: 3px !important;
   min-width: 0 !important;
+  animation: campaignCopyFadeIn 0.3s ease-out !important;
 }
 
 .campaign-tag {
@@ -10121,8 +10157,8 @@ select.search-sort-select:focus-visible,
 }
 
 @media (max-width: 900px) {
-  .campaign-image-stage {
-    aspect-ratio: 16 / 6 !important;
+  .campaign-carousel-viewport {
+    aspect-ratio: 16 / 6.2 !important;
   }
   .campaign-info-bar {
     padding: 16px 20px !important;
@@ -10131,7 +10167,7 @@ select.search-sort-select:focus-visible,
 }
 
 @media (max-width: 680px) {
-  .campaign-image-stage {
+  .campaign-carousel-viewport {
     aspect-ratio: 16 / 7.5 !important;
   }
   .campaign-info-bar {

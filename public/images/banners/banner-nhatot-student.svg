@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="b2_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00695C"/>
+      <stop offset="35%" stop-color="#00897B"/>
+      <stop offset="70%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+    <radialGradient id="b2_glow1" cx="80%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="#E0F7FA" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#80DEEA" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="b2_glow2" cx="15%" cy="85%" r="45%">
+      <stop offset="0%" stop-color="#4DD0E1" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#004D40" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="b2_card_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="b2_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF59D"/>
+      <stop offset="50%" stop-color="#FFD54F"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+    <linearGradient id="b2_cta" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#64FFDA"/>
+      <stop offset="100%" stop-color="#1DE9B6"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="b2_shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25"/>
+    </filter>
+    <filter id="b2_heavy_shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="420" rx="16" fill="url(#b2_bg)"/>
+  <rect width="1200" height="420" rx="16" fill="url(#b2_glow1)"/>
+  <rect width="1200" height="420" rx="16" fill="url(#b2_glow2)"/>
+
+  <!-- Decorative geometric rings -->
+  <g opacity="0.08" stroke="#FFFFFF" stroke-width="1.5" fill="none">
+    <circle cx="950" cy="210" r="150"/>
+    <circle cx="950" cy="210" r="220"/>
+    <circle cx="950" cy="210" r="290"/>
+    <line x1="820" y1="0" x2="1200" y2="380"/>
+  </g>
+
+  <!-- LEFT COLUMN: Typography & Value Props -->
+  <g transform="translate(60, 48)">
+    <!-- Badge -->
+    <g>
+      <rect x="0" y="0" width="350" height="34" rx="17" fill="#FFFFFF" fill-opacity="0.22" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.4"/>
+      <circle cx="16" cy="17" r="5" fill="#64FFDA"/>
+      <text x="30" y="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12.5" font-weight="800" fill="#FFFFFF" letter-spacing="0.8">ĐỒNG HÀNH MÙA THUÊ TRỌ • ƯU ĐÃI 2026</text>
+    </g>
+
+    <!-- Main Title -->
+    <g transform="translate(0, 52)">
+      <text font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="34" font-weight="900" fill="#FFFFFF" filter="url(#b2_shadow)" letter-spacing="-0.5">
+        TÌM TRỌ AN TÂM
+      </text>
+      <text y="42" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="34" font-weight="900" fill="url(#b2_gold)" filter="url(#b2_shadow)" letter-spacing="-0.5">
+        ĐÚNG GIÁ • ĐÚNG HÌNH THẬT
+      </text>
+    </g>
+
+    <!-- Subtitle -->
+    <text x="0" y="152" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="500" fill="#E0F2F1">
+      Hơn 12.000+ phòng trọ gần các trường Đại học tại TP.HCM, minh bạch chi phí điện nước
+    </text>
+
+    <!-- 3 Benefit Pill Cards -->
+    <g transform="translate(0, 180)">
+      <!-- Card 1 -->
+      <g>
+        <rect width="186" height="66" rx="12" fill="url(#b2_card_bg)" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.3" filter="url(#b2_shadow)"/>
+        <circle cx="28" cy="33" r="16" fill="#FFFFFF" fill-opacity="0.25"/>
+        <text x="20" y="39" font-size="16">🛡️</text>
+        <text x="52" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#FFFFFF">100% PHÒNG DUYỆT</text>
+        <text x="52" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" fill="#B2DFDB">Hình ảnh xác thực</text>
+      </g>
+
+      <!-- Card 2 -->
+      <g transform="translate(198, 0)">
+        <rect width="198" height="66" rx="12" fill="url(#b2_card_bg)" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.3" filter="url(#b2_shadow)"/>
+        <circle cx="28" cy="33" r="16" fill="#FFFFFF" fill-opacity="0.25"/>
+        <text x="21" y="39" font-size="16">📍</text>
+        <text x="52" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#FFFFFF">GẦN TRƯỜNG ĐH</text>
+        <text x="52" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" fill="#B2DFDB">Bản đồ định vị chuẩn</text>
+      </g>
+
+      <!-- Card 3 -->
+      <g transform="translate(408, 0)">
+        <rect width="194" height="66" rx="12" fill="url(#b2_card_bg)" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.3" filter="url(#b2_shadow)"/>
+        <circle cx="28" cy="33" r="16" fill="#FFFFFF" fill-opacity="0.25"/>
+        <text x="20" y="39" font-size="16">💬</text>
+        <text x="52" y="28" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" fill="#FFFFFF">CHỦ NHÀ TRỰC TIẾP</text>
+        <text x="52" y="47" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" fill="#B2DFDB">Không phí môi giới</text>
+      </g>
+    </g>
+
+    <!-- Bottom Action Pill / Info -->
+    <g transform="translate(0, 270)">
+      <rect width="210" height="42" rx="21" fill="url(#b2_cta)" filter="url(#b2_shadow)"/>
+      <text x="28" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="800" fill="#004D40">TÌM PHÒNG NGAY</text>
+      <path d="M165 21l-5-5m5 5l-5 5m5-5H142" stroke="#004D40" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="230" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#FFFFFF" fill-opacity="0.9">★ Hẹn xem phòng tiện lợi trên Trọ Ơi</text>
+    </g>
+  </g>
+
+  <!-- RIGHT COLUMN: Professional Clean Vector Student / Location Map Artwork -->
+  <g transform="translate(860, 60)">
+    <!-- Glow Backdrop -->
+    <circle cx="160" cy="150" r="140" fill="#FFFFFF" fill-opacity="0.12" filter="url(#b2_heavy_shadow)"/>
+
+    <!-- Map Board Isometric Base -->
+    <path d="M160 280 L290 215 L160 150 L30 215 Z" fill="#004D40" fill-opacity="0.4"/>
+    <path d="M30 215 L160 280 L160 295 L30 230 Z" fill="#00332C" fill-opacity="0.5"/>
+    <path d="M290 215 L160 280 L160 295 L290 230 Z" fill="#00241F" fill-opacity="0.4"/>
+
+    <!-- Modern Apartment Mini Building -->
+    <polygon points="90,190 160,235 160,105 90,60" fill="#FFFFFF"/>
+    <polygon points="160,235 230,190 230,60 160,105" fill="#E0F2F1"/>
+    <polygon points="80,65 160,15 240,65 160,115" fill="#00897B"/>
+
+    <!-- Windows Teal Glowing -->
+    <polygon points="105,95 130,110 130,135 105,120" fill="#4DD0E1"/>
+    <polygon points="138,115 152,123 152,148 138,140" fill="#4DD0E1"/>
+    <polygon points="105,138 130,153 130,178 105,163" fill="#4DD0E1"/>
+    <polygon points="138,158 152,166 152,191 138,183" fill="#4DD0E1"/>
+
+    <polygon points="168,123 192,109 192,134 168,148" fill="#26A69A"/>
+    <polygon points="168,166 192,152 192,177 168,191" fill="#26A69A"/>
+
+    <!-- Huge Glowing Map Pin -->
+    <g transform="translate(160, 4)" filter="url(#b2_heavy_shadow)">
+      <path d="M0 -30 C-22 -30 -38 -14 -38 8 C-38 32 0 68 0 68 C0 68 38 32 38 8 C38 -14 22 -30 0 -30 Z" fill="#FF5252"/>
+      <circle cx="0" cy="5" r="14" fill="#FFFFFF"/>
+      <circle cx="0" cy="5" r="8" fill="#FF5252"/>
+    </g>
+
+    <!-- Floating Badge 1: Đánh Giá 5.0 -->
+    <g transform="translate(170, 75)" filter="url(#b2_heavy_shadow)">
+      <rect x="0" y="0" width="124" height="46" rx="10" fill="#FFFFFF"/>
+      <circle cx="22" cy="23" r="13" fill="#FFC107"/>
+      <text x="16" y="28" font-size="13">★</text>
+      <text x="42" y="20" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#263238">5.0 SAO</text>
+      <text x="42" y="36" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="600" fill="#00897B">Đánh giá thật</text>
+    </g>
+
+    <!-- Floating Badge 2: Đại Học Gần Nhất -->
+    <g transform="translate(-10, 160)" filter="url(#b2_heavy_shadow)">
+      <rect x="0" y="0" width="134" height="46" rx="10" fill="#FFFFFF"/>
+      <circle cx="22" cy="23" r="13" fill="#0284C7"/>
+      <text x="16" y="28" font-size="14">🎓</text>
+      <text x="42" y="19" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#0F172A">&lt; 15 PHÚT</text>
+      <text x="42" y="35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="9.5" font-weight="600" fill="#64748B">Tới các trường ĐH</text>
+    </g>
+  </g>
+</svg>

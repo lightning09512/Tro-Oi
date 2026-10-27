@@ -212,7 +212,7 @@ function Home() {
     {
       id: "landlord-campaign",
       tag: "Chương trình dành cho chủ trọ",
-      image: "/images/banners/banner-nhatot-style.jpg",
+      image: "/images/banners/banner-nhatot-promo.svg",
       title: "Đăng tin cho thuê trên Trọ Ơi - Tiếp cận hơn 50.000+ người thuê mỗi tháng",
       description: "Đăng tin hoàn toàn miễn phí, kết nối người thuê trực tiếp không qua trung gian. Hệ thống hỗ trợ gắn nhãn chính chủ xác thực và quản lý lịch hẹn thông minh!",
       buttonText: "Đăng tin ngay",
@@ -221,7 +221,7 @@ function Home() {
     {
       id: "renter-campaign",
       tag: "Ưu đãi sinh viên & người thuê",
-      image: "/images/banners/banner-student-nhatot.jpg",
+      image: "/images/banners/banner-nhatot-student.svg",
       title: "Rủ bạn cùng tìm phòng trên Trọ Ơi - Nhận trọn ưu đãi tiện ích",
       description: "Khám phá hàng ngàn phòng trọ gần các trường đại học lớn tại TP.HCM, xem ảnh thật, giá điện nước minh bạch và hẹn xem phòng tiện lợi ngay trên hệ thống!",
       buttonText: "Tìm phòng ngay",
@@ -230,14 +230,41 @@ function Home() {
   ], [landlordProgramUrl])
 
   const [activeCampaignIndex, setActiveCampaignIndex] = useState(0)
+  const [isCarouselHovered, setIsCarouselHovered] = useState(false)
   const currentCampaign = promoCampaigns[activeCampaignIndex] ?? promoCampaigns[0]
+  const touchStartXRef = useRef<number | null>(null)
+
+  const handlePrevCampaign = () => {
+    setActiveCampaignIndex((prev) => (prev - 1 + promoCampaigns.length) % promoCampaigns.length)
+  }
+
+  const handleNextCampaign = () => {
+    setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)
+  }
 
   useEffect(() => {
+    if (isCarouselHovered) return
     const timer = setInterval(() => {
       setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)
-    }, 7000)
+    }, 6000)
     return () => clearInterval(timer)
-  }, [promoCampaigns.length])
+  }, [isCarouselHovered, promoCampaigns.length])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return
+    const touchEndX = e.changedTouches[0].clientX
+    const diff = touchStartXRef.current - touchEndX
+    if (diff > 45) {
+      handleNextCampaign()
+    } else if (diff < -45) {
+      handlePrevCampaign()
+    }
+    touchStartXRef.current = null
+  }
 
   const buildSearchUrl = (roomType?: string) => {
     const params = new URLSearchParams()
@@ -463,32 +490,59 @@ function Home() {
             <h2 id="home-campaign-title" className="campaign-section-title">Ưu đãi / Chương trình</h2>
           </div>
 
-          <div className="campaign-banner-card">
-            <div className="campaign-image-stage">
-              <Link to={currentCampaign.link} className="campaign-image-link" aria-label={currentCampaign.title}>
-                <img
-                  src={currentCampaign.image}
-                  alt={currentCampaign.title}
-                  loading="lazy"
-                />
-              </Link>
+          <div
+            className="campaign-banner-card"
+            onMouseEnter={() => setIsCarouselHovered(true)}
+            onMouseLeave={() => setIsCarouselHovered(false)}
+          >
+            <div
+              className="campaign-carousel-viewport"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div
+                className="campaign-carousel-track"
+                style={{
+                  transform: `translate3d(-${activeCampaignIndex * 100}%, 0, 0)`,
+                  transition: "transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+              >
+                {promoCampaigns.map((campaign, idx) => (
+                  <div key={campaign.id} className="campaign-carousel-slide">
+                    <Link
+                      to={campaign.link}
+                      className="campaign-image-link"
+                      aria-label={campaign.title}
+                    >
+                      <img
+                        src={campaign.image}
+                        alt={campaign.title}
+                        loading={idx === 0 ? "eager" : "lazy"}
+                        draggable="false"
+                      />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
               <button
                 type="button"
                 className="campaign-nav-arrow campaign-nav-prev"
                 aria-label="Xem chương trình trước"
-                onClick={() => setActiveCampaignIndex((prev) => (prev - 1 + promoCampaigns.length) % promoCampaigns.length)}
+                onClick={handlePrevCampaign}
               >
-                <Icon name="chevron" size={16} />
+                <Icon name="chevron" size={18} />
               </button>
               <button
                 type="button"
                 className="campaign-nav-arrow campaign-nav-next"
                 aria-label="Xem chương trình tiếp theo"
-                onClick={() => setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)}
+                onClick={handleNextCampaign}
               >
-                <Icon name="chevron" size={16} />
+                <Icon name="chevron" size={18} />
               </button>
-              <div className="campaign-dots" role="tablist">
+
+              <div className="campaign-dots" role="tablist" aria-label="Danh sách chương trình">
                 {promoCampaigns.map((item, idx) => (
                   <button
                     key={item.id}
@@ -498,12 +552,14 @@ function Home() {
                     className={`campaign-dot${idx === activeCampaignIndex ? " is-active" : ""}`}
                     onClick={() => setActiveCampaignIndex(idx)}
                     aria-label={`Chuyển đến chương trình ${idx + 1}`}
-                  />
+                  >
+                    <span className="campaign-dot-inner" />
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="campaign-info-bar">
+            <div className="campaign-info-bar" key={currentCampaign.id}>
               <div className="campaign-copy">
                 <span className="campaign-tag">{currentCampaign.tag}</span>
                 <h3 className="campaign-title">{currentCampaign.title}</h3>
