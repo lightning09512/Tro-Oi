@@ -7194,24 +7194,228 @@ a,
 }
 
 .community-preview {
-  padding-top: 12px;
+  padding-top: 36px;
+  padding-bottom: 56px;
+}
+
+.community-preview .section-title h2 {
+  font-family: var(--font-ui), sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: #223328;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(300px, 0.82fr);
+  gap: 22px;
+  align-items: stretch;
 }
 
 .featured-story {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid #e1e9e3;
   border-radius: 16px;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s ease;
+  min-height: auto;
 }
 
-.featured-story span,
-.story-list span,
-.featured-story small,
-.story-list small {
+.featured-story:hover {
+  border-color: #bad3c0;
+  box-shadow: 0 8px 24px rgba(36, 95, 59, 0.08);
+  transform: translateY(-2px);
+}
+
+.featured-story-photo {
+  width: 200px;
+  height: 160px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #eef2ef;
+}
+
+.featured-story-photo img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.featured-story:hover .featured-story-photo img {
+  transform: scale(1.04);
+}
+
+.featured-story-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.featured-story-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #245f3b;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.featured-story-title {
+  font-family: var(--font-ui), sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.45 !important;
+  color: #24352a !important;
+  margin: 0 0 8px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.featured-story:hover .featured-story-title {
+  color: #1e5a35 !important;
+}
+
+.featured-story-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
+  color: #6a7c72;
+  margin: 0 0 10px;
 }
 
-.featured-story small,
-.story-list small {
-  color: #5a675f;
-  font-size: 13px;
+.featured-story-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #245f3b;
+  margin-top: auto;
+}
+
+.story-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.story-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e3ebe5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.story-item:hover {
+  border-color: #bad3c0;
+  background: #f8faf8;
+  transform: translateX(3px);
+}
+
+.story-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #e3ebd7;
+  color: #2f613f;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.story-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-item-author {
+  font-size: 12px;
+  font-weight: 700;
+  color: #24352a;
+  margin-bottom: 2px;
+}
+
+.story-item-text {
+  font-family: var(--font-ui), sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: #53645b !important;
+  margin: 0 0 4px !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-item:hover .story-item-text {
+  color: #1e5a35 !important;
+}
+
+.story-item-meta {
+  font-size: 11px;
+  color: #7e8f85;
+}
+
+@media (max-width: 900px) {
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .featured-story {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+  .featured-story-photo {
+    width: 140px;
+    height: 130px;
+  }
+}
+
+@media (max-width: 580px) {
+  .featured-story {
+    grid-template-columns: 1fr;
+  }
+  .featured-story-photo {
+    width: 100%;
+    height: 160px;
+  }
 }
 
 .promotion-ticket small {

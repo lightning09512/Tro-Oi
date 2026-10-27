@@ -373,34 +373,47 @@ function Home() {
           action="Vào diễn đàn"
           onAction={() => navigate("/dien-dan")}
         />
-        {latestPosts.length ? <div className="story-grid">
-          <Link className="featured-story" to={`/bai-viet/${latestPosts[0].id}`}>
-            <img
-              src={latestPosts[0].image || forumFallbackImage}
-              alt={`Ảnh minh họa cho bài viết của ${latestPosts[0].name}`}
-              onError={(event) => { event.currentTarget.src = forumFallbackImage }}
-            />
-            <div>
-              <span>Chia sẻ từ {latestPosts[0].name}</span>
-              <h2>{latestPosts[0].content}</h2>
-              <small>{latestPosts[0].time} · {latestPosts[0].likes} lượt thích · {latestPosts[0].commentsCount} bình luận</small>
-            </div>
-          </Link>
-          <div className="story-list">
-            {latestPosts.slice(1, 4).map((post) => (
-              <Link to={`/bai-viet/${post.id}`} key={post.id}>
-                <span className="story-avatar">
-                  {post.avatarUrl ? <img className="user-avatar-image" src={post.avatarUrl} alt="" /> : post.initials}
-                </span>
-                <div>
-                  <span>{post.name}</span>
-                  <h3>{post.content}</h3>
-                  <small>{post.time} · {post.commentsCount} bình luận</small>
+        {latestPosts.length ? (
+          <div className="story-grid">
+            <Link className="featured-story" to={`/bai-viet/${latestPosts[0].id}`}>
+              <div className="featured-story-photo">
+                <img
+                  src={latestPosts[0].image || forumFallbackImage}
+                  alt={`Ảnh minh họa bài viết của ${latestPosts[0].name}`}
+                  onError={(event) => { event.currentTarget.src = forumFallbackImage }}
+                />
+              </div>
+              <div className="featured-story-body">
+                <span className="featured-story-badge">Chia sẻ từ {latestPosts[0].name}</span>
+                <h3 className="featured-story-title">{latestPosts[0].content}</h3>
+                <div className="featured-story-meta">
+                  <span>{latestPosts[0].time}</span>
+                  <span>·</span>
+                  <span>{latestPosts[0].likes} lượt thích</span>
+                  <span>·</span>
+                  <span>{latestPosts[0].commentsCount} bình luận</span>
                 </div>
-              </Link>
-            ))}
+                <span className="featured-story-cta">
+                  Đọc tiếp <Icon name="chevron" size={14} />
+                </span>
+              </div>
+            </Link>
+            <div className="story-list">
+              {latestPosts.slice(1, 4).map((post) => (
+                <Link to={`/bai-viet/${post.id}`} key={post.id} className="story-item">
+                  <span className="story-avatar">
+                    {post.avatarUrl ? <img className="user-avatar-image" src={post.avatarUrl} alt="" /> : post.initials}
+                  </span>
+                  <div className="story-item-body">
+                    <span className="story-item-author">{post.name}</span>
+                    <p className="story-item-text">{post.content}</p>
+                    <small className="story-item-meta">{post.time} · {post.commentsCount} bình luận</small>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div> : <div className="home-forum-empty"><p>Chưa có bài viết nào được đăng.</p><button onClick={() => navigate("/dien-dan")}>Mở diễn đàn <Icon name="chevron" size={16}/></button></div>}
+        ) : <div className="home-forum-empty"><p>Chưa có bài viết nào được đăng.</p><button onClick={() => navigate("/dien-dan")}>Mở diễn đàn <Icon name="chevron" size={16}/></button></div>}
       </section>
     </main>
   )
