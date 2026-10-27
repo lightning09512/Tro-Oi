@@ -9339,3 +9339,38 @@ select.search-sort-select:focus-visible,
     gap: 16px !important;
   }
 }
+
+
+/* ========================================================
+   LOCATION PICKER & DROPDOWN SVG CHEVRON POLISH
+   ======================================================== */
+.location-picker-chevron {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #526759 !important;
+  margin-left: 4px !important;
+  font-size: initial !important;
+  line-height: normal !important;
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms ease !important;
+}
+
+.location-picker-chevron.is-flipped {
+  transform: rotate(180deg) !important;
+  color: #245f3b !important;
+}
+
+.custom-select-arrow {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #65776c !important;
+  font-size: initial !important;
+  line-height: normal !important;
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms ease !important;
+}
+
+.custom-select-arrow.is-flipped {
+  transform: rotate(180deg) !important;
+  color: #245f3b !important;
+}

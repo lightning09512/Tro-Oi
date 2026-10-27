@@ -87,7 +87,7 @@ function CustomSelectField({
           <span className={`custom-select-value${!value ? " is-placeholder" : ""}`}>
             {value || placeholder}
           </span>
-          <span className={`custom-select-arrow${isOpen ? " is-flipped" : ""}`}>⌄</span>
+          <span className={`custom-select-arrow${isOpen ? " is-flipped" : ""}`} aria-hidden="true"><Icon name="chevronDown" size={14} /></span>
         </div>
       </button>
 
@@ -211,7 +211,7 @@ export default function LocationPicker({
       >
         <Icon name="pin" size={variant === "hero" ? 18 : 17} />
         <span>{displayValue}</span>
-        <span className="location-picker-chevron" aria-hidden="true">⌄</span>
+        <span className={`location-picker-chevron${open ? " is-flipped" : ""}`} aria-hidden="true"><Icon name="chevronDown" size={15} /></span>
       </button>
 
       {open && (
