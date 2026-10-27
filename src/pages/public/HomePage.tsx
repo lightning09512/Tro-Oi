@@ -211,7 +211,7 @@ function Home() {
     {
       id: "landlord-campaign",
       tag: "Chương trình dành cho chủ trọ",
-      image: "/images/banners/banner-nhatot-promo.svg",
+      image: "/images/banners/banner-nhatot-style.jpg",
       title: "Đăng tin cho thuê trên Trọ Ơi - Tiếp cận hơn 50.000+ người thuê mỗi tháng",
       description: "Đăng tin hoàn toàn miễn phí, kết nối người thuê trực tiếp không qua trung gian. Hệ thống hỗ trợ gắn nhãn chính chủ xác thực và quản lý lịch hẹn thông minh!",
       buttonText: "Đăng tin ngay",
@@ -220,7 +220,7 @@ function Home() {
     {
       id: "renter-campaign",
       tag: "Ưu đãi sinh viên & người thuê",
-      image: "/images/banners/banner-nhatot-student.svg",
+      image: "/images/banners/banner-student-nhatot.jpg",
       title: "Rủ bạn cùng tìm phòng trên Trọ Ơi - Nhận trọn ưu đãi tiện ích",
       description: "Khám phá hàng ngàn phòng trọ gần các trường đại học lớn tại TP.HCM, xem ảnh thật, giá điện nước minh bạch và hẹn xem phòng tiện lợi ngay trên hệ thống!",
       buttonText: "Tìm phòng ngay",
@@ -523,6 +523,10 @@ function Home() {
                     <span className="campaign-dot-inner" />
                   </button>
                 ))}
+              </div>
+
+              <div className="campaign-counter-badge">
+                {activeCampaignIndex + 1} / {promoCampaigns.length}
               </div>
             </div>
 
