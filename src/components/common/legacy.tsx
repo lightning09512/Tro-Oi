@@ -73,6 +73,13 @@ export function Icon({
       <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4-5.9-3.1L6.1 20l1.1-6.4L2.5 9 9 8Z" />
     ),
     send: <path d="m22 2-7 20-4-9-9-4Z M22 2 11 13" />,
+    upload: (
+      <>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </>
+    ),
     smile: (
       <>
         <circle cx="12" cy="12" r="10" />

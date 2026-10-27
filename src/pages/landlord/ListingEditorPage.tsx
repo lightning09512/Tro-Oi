@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
@@ -12,6 +12,8 @@ export default function ListingEditorPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const { listings, saveListing, categories } = usePlatform()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
   const amenities = categories.filter((item) => item.type === "Tiện ích" && item.status === "active").map((item) => item.name)
   const existing = listings.find((item) => item.id === id && item.ownerId === user?.id)
@@ -33,31 +35,33 @@ export default function ListingEditorPage() {
       latitude: existing.latitude === undefined ? "" : String(existing.latitude),
       longitude: existing.longitude === undefined ? "" : String(existing.longitude),
     })
-  }, [existing])
+  }, [existing, user?.phone])
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }))
   const toggleAmenity = (value: string) => setForm((current) => ({ ...current, amenities: current.amenities.includes(value) ? current.amenities.filter((item) => item !== value) : [...current.amenities, value] }))
+
   const uploadImages = async (fileList?: FileList | null) => {
     const files = Array.from(fileList ?? [])
     if (!files.length) return
     if (form.gallery.length + files.length > 6) {
-      setError("Mỗi tin được thêm tối đa 6 ảnh. Hãy bỏ bớt ảnh trước khi chọn thêm.")
+      setError("Mỗi tin phòng được thêm tối đa 6 ảnh. Hãy xóa bớt ảnh trước khi tải thêm.")
       return
     }
     if (files.some((file) => !file.type.startsWith("image/"))) {
-      setError("Vui lòng chỉ chọn tệp hình ảnh.")
+      setError("Vui lòng chỉ chọn tệp hình ảnh (JPG, PNG, WebP).")
       return
     }
-    const maxFileSize = isApiMode ? 3_000_000 : 500_000
+    const maxFileSize = isApiMode ? 4_000_000 : 1_000_000
     if (files.some((file) => file.size > maxFileSize)) {
-      setError(isApiMode ? "Mỗi ảnh tải lên cần nhỏ hơn 3 MB." : "Mỗi ảnh demo cần nhỏ hơn 500 KB để lưu ổn định trong trình duyệt.")
+      setError(isApiMode ? "Mỗi ảnh tải lên cần nhỏ hơn 4 MB." : "Mỗi ảnh demo cần nhỏ hơn 1 MB để lưu ổn định trong trình duyệt.")
       return
     }
     setUploading(true)
     setError("")
     try {
+      const newUrls: string[] = []
       for (const [index, file] of files.entries()) {
-        setUploadProgress(`Đang xử lý ảnh ${index + 1}/${files.length}…`)
+        setUploadProgress(`Đang tải ảnh ${index + 1}/${files.length}…`)
         let url: string
         if (isApiMode) {
           const body = new FormData()
@@ -72,29 +76,39 @@ export default function ListingEditorPage() {
             reader.readAsDataURL(file)
           })
         }
-        setForm((current) => {
-          const gallery = [...new Set([...current.gallery, url])].slice(0, 6)
-          return { ...current, gallery, image: current.image || gallery[0] || "" }
-        })
+        newUrls.push(url)
       }
-      setUploadProgress(`${files.length} ảnh đã được thêm vào tin.`)
+      setForm((current) => {
+        const gallery = [...new Set([...current.gallery, ...newUrls])].slice(0, 6)
+        return {
+          ...current,
+          gallery,
+          image: current.image && gallery.includes(current.image) ? current.image : gallery[0] || "",
+        }
+      })
+      setUploadProgress(`Đã tải lên thành công ${files.length} ảnh.`)
+      toast(`Đã tải lên ${files.length} ảnh thành công!`, "success")
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Không thể tải ảnh lên.")
+      setError(caught instanceof Error ? caught.message : "Không thể tải ảnh lên. Vui lòng thử lại.")
     } finally {
       setUploading(false)
+      window.setTimeout(() => setUploadProgress(""), 2500)
     }
   }
 
-  const setCoverImageUrl = (value: string) => setForm((current) => {
-    const others = current.gallery.filter((photo) => photo !== current.image)
-    const gallery = value.trim() ? [...new Set([value.trim(), ...others])].slice(0, 6) : others
-    return { ...current, image: value, gallery }
-  })
-  const removeGalleryImage = (photo: string) => setForm((current) => {
-    const gallery = current.gallery.filter((item) => item !== photo)
-    return { ...current, gallery, image: current.image === photo ? gallery[0] ?? "" : current.image }
-  })
-  const makeCoverImage = (photo: string) => setForm((current) => ({ ...current, image: photo, gallery: [photo, ...current.gallery.filter((item) => item !== photo)] }))
+  const removeGalleryImage = (photo: string) => {
+    setForm((current) => {
+      const gallery = current.gallery.filter((item) => item !== photo)
+      const nextImage = current.image === photo ? gallery[0] ?? "" : current.image
+      return { ...current, gallery, image: nextImage }
+    })
+    toast("Đã xóa ảnh.", "info")
+  }
+
+  const makeCoverImage = (photo: string) => {
+    setForm((current) => ({ ...current, image: photo }))
+    toast("Đã chọn làm ảnh đại diện chính của phòng!", "info")
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -106,8 +120,15 @@ export default function ListingEditorPage() {
       setError("Nhập cả vĩ độ và kinh độ hợp lệ, hoặc để trống cả hai.")
       return
     }
-    if (form.gallery.length < 2 || !form.image.trim()) { setError("Thêm ít nhất 2 ảnh thực tế của cùng phòng trước khi gửi tin."); return }
-    if (uploading) { setError("Đợi ảnh tải lên xong rồi lưu tin."); return }
+    if (form.gallery.length < 2) {
+      setError("Vui lòng tải lên ít nhất 2 ảnh thực tế của phòng trước khi gửi duyệt tin.")
+      return
+    }
+    if (uploading) {
+      setError("Đang trong quá trình tải ảnh, vui lòng đợi ảnh tải xong trước khi lưu tin.")
+      return
+    }
+    const coverImage = form.image && form.gallery.includes(form.image) ? form.image : form.gallery[0] || ""
     const item: RentalListing = {
       id: existing?.id ?? `room-${Date.now()}`,
       title: form.title.trim(),
@@ -117,8 +138,8 @@ export default function ListingEditorPage() {
       area: `${Number(form.area)} m²`,
       areaValue: Number(form.area),
       type: form.type,
-      image: form.image,
-      gallery: [...new Set([form.image, ...form.gallery].filter(Boolean))].slice(0, 6),
+      image: coverImage,
+      gallery: [...new Set([coverImage, ...form.gallery].filter(Boolean))].slice(0, 6),
       badge: existing?.badge ?? "Mới đăng",
       amenities: form.amenities,
       mapX: existing?.mapX ?? 50,
@@ -178,13 +199,144 @@ export default function ListingEditorPage() {
             </div>
           </section>
 
-          {/* Khối 3: Hình ảnh & Tiện ích */}
+          {/* Khối 3: Hình ảnh & Tiện ích (100% Tải ảnh trực tiếp từ máy) */}
           <section className="editor-card">
-            <div className="editor-section-title"><span>03</span><div><h2>Hình ảnh & Tiện ích</h2><p>Tải từ 2–6 ảnh thực tế của phòng và chọn các tiện ích phòng có sẵn.</p></div></div>
-            <label className="form-field"><span>Chọn ảnh từ thiết bị (tối đa 6 ảnh)</span><input type="file" accept="image/*" multiple disabled={uploading || form.gallery.length >= 6} onChange={(event) => { void uploadImages(event.currentTarget.files); event.currentTarget.value = "" }}/><small>{uploading ? uploadProgress : uploadProgress || (isApiMode ? "Mỗi ảnh dưới 3 MB; ảnh được tải lên an toàn." : "Tối đa 6 ảnh, mỗi ảnh dưới 500 KB; ảnh được lưu trong trình duyệt.")}</small></label>
-            <label className="form-field"><span>Đường dẫn ảnh đại diện (tùy chọn)</span><input value={form.image} onChange={(event) => setCoverImageUrl(event.target.value)} placeholder="https://..." autoComplete="off"/></label>
-            {form.gallery.length > 0 && <div className="listing-gallery-preview" aria-label="Ảnh của tin phòng">{form.gallery.map((photo, index) => <div className="listing-gallery-preview-item" key={photo}><img src={photo} alt={`Ảnh ${index + 1} của phòng`}/><div><button type="button" onClick={() => makeCoverImage(photo)} disabled={form.image === photo}>{form.image === photo ? "Ảnh đại diện" : "Đặt làm ảnh đại diện"}</button><button type="button" onClick={() => removeGalleryImage(photo)} aria-label={`Xóa ảnh ${index + 1}`}>Xóa</button></div></div>)}</div>}
-            <fieldset className="amenity-picker" style={{ marginTop: "24px" }}><legend>Tiện ích có sẵn</legend>{amenities.map((item) => <label key={item}><input type="checkbox" checked={form.amenities.includes(item)} onChange={() => toggleAmenity(item)}/>{item}</label>)}</fieldset>
+            <div className="editor-section-title"><span>03</span><div><h2>Hình ảnh thực tế & Tiện ích</h2><p>Tải từ 2–6 ảnh chụp thực tế của phòng và chọn các tiện ích có sẵn.</p></div></div>
+
+            {/* Vùng Dropzone Tải ảnh */}
+            <div className="photo-upload-section">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden-file-input"
+                style={{ display: "none" }}
+                disabled={uploading || form.gallery.length >= 6}
+                onChange={(event) => {
+                  void uploadImages(event.currentTarget.files)
+                  event.currentTarget.value = ""
+                }}
+              />
+
+              <div
+                className={`photo-dropzone${isDragging ? " is-dragging" : ""}${form.gallery.length >= 6 ? " is-full" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  if (form.gallery.length < 6 && !uploading) setIsDragging(true)
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  if (form.gallery.length < 6 && !uploading) {
+                    void uploadImages(e.dataTransfer.files)
+                  }
+                }}
+                onClick={() => {
+                  if (form.gallery.length < 6 && !uploading) {
+                    fileInputRef.current?.click()
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    fileInputRef.current?.click()
+                  }
+                }}
+              >
+                <div className="dropzone-icon">
+                  <Icon name="upload" size={28} />
+                </div>
+                <div className="dropzone-text">
+                  <strong>Bấm để chọn ảnh từ máy hoặc kéo thả ảnh vào đây</strong>
+                  <p>Hỗ trợ định dạng JPG, PNG, WebP (Tối đa 6 ảnh, tải lên từ 2 đến 6 ảnh thực tế)</p>
+                </div>
+                <button
+                  type="button"
+                  className="dropzone-browse-btn"
+                  disabled={uploading || form.gallery.length >= 6}
+                >
+                  <Icon name="plus" size={16} /> Chọn ảnh từ thiết bị
+                </button>
+              </div>
+
+              {uploading && (
+                <div className="photo-upload-status" role="status">
+                  <span className="upload-spinner" />
+                  <span>{uploadProgress || "Đang xử lý tải ảnh lên..."}</span>
+                </div>
+              )}
+
+              {/* Danh sách ảnh đã tải lên */}
+              {form.gallery.length > 0 && (
+                <div className="photo-gallery-manager">
+                  <div className="gallery-manager-header">
+                    <div>
+                      <strong>Ảnh đã tải ({form.gallery.length}/6 ảnh)</strong>
+                      <p>Bấm "Đặt làm ảnh đại diện" để chọn ảnh bìa xuất hiện trên danh sách tìm kiếm.</p>
+                    </div>
+                    {form.gallery.length < 6 && (
+                      <button
+                        type="button"
+                        className="btn-add-more-photos"
+                        disabled={uploading}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Icon name="plus" size={15} /> Thêm ảnh khác
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="photo-grid-preview">
+                    {form.gallery.map((photo, index) => {
+                      const isCover = (form.image || form.gallery[0]) === photo
+                      return (
+                        <div className={`photo-grid-card${isCover ? " is-cover" : ""}`} key={photo}>
+                          <div className="photo-grid-thumb">
+                            <img src={photo} alt={`Ảnh phòng ${index + 1}`} loading="lazy" />
+                            {isCover && (
+                              <span className="photo-cover-badge">
+                                <Icon name="star" size={12} /> Ảnh đại diện
+                              </span>
+                            )}
+                          </div>
+                          <div className="photo-grid-actions">
+                            {!isCover ? (
+                              <button
+                                type="button"
+                                className="btn-set-cover"
+                                onClick={() => makeCoverImage(photo)}
+                              >
+                                Đặt làm ảnh bìa
+                              </button>
+                            ) : (
+                              <span className="cover-active-text">Ảnh đại diện</span>
+                            )}
+                            <button
+                              type="button"
+                              className="btn-delete-photo"
+                              onClick={() => removeGalleryImage(photo)}
+                              aria-label={`Xóa ảnh ${index + 1}`}
+                              title="Xóa ảnh này"
+                            >
+                              <Icon name="trash" size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <fieldset className="amenity-picker" style={{ marginTop: "28px" }}>
+              <legend>Tiện ích có sẵn</legend>
+              {amenities.map((item) => <label key={item}><input type="checkbox" checked={form.amenities.includes(item)} onChange={() => toggleAmenity(item)}/>{item}</label>)}
+            </fieldset>
           </section>
 
           {/* Khối 4: Mô tả chi tiết & Liên hệ */}

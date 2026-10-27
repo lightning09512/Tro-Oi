@@ -9374,3 +9374,272 @@ select.search-sort-select:focus-visible,
   transform: rotate(180deg) !important;
   color: #245f3b !important;
 }
+
+
+/* ========================================================
+   LANDLORD PHOTO UPLOAD ZONE & GALLERY MANAGER
+   ======================================================== */
+.photo-upload-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  margin-top: 10px !important;
+}
+
+.photo-dropzone {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 34px 24px !important;
+  border: 2px dashed #b5d4bf !important;
+  border-radius: 18px !important;
+  background: #f7faf8 !important;
+  cursor: pointer !important;
+  transition: all 0.22s ease !important;
+}
+
+.photo-dropzone:hover,
+.photo-dropzone.is-dragging {
+  border-color: #245f3b !important;
+  background: #edf6ef !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 24px rgba(36, 95, 59, 0.08) !important;
+}
+
+.photo-dropzone.is-full {
+  opacity: 0.6 !important;
+  pointer-events: none !important;
+}
+
+.dropzone-icon {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  background: #eaf4ec !important;
+  color: #245f3b !important;
+  display: grid !important;
+  place-items: center !important;
+  margin-bottom: 12px !important;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease !important;
+}
+
+.photo-dropzone:hover .dropzone-icon {
+  transform: scale(1.08) !important;
+  background: #245f3b !important;
+  color: #ffffff !important;
+}
+
+.dropzone-text strong {
+  display: block !important;
+  font-size: 15px !important;
+  color: #213327 !important;
+  margin-bottom: 4px !important;
+}
+
+.dropzone-text p {
+  font-size: 13px !important;
+  color: #64776b !important;
+  margin: 0 0 16px !important;
+}
+
+.dropzone-browse-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  padding: 0 20px !important;
+  border-radius: 9999px !important;
+  background: #245f3b !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-shadow: 0 3px 10px rgba(36, 95, 59, 0.2) !important;
+  transition: all 0.18s ease !important;
+}
+
+.dropzone-browse-btn:hover {
+  background: #1b492d !important;
+  transform: scale(1.04) !important;
+}
+
+.photo-upload-status {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 18px !important;
+  border-radius: 12px !important;
+  background: #eaf4ec !important;
+  color: #245f3b !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+
+.upload-spinner {
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid #a8d5b4 !important;
+  border-top-color: #245f3b !important;
+  border-radius: 50% !important;
+  animation: spin 0.8s linear infinite !important;
+}
+
+/* Gallery Manager */
+.photo-gallery-manager {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding-top: 10px !important;
+}
+
+.gallery-manager-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+
+.gallery-manager-header strong {
+  display: block !important;
+  font-size: 14.5px !important;
+  color: #1e3325 !important;
+}
+
+.gallery-manager-header p {
+  font-size: 12.5px !important;
+  color: #65776c !important;
+  margin: 2px 0 0 !important;
+}
+
+.btn-add-more-photos {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 36px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid #c7dccd !important;
+  background: #ffffff !important;
+  color: #245f3b !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.16s ease !important;
+}
+
+.btn-add-more-photos:hover {
+  background: #f0f7f2 !important;
+  border-color: #245f3b !important;
+}
+
+/* Grid of Cards */
+.photo-grid-preview {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.photo-grid-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1.5px solid #dce8df !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.18s ease !important;
+}
+
+.photo-grid-card.is-cover {
+  border-color: #245f3b !important;
+  box-shadow: 0 4px 16px rgba(36, 95, 59, 0.16) !important;
+}
+
+.photo-grid-thumb {
+  position: relative !important;
+  width: 100% !important;
+  height: 120px !important;
+  background: #f0f4f1 !important;
+  overflow: hidden !important;
+}
+
+.photo-grid-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transition: transform 0.22s ease !important;
+}
+
+.photo-grid-card:hover .photo-grid-thumb img {
+  transform: scale(1.04) !important;
+}
+
+.photo-cover-badge {
+  position: absolute !important;
+  top: 8px !important;
+  left: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  background: #245f3b !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+}
+
+.photo-grid-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 10px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #edf2ee !important;
+}
+
+.btn-set-cover {
+  background: none !important;
+  border: none !important;
+  color: #245f3b !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  padding: 4px 0 !important;
+}
+
+.btn-set-cover:hover {
+  text-decoration: underline !important;
+  color: #174227 !important;
+}
+
+.cover-active-text {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: #245f3b !important;
+}
+
+.btn-delete-photo {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  border: 1px solid #ebd0ce !important;
+  background: #fff5f5 !important;
+  color: #b7463f !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+  transition: all 0.16s ease !important;
+}
+
+.btn-delete-photo:hover {
+  background: #b7463f !important;
+  color: #ffffff !important;
+  border-color: #b7463f !important;
+}
