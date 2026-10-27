@@ -10062,6 +10062,13 @@ input[type="file"]::file-selector-button:hover {
   position: relative !important;
   display: inline-block !important;
   margin: 0 auto 6px !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: transform 180ms ease !important;
+}
+
+.account-avatar-wrapper:hover {
+  transform: scale(1.03) !important;
 }
 
 .account-avatar-display {
@@ -10087,38 +10094,6 @@ input[type="file"]::file-selector-button:hover {
   display: block !important;
 }
 
-.account-avatar-camera-badge {
-  position: absolute !important;
-  bottom: 2px !important;
-  right: 2px !important;
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 50% !important;
-  background: #ffffff !important;
-  color: #245f3b !important;
-  border: 1.5px solid #dce8df !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  transition: all 160ms ease !important;
-}
-
-.account-avatar-camera-badge:hover {
-  background: #245f3b !important;
-  color: #ffffff !important;
-  border-color: #245f3b !important;
-  transform: scale(1.1) !important;
-}
-
-.account-avatar-camera-badge.small {
-  width: 24px !important;
-  height: 24px !important;
-  bottom: 0 !important;
-  right: 0 !important;
-}
-
 /* Banner inside account-card */
 .account-profile-header-banner {
   display: flex !important;
@@ -10136,6 +10111,13 @@ input[type="file"]::file-selector-button:hover {
   width: 56px !important;
   height: 56px !important;
   flex-shrink: 0 !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: transform 180ms ease !important;
+}
+
+.account-profile-header-avatar:hover {
+  transform: scale(1.05) !important;
 }
 
 .account-profile-header-avatar .avatar.large {

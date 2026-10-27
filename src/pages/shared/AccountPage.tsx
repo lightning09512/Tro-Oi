@@ -179,19 +179,16 @@ export default function AccountPage({
     <main className="page-bg account-page">
       <div className="container account-layout">
         <aside className="account-summary">
-          <div className="account-avatar-wrapper">
+          <div
+            className="account-avatar-wrapper"
+            onClick={() => setShowAvatarModal(true)}
+            role="button"
+            tabIndex={0}
+            title="Bấm để đổi ảnh đại diện"
+          >
             <span className="avatar xlarge account-avatar-display">
               {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
             </span>
-            <button
-              type="button"
-              className="account-avatar-camera-badge"
-              onClick={() => setShowAvatarModal(true)}
-              title="Đổi ảnh đại diện"
-              aria-label="Đổi ảnh đại diện"
-            >
-              <Icon name="camera" size={15} />
-            </button>
           </div>
           <h2>{user?.name}</h2>
           <p>{user?.email}</p>
@@ -221,19 +218,16 @@ export default function AccountPage({
 
           {!passwordMode && (
             <div className="account-profile-header-banner">
-              <div className="account-profile-header-avatar">
+              <div
+                className="account-profile-header-avatar"
+                onClick={() => setShowAvatarModal(true)}
+                role="button"
+                tabIndex={0}
+                title="Bấm để đổi ảnh đại diện"
+              >
                 <span className="avatar large account-avatar-display">
                   {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
                 </span>
-                <button
-                  type="button"
-                  className="account-avatar-camera-badge small"
-                  onClick={() => setShowAvatarModal(true)}
-                  title="Đổi ảnh đại diện"
-                  aria-label="Đổi ảnh đại diện"
-                >
-                  <Icon name="camera" size={12} />
-                </button>
               </div>
               <div className="account-profile-header-info">
                 <div className="account-profile-header-title">
