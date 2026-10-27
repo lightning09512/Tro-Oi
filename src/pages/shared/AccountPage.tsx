@@ -30,6 +30,7 @@ export default function AccountPage({
   const [phone, setPhone] = useState(user?.phone ?? "")
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [avatarFeedback, setAvatarFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -184,25 +185,27 @@ export default function AccountPage({
             </span>
             <button
               type="button"
-              className="account-avatar-change-btn"
-              onClick={() => fileInputRef.current?.click()}
+              className="account-avatar-camera-badge"
+              onClick={() => setShowAvatarModal(true)}
               title="Đổi ảnh đại diện"
               aria-label="Đổi ảnh đại diện"
             >
-              <Icon name="upload" size={15} />
+              <Icon name="camera" size={15} />
             </button>
           </div>
           <h2>{user?.name}</h2>
           <p>{user?.email}</p>
-          <span className="role-badge">
-            {user?.role === "admin" ? "Quản trị viên" : user?.role === "landlord" ? "Chủ trọ" : "Người thuê"}
-          </span>
+          <div className="account-summary-badge-wrap">
+            <span className="role-badge">
+              {user?.role === "admin" ? "Quản trị viên" : user?.role === "landlord" ? "Chủ trọ" : "Người thuê"}
+            </span>
+          </div>
           <button
             type="button"
-            className="account-summary-edit-avatar-btn"
-            onClick={() => fileInputRef.current?.click()}
+            className="account-edit-avatar-pill"
+            onClick={() => setShowAvatarModal(true)}
           >
-            <Icon name="upload" size={14} /> Đổi ảnh đại diện
+            <Icon name="camera" size={14} /> Đổi ảnh đại diện
           </button>
         </aside>
         <section className="account-card">
@@ -215,99 +218,46 @@ export default function AccountPage({
                 : "Thông tin này giúp mọi người nhận biết và liên hệ với bạn."}
             </p>
           </div>
+
+          {!passwordMode && (
+            <div className="account-profile-header-banner">
+              <div className="account-profile-header-avatar">
+                <span className="avatar large account-avatar-display">
+                  {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
+                </span>
+                <button
+                  type="button"
+                  className="account-avatar-camera-badge small"
+                  onClick={() => setShowAvatarModal(true)}
+                  title="Đổi ảnh đại diện"
+                  aria-label="Đổi ảnh đại diện"
+                >
+                  <Icon name="camera" size={12} />
+                </button>
+              </div>
+              <div className="account-profile-header-info">
+                <div className="account-profile-header-title">
+                  <strong>{user?.name}</strong>
+                  <span className="role-tag">
+                    {user?.role === "admin" ? "Quản trị viên" : user?.role === "landlord" ? "Chủ trọ" : "Người thuê"}
+                  </span>
+                </div>
+                <p>{user?.email}</p>
+              </div>
+              <button
+                type="button"
+                className="account-change-photo-btn"
+                onClick={() => setShowAvatarModal(true)}
+              >
+                <Icon name="camera" size={14} />
+                <span>Đổi ảnh</span>
+              </button>
+            </div>
+          )}
+
           <form className="auth-form" onSubmit={submit} noValidate>
             {!passwordMode ? (
               <>
-                <div className="account-avatar-section">
-                  <div className="account-avatar-header">
-                    <div>
-                      <span className="account-avatar-label">Ảnh đại diện</span>
-                      <p className="account-avatar-hint">Ảnh vuông định dạng JPG, PNG hoặc WebP (tối đa 3 MB).</p>
-                    </div>
-                  </div>
-
-                  <div className="account-avatar-row">
-                    <div className="account-avatar-preview">
-                      <span className="avatar xlarge account-avatar-display">
-                        {avatarUrl ? (
-                          <img className="user-avatar-image" src={avatarUrl} alt={user?.name ?? ""} />
-                        ) : (
-                          user?.initials
-                        )}
-                      </span>
-                      {uploadingAvatar && (
-                        <div className="account-avatar-spinner-overlay" role="status">
-                          <span className="upload-spinner" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="account-avatar-actions">
-                      <div className="account-avatar-btn-group">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,image/avif"
-                          style={{ display: "none" }}
-                          onChange={(e) => void handleAvatarFileSelect(e.target.files)}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          icon="upload"
-                          disabled={uploadingAvatar}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          {uploadingAvatar ? "Đang tải lên..." : "Tải ảnh từ máy"}
-                        </Button>
-
-                        {avatarUrl && (
-                          <button
-                            type="button"
-                            className="account-avatar-remove-btn"
-                            onClick={() => void handleRemoveAvatar()}
-                            disabled={uploadingAvatar}
-                          >
-                            Gỡ ảnh
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="account-preset-avatars">
-                        <span className="account-preset-title">Hoặc chọn ảnh đại diện có sẵn:</span>
-                        <div className="account-preset-grid">
-                          {PRESET_AVATARS.map((preset) => {
-                            const isSelected = avatarUrl === preset.url
-                            return (
-                              <button
-                                key={preset.url}
-                                type="button"
-                                className={`account-preset-item${isSelected ? " is-selected" : ""}`}
-                                onClick={() => void handleSelectPresetAvatar(preset.url)}
-                                title={preset.label}
-                                aria-label={`Chọn ${preset.label}`}
-                              >
-                                <img src={preset.url} alt={preset.label} />
-                                {isSelected && (
-                                  <span className="account-preset-check">
-                                    <Icon name="check" size={12} />
-                                  </span>
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {avatarFeedback && (
-                    <p className={`form-message ${avatarFeedback.type} account-avatar-message`} role="status">
-                      {avatarFeedback.message}
-                    </p>
-                  )}
-                </div>
-
                 <label className="form-field">
                   <span>
                     Họ và tên <b>*</b>
@@ -393,6 +343,118 @@ export default function AccountPage({
           {!passwordMode && <section className="account-shortcuts"><span className="eyebrow">Lối tắt theo vai trò</span><div>{shortcuts.map((item) => <Link className="favorites-shortcut" to={item.to} key={item.to}><span className="favorites-shortcut-icon"><Icon name={item.icon}/></span><span><strong>{item.title}</strong><small>{item.detail}</small></span><Icon name="chevron"/></Link>)}</div></section>}
         </section>
       </div>
+
+      {showAvatarModal && (
+        <div className="avatar-modal-backdrop" onClick={() => setShowAvatarModal(false)}>
+          <div className="avatar-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+            <div className="avatar-modal-header">
+              <div>
+                <h3 id="avatar-modal-title">Cập nhật ảnh đại diện</h3>
+                <p>Chọn ảnh từ thiết bị của bạn hoặc chọn mẫu có sẵn</p>
+              </div>
+              <button
+                type="button"
+                className="avatar-modal-close-btn"
+                onClick={() => setShowAvatarModal(false)}
+                aria-label="Đóng"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+
+            <div className="avatar-modal-body">
+              <div className="avatar-modal-current-wrap">
+                <div className="avatar-modal-preview">
+                  <span className="avatar xlarge account-avatar-display avatar-modal-img">
+                    {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt={user?.name ?? ""} /> : user?.initials}
+                  </span>
+                  {uploadingAvatar && (
+                    <div className="avatar-modal-spinner" role="status">
+                      <span className="upload-spinner" />
+                    </div>
+                  )}
+                </div>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    className="avatar-modal-remove-link"
+                    onClick={() => void handleRemoveAvatar()}
+                    disabled={uploadingAvatar}
+                  >
+                    <Icon name="trash" size={13} /> Gỡ ảnh đại diện (dùng chữ cái mặc định)
+                  </button>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/avif"
+                style={{ display: "none" }}
+                onChange={(e) => void handleAvatarFileSelect(e.target.files)}
+              />
+
+              <div
+                className={`avatar-modal-dropzone${uploadingAvatar ? " is-uploading" : ""}`}
+                onClick={() => !uploadingAvatar && fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click() }}
+              >
+                <div className="avatar-modal-dropzone-icon">
+                  <Icon name="upload" size={24} />
+                </div>
+                <div>
+                  <strong>{uploadingAvatar ? "Đang tải ảnh lên..." : "Tải ảnh mới từ thiết bị"}</strong>
+                  <small>Hỗ trợ định dạng JPG, PNG, WebP (tối đa 3 MB)</small>
+                </div>
+              </div>
+
+              <div className="avatar-modal-presets-section">
+                <span className="avatar-modal-presets-label">Hoặc chọn nhanh từ ảnh mẫu:</span>
+                <div className="avatar-modal-presets-grid">
+                  {PRESET_AVATARS.map((preset) => {
+                    const isSelected = avatarUrl === preset.url
+                    return (
+                      <button
+                        key={preset.url}
+                        type="button"
+                        className={`avatar-modal-preset-item${isSelected ? " is-selected" : ""}`}
+                        onClick={() => void handleSelectPresetAvatar(preset.url)}
+                        title={preset.label}
+                        aria-label={`Chọn ${preset.label}`}
+                      >
+                        <img src={preset.url} alt={preset.label} />
+                        {isSelected && (
+                          <span className="avatar-modal-preset-check">
+                            <Icon name="check" size={11} />
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {avatarFeedback && (
+                <p className={`form-message ${avatarFeedback.type} avatar-modal-feedback`} role="status">
+                  {avatarFeedback.message}
+                </p>
+              )}
+            </div>
+
+            <div className="avatar-modal-footer">
+              <button
+                type="button"
+                className="btn btn-outline avatar-modal-done-btn"
+                onClick={() => setShowAvatarModal(false)}
+              >
+                Hoàn tất
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

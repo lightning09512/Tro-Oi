@@ -146,6 +146,12 @@ export function Icon({
     down: <path d="m6 9 6 6 6-6" />,
     check: <path d="m5 12 4 4L19 6" />,
     close: <path d="m18 6-12 12M6 6l12 12" />,
+    camera: (
+      <>
+        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+        <circle cx="12" cy="13" r="3" />
+      </>
+    ),
     edit: (
       <>
         <path d="m15 5 4 4" />
