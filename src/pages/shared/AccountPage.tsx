@@ -193,39 +193,6 @@ export default function AccountPage({
             </p>
           </div>
 
-          {!passwordMode && (
-            <div className="account-profile-header-banner">
-              <div
-                className="account-profile-header-avatar"
-                onClick={() => setShowAvatarModal(true)}
-                role="button"
-                tabIndex={0}
-                title="Bấm để đổi ảnh đại diện"
-              >
-                <span className="avatar large account-avatar-display">
-                  {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
-                </span>
-              </div>
-              <div className="account-profile-header-info">
-                <div className="account-profile-header-title">
-                  <strong>{user?.name}</strong>
-                  <span className="role-tag">
-                    {user?.role === "admin" ? "Quản trị viên" : user?.role === "landlord" ? "Chủ trọ" : "Người thuê"}
-                  </span>
-                </div>
-                <p>{user?.email}</p>
-              </div>
-              <button
-                type="button"
-                className="account-change-photo-btn"
-                onClick={() => setShowAvatarModal(true)}
-              >
-                <Icon name="camera" size={14} />
-                <span>Đổi ảnh</span>
-              </button>
-            </div>
-          )}
-
           <form className="auth-form" onSubmit={submit} noValidate>
             {!passwordMode ? (
               <>
