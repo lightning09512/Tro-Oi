@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import LocationPicker from "@/components/common/LocationPicker"
@@ -21,6 +21,8 @@ const primaryLinks: NavigationLink[] = [
 export default function MainHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
+  const avatarDropdownRef = useRef<HTMLDivElement>(null)
+  const menuNavRef = useRef<HTMLElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [headerLocation, setHeaderLocation] = useState("TP. Hồ Chí Minh")
   const { user, logout } = useAuth()
@@ -28,6 +30,31 @@ export default function MainHeader() {
   const unreadNotifications = notifications.filter((item) => item.userId === user?.id && !item.read).length
   const navigate = useNavigate()
   const closeMenu = () => setMenuOpen(false)
+
+  useEffect(() => {
+    if (!avatarOpen && !menuOpen) return
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (avatarOpen && avatarDropdownRef.current && !avatarDropdownRef.current.contains(target)) {
+        setAvatarOpen(false)
+      }
+      if (menuOpen && menuNavRef.current && !menuNavRef.current.contains(target)) {
+        setMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAvatarOpen(false)
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown)
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown)
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [avatarOpen, menuOpen])
   const mobileLinks: NavigationLink[] =
     user?.role === "landlord"
       ? [
@@ -112,6 +139,7 @@ export default function MainHeader() {
         </form>
 
         <nav
+          ref={menuNavRef}
           id="main-navigation"
           className={menuOpen
             ? "absolute left-3 right-3 top-[calc(100%+8px)] z-[60] grid grid-cols-2 gap-1.5 rounded-2xl border border-[#e1e8e2] bg-white p-2 shadow-[0_14px_24px_rgb(29_58_38_/_0.10)] lg:static lg:z-auto lg:ml-auto lg:flex lg:flex-row lg:items-center lg:gap-1 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none"
@@ -182,7 +210,7 @@ export default function MainHeader() {
                 </>
               )}
 
-              <div className="relative">
+              <div className="relative" ref={avatarDropdownRef}>
                 <button
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-transparent bg-white py-0 pl-0.5 pr-2 text-[#4a5b50] transition-colors hover:border-[#e3ebe4] hover:bg-[#f7faf7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
                   onClick={() => setAvatarOpen((open) => !open)}
@@ -207,20 +235,20 @@ export default function MainHeader() {
                         <small className="text-xs text-[#718078]">{roleLabels[user.role]}</small>
                       </div>
                     </div>
-                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => navigate(user.role === "admin" ? "/admin/ho-so" : "/tai-khoan/ho-so")}>
+                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate(user.role === "admin" ? "/admin/ho-so" : "/tai-khoan/ho-so"); }}>
                       Hồ sơ
                     </button>
-                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => navigate(user.role === "admin" ? "/admin/doi-mat-khau" : "/tai-khoan/doi-mat-khau")}>
+                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate(user.role === "admin" ? "/admin/doi-mat-khau" : "/tai-khoan/doi-mat-khau"); }}>
                       Đổi mật khẩu
                     </button>
                     {user.role !== "admin" && (
-                      <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => navigate("/yeu-thich")}>
+                      <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/yeu-thich"); }}>
                         <Icon name="heart" size={18} />
                         Tin yêu thích
                       </button>
                     )}
                     {user.role === "landlord" && (
-                      <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => navigate("/chu-tro/thong-ke")}>
+                      <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/chu-tro/thong-ke"); }}>
                         <Icon name="chart" size={18} />
                         Thống kê
                       </button>

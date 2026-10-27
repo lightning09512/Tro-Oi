@@ -70,6 +70,7 @@ export default function PublicProfilePage() {
         accountId: user.id,
         name: profile.name,
         avatar: profile.initials,
+        avatarUrl: profile.avatarUrl,
         userId: profile.id,
         roomId: publicListings[0]?.id ?? "",
       })

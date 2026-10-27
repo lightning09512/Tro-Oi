@@ -21,7 +21,27 @@ export default function LandlordStatsPage() {
         <section className="metric-grid">
           {[["Lượt xem", totalViews, "eye"], ["Lượt liên hệ", totalContacts, "chat"], ["Tin đang hiển thị", active, "building"], ["Tổng số tin", mine.length, "chart"]].map(([label, value, icon]) => <article className="metric-card" key={label}><span><Icon name={String(icon)} /></span><div><small>{label}</small><strong>{Number(value).toLocaleString("vi-VN")}</strong></div></article>)}
         </section>
-        <section className="editor-card performance-card"><div className="editor-section-title"><span>01</span><div><h2>Lượt xem theo phòng</h2><p>Phòng nào đang thu hút nhiều sự quan tâm.</p></div></div>{mine.length ? <div className="performance-list">{mine.map((item) => <div className="performance-row" key={item.id}><div><strong>{item.title}</strong><small>{item.location} · {item.contacts} lượt liên hệ</small></div><span className="performance-track"><i style={{ width: `${Math.max(4, item.views / maxViews * 100)}%` }} /></span><b>{item.views}</b></div>)}</div> : <p>Bạn chưa có dữ liệu. Đăng tin cho thuê để bắt đầu theo dõi.</p>}</section>
+        {mine.length ? (
+          <section className="editor-card performance-card">
+            <div className="editor-section-title"><span>01</span><div><h2>Lượt xem theo phòng</h2><p>Phòng nào đang thu hút nhiều sự quan tâm.</p></div></div>
+            <div className="performance-list">
+              {mine.map((item) => (
+                <div className="performance-row" key={item.id}>
+                  <div><strong>{item.title}</strong><small>{item.location} · {item.contacts} lượt liên hệ</small></div>
+                  <span className="performance-track"><i style={{ width: `${Math.max(4, (item.views / maxViews) * 100)}%` }} /></span>
+                  <b>{item.views}</b>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="empty-state">
+            <span className="placeholder-icon"><Icon name="chart" size={28} /></span>
+            <h2>Chưa có dữ liệu thống kê</h2>
+            <p>Bạn chưa đăng phòng nào. Hãy đăng tin đầu tiên để theo dõi lượt xem và liên hệ từ người thuê.</p>
+            <Button onClick={() => navigate("/chu-tro/dang-tin")}>Đăng phòng mới</Button>
+          </section>
+        )}
       </div>
     </main>
   )

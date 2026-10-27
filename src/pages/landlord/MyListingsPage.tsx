@@ -104,6 +104,7 @@ export default function MyListingsPage() {
                   <span><b>{item.contacts}</b> liên hệ</span>
                 </div>
                 <div className="owned-listing-actions">
+                  <button className="secondary-action" onClick={() => navigate(`/phong/${item.id}`)} title="Xem chi tiết tin phòng"><Icon name="eye" size={16} /> Xem tin</button>
                   <button className="secondary-action" onClick={() => navigate(`/chu-tro/tin/${item.id}/chinh-sua`)}><Icon name="edit" size={16} /> Sửa tin</button>
                   <select
                     aria-label={`Cập nhật trạng thái: ${item.title}`}

@@ -4314,6 +4314,9 @@ select:focus-visible, textarea:focus-visible {
 .tiny-room small { color: #65746c; font-size: 11px; line-height: 1.35; }
 .tiny-room small:first-of-type { color: #246440; font-weight: 600; }
 
+.chat-related-room-block { text-align: left; margin-top: 14px; }
+.chat-related-room-label { display: block; font-size: 11px; font-weight: 700; color: #65746c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
 .chat-input { min-height: 72px; padding: 0 16px; background: #fff; }
 .chat-text-entry { min-width: 0; min-height: 44px; }
 .chat-text-entry input { min-width: 0; font-size: 14px; }

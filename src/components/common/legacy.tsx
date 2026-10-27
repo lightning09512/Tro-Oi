@@ -68,6 +68,14 @@ export function Icon({
         <path d="M9 3v15M15 6v15" />
       </>
     ),
+    grid: (
+      <>
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      </>
+    ),
     filter: <path d="M4 5h16M7 12h10M10 19h4" />,
     star: (
       <path d="m12 2 3 6 6.5 1-4.7 4.6 1.1 6.4-5.9-3.1L6.1 20l1.1-6.4L2.5 9 9 8Z" />

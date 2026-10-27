@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "react-router"
+import { Link, useSearchParams } from "react-router"
 import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { usePlatform, type RentalListing } from "@/contexts/PlatformContext"
 import type { ChangeEvent } from "react"
@@ -337,7 +337,7 @@ export default function SearchPage() {
     <main className="page-bg">
       <div className="container search-page">
         <div className="breadcrumbs">
-          Trang chủ <span>/</span> Tìm phòng tại {locationLabel}
+          <Link to="/">Trang chủ</Link> <span>/</span> Tìm phòng tại {locationLabel}
         </div>
         <div className="mobile-filter-row">
           <Button
@@ -421,7 +421,7 @@ export default function SearchPage() {
                   aria-label="Xem dạng danh sách"
                   aria-pressed={!map}
                 >
-                  ▦
+                  <Icon name="grid" size={17} />
                 </button>
                 <button
                   className={map ? "active" : ""}

@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform } from "@/contexts/PlatformContext"
@@ -17,7 +17,7 @@ export default function FavoritesPage() {
     <main className="page-bg favorites-page">
       <div className="container">
         <div className="breadcrumbs">
-          Trang chủ <span>/</span> Tin yêu thích
+          <Link to="/">Trang chủ</Link> <span>/</span> Tin yêu thích
         </div>
         <div className="results-head favorites-heading">
           <div>

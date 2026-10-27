@@ -10,11 +10,13 @@ import { isApiMode } from "@/services/apiClient"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
 
-const getValidMapCenter = (latitude: unknown, longitude: unknown): [number, number] | null =>
-  typeof latitude === "number" && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
-  typeof longitude === "number" && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
-    ? [latitude, longitude]
+const getValidMapCenter = (latitude: unknown, longitude: unknown): [number, number] | null => {
+  const lat = typeof latitude === "number" ? latitude : Number(latitude)
+  const lng = typeof longitude === "number" ? longitude : Number(longitude)
+  return Number.isFinite(lat) && lat >= -90 && lat <= 90 && Number.isFinite(lng) && lng >= -180 && lng <= 180
+    ? [lat, lng]
     : null
+}
 
 export default function RoomDetailPage() {
   const navigate = useNavigate()
@@ -31,10 +33,14 @@ export default function RoomDetailPage() {
   const [stars, setStars] = useState(5)
   const [editingReview, setEditingReview] = useState<RoomReview | null>(null)
   const [expanded, setExpanded] = useState(false)
-  const room = listings.find((item) => item.id === id && (
-    item.status === "active" ||
-    (item.status === "rented" && user?.role === "renter" && item.currentTenantId === user.id)
-  ))
+  const normalizedId = id ? decodeURIComponent(id).trim() : ""
+  const room = listings.find((item) => {
+    const isMatch = item.id === id || item.id === normalizedId || (normalizedId && item.id === normalizedId.replace(/\s+/g, "-"))
+    return isMatch && (
+      item.status === "active" ||
+      (item.status === "rented" && user?.role === "renter" && item.currentTenantId === user.id)
+    )
+  })
   const mapCenter = room ? getValidMapCenter(room.latitude, room.longitude) : null
   const similarListings = useMemo(() => {
     if (!room) return []
@@ -102,7 +108,13 @@ export default function RoomDetailPage() {
 
   return (
     <main className="page-bg detail-page"><div className="container workspace-container">
-      <div className="breadcrumbs"><button onClick={() => navigate("/tim-phong")}>Tìm phòng</button><span>/</span>{room.location}<span>/</span>{room.title}</div>
+      <div className="breadcrumbs">
+        <Link to="/">Trang chủ</Link>
+        <span>/</span>
+        <Link to="/tim-phong">Tìm phòng</Link>
+        <span>/</span>
+        <span>{room.location}</span>
+      </div>
       <div className="room-detail-showcase">
         <div className="room-detail-main-column">
           {activeGalleryPhoto && <section className="room-gallery-carousel" aria-label={`Thư viện ảnh của ${room.title}`}>
