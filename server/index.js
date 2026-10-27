@@ -1,6 +1,7 @@
 import "dotenv/config"
 import http from "node:http"
-import path from "node:path"
+import fs from 'node:fs'
+import path from 'node:path'
 import { fileURLToPath } from "node:url"
 import express from "express"
 import cors from "cors"
@@ -68,6 +69,14 @@ app.use("/api/categories", requirePostgres, categoryRoutes)
 app.use("/api/uploads", requirePostgres, uploadRoutes)
 app.use("/api/members", requirePostgres, memberRoutes)
 app.use("/api/reviews", requirePostgres, reviewRoutes)
+const distPath = path.resolve(serverDirectory, '../dist')
+if (process.env.NODE_ENV === 'production' && fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get(/^(?!\/api|\/socket\.io|\/uploads).*/, (_req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
+
 app.use(notFound)
 app.use(errorHandler)
 
