@@ -208,6 +208,37 @@ function Home() {
   const [nearbyMessage, setNearbyMessage] = useState("")
   const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : user ? "/chu-tro/dang-tin" : "/dang-nhap"
 
+  const promoCampaigns = useMemo(() => [
+    {
+      id: "landlord-campaign",
+      tag: "Chương trình dành cho chủ trọ",
+      image: "/images/banners/banner-nhatot-style.jpg",
+      title: "Đăng tin cho thuê trên Trọ Ơi - Tiếp cận hơn 50.000+ người thuê mỗi tháng",
+      description: "Đăng tin hoàn toàn miễn phí, kết nối người thuê trực tiếp không qua trung gian. Hệ thống hỗ trợ gắn nhãn chính chủ xác thực và quản lý lịch hẹn thông minh!",
+      buttonText: "Đăng tin ngay",
+      link: landlordProgramUrl,
+    },
+    {
+      id: "renter-campaign",
+      tag: "Ưu đãi sinh viên & người thuê",
+      image: "/images/banners/banner-student-nhatot.jpg",
+      title: "Rủ bạn cùng tìm phòng trên Trọ Ơi - Nhận trọn ưu đãi tiện ích",
+      description: "Khám phá hàng ngàn phòng trọ gần các trường đại học lớn tại TP.HCM, xem ảnh thật, giá điện nước minh bạch và hẹn xem phòng tiện lợi ngay trên hệ thống!",
+      buttonText: "Tìm phòng ngay",
+      link: "/tim-phong",
+    },
+  ], [landlordProgramUrl])
+
+  const [activeCampaignIndex, setActiveCampaignIndex] = useState(0)
+  const currentCampaign = promoCampaigns[activeCampaignIndex] ?? promoCampaigns[0]
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)
+    }, 7000)
+    return () => clearInterval(timer)
+  }, [promoCampaigns.length])
+
   const buildSearchUrl = (roomType?: string) => {
     const params = new URLSearchParams()
     if (roomType) params.set("type", roomType)
@@ -426,93 +457,63 @@ function Home() {
         </div>
       </section>
 
-      <section className="home-landlord-section" aria-labelledby="home-landlord-title">
+      <section className="home-campaign-section" aria-labelledby="home-campaign-title">
         <div className="container">
-          <div className="landlord-cta-container">
-            <div className="landlord-cta-content">
-              <span className="landlord-badge">Dành cho chủ trọ & người quản lý</span>
-              <h2 id="home-landlord-title">Bạn có phòng trọ, căn hộ trống cần cho thuê?</h2>
-              <p className="landlord-desc">
-                Đăng tin tiếp cận hơn <strong>50.000+</strong> lượt tìm kiếm mỗi tháng từ sinh viên và người đi làm tại TP.HCM. Kết nối trực tiếp, hẹn xem phòng ngay trên hệ thống mà không qua trung gian hay chi phí ẩn.
-              </p>
+          <div className="campaign-head">
+            <h2 id="home-campaign-title" className="campaign-section-title">Ưu đãi / Chương trình</h2>
+          </div>
 
-              <div className="landlord-features-list">
-                <div className="landlord-feature-item">
-                  <div className="feature-icon-wrapper">
-                    <Icon name="check" size={15} />
-                  </div>
-                  <div className="feature-text">
-                    <strong>Đăng tin nhanh & thuận tiện</strong>
-                    <span>Chỉ 3 phút tạo tin với hình ảnh, giá điện nước và tiện ích rõ ràng.</span>
-                  </div>
-                </div>
-
-                <div className="landlord-feature-item">
-                  <div className="feature-icon-wrapper">
-                    <Icon name="chat" size={15} />
-                  </div>
-                  <div className="feature-text">
-                    <strong>Nhắn tin & đặt lịch trực tiếp</strong>
-                    <span>Trao đổi trực tiếp với khách thuê thật, chủ động xếp lịch xem phòng.</span>
-                  </div>
-                </div>
-
-                <div className="landlord-feature-item">
-                  <div className="feature-icon-wrapper">
-                    <Icon name="shield" size={15} />
-                  </div>
-                  <div className="feature-text">
-                    <strong>Kiểm duyệt minh bạch, uy tín</strong>
-                    <span>Hệ thống gắn nhãn phòng chính chủ, gia tăng độ tin cậy và tỷ lệ lấp phòng.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="landlord-actions">
-                <Link to={landlordProgramUrl} className="btn-landlord-primary">
-                  <span>Đăng tin cho thuê ngay</span>
-                  <Icon name="chevron" size={16} />
-                </Link>
-                <Link to="/dien-dan" className="btn-landlord-secondary">
-                  <Icon name="chat" size={15} />
-                  <span>Kinh nghiệm cho thuê</span>
-                </Link>
+          <div className="campaign-banner-card">
+            <div className="campaign-image-stage">
+              <Link to={currentCampaign.link} className="campaign-image-link" aria-label={currentCampaign.title}>
+                <img
+                  src={currentCampaign.image}
+                  alt={currentCampaign.title}
+                  loading="lazy"
+                />
+              </Link>
+              <button
+                type="button"
+                className="campaign-nav-arrow campaign-nav-prev"
+                aria-label="Xem chương trình trước"
+                onClick={() => setActiveCampaignIndex((prev) => (prev - 1 + promoCampaigns.length) % promoCampaigns.length)}
+              >
+                <Icon name="chevron" size={16} />
+              </button>
+              <button
+                type="button"
+                className="campaign-nav-arrow campaign-nav-next"
+                aria-label="Xem chương trình tiếp theo"
+                onClick={() => setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)}
+              >
+                <Icon name="chevron" size={16} />
+              </button>
+              <div className="campaign-dots" role="tablist">
+                {promoCampaigns.map((item, idx) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={idx === activeCampaignIndex}
+                    className={`campaign-dot${idx === activeCampaignIndex ? " is-active" : ""}`}
+                    onClick={() => setActiveCampaignIndex(idx)}
+                    aria-label={`Chuyển đến chương trình ${idx + 1}`}
+                  />
+                ))}
               </div>
             </div>
 
-            <div className="landlord-cta-visual">
-              <div className="landlord-stat-card">
-                <div className="stat-card-header">
-                  <span className="stat-card-dot" />
-                  <span>Hiệu quả kết nối trên Trọ Ơi</span>
-                </div>
-
-                <div className="stat-metrics-grid">
-                  <div className="stat-metric-item">
-                    <div className="metric-number">50K+</div>
-                    <div className="metric-label">Lượt tìm kiếm/tháng</div>
-                  </div>
-                  <div className="stat-metric-item">
-                    <div className="metric-number">95%</div>
-                    <div className="metric-label">Có khách trong 2 tuần</div>
-                  </div>
-                  <div className="stat-metric-item">
-                    <div className="metric-number">100%</div>
-                    <div className="metric-label">Khách thuê trực tiếp</div>
-                  </div>
-                  <div className="stat-metric-item">
-                    <div className="metric-number">0đ</div>
-                    <div className="metric-label">Không phí môi giới</div>
-                  </div>
-                </div>
-
-                <div className="landlord-tip-box">
-                  <div className="tip-header">
-                    <Icon name="star" size={14} />
-                    <span>Mẹo cho chủ trọ:</span>
-                  </div>
-                  <p>Phòng có 4–6 ảnh chụp thực tế và chi phí điện nước rõ ràng giúp tăng gấp 3 lần lượt liên hệ xem phòng.</p>
-                </div>
+            <div className="campaign-info-bar">
+              <div className="campaign-copy">
+                <span className="campaign-tag">{currentCampaign.tag}</span>
+                <h3 className="campaign-title">{currentCampaign.title}</h3>
+                <p className="campaign-desc">{currentCampaign.description}</p>
+              </div>
+              <div className="campaign-action">
+                <Link to={currentCampaign.link} className="campaign-cta-btn">
+                  <span>{currentCampaign.buttonText}</span>
+                  <Icon name="chevron" size={14} />
+                </Link>
               </div>
             </div>
           </div>

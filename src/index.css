@@ -9912,343 +9912,238 @@ select.search-sort-select:focus-visible,
 }
 
 /* ========================================================
-   AUTHENTIC LANDLORD CTA SECTION
+   AUTHENTIC PROMOTIONAL CAMPAIGN BANNER (NHÀ TỐT STYLE)
    ======================================================== */
-.home-landlord-section {
-  padding: 16px 0 60px !important;
+.home-campaign-section {
+  padding: 16px 0 54px !important;
 }
 
-.landlord-cta-container {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.85fr) !important;
-  gap: 40px !important;
-  align-items: center !important;
-  border-radius: 24px !important;
-  background: linear-gradient(135deg, #163e24 0%, #1e5231 55%, #184227 100%) !important;
-  padding: 46px 50px !important;
-  box-shadow: 0 16px 42px rgba(22, 62, 36, 0.12) !important;
-  position: relative !important;
-  overflow: hidden !important;
+.campaign-head {
+  margin-bottom: 16px !important;
 }
 
-.landlord-cta-container::before {
-  content: "" !important;
-  position: absolute !important;
-  width: 480px !important;
-  height: 480px !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(142, 226, 172, 0.12) 0%, transparent 65%) !important;
-  top: -160px !important;
-  right: -80px !important;
-  pointer-events: none !important;
-}
-
-.landlord-cta-container::after {
-  content: "" !important;
-  position: absolute !important;
-  width: 320px !important;
-  height: 320px !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 60%) !important;
-  bottom: -100px !important;
-  left: 20% !important;
-  pointer-events: none !important;
-}
-
-.landlord-cta-content {
-  position: relative !important;
-  z-index: 2 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-}
-
-.landlord-badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 5px 14px !important;
-  border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  color: #e4f7ec !important;
-  font-size: 11.5px !important;
+.campaign-section-title {
+  font-size: 20px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.5px !important;
-  text-transform: uppercase !important;
-  margin-bottom: 14px !important;
-}
-
-.landlord-cta-content h2 {
-  font-size: clamp(24px, 2.7vw, 34px) !important;
-  font-weight: 750 !important;
-  color: #ffffff !important;
-  margin: 0 0 12px !important;
-  line-height: 1.25 !important;
-  letter-spacing: -0.025em !important;
-}
-
-.landlord-desc {
-  font-size: 14.5px !important;
-  color: rgba(255, 255, 255, 0.88) !important;
-  line-height: 1.65 !important;
-  margin: 0 0 24px !important;
-  max-width: 560px !important;
-}
-
-.landlord-desc strong {
-  color: #92e6b7 !important;
-}
-
-.landlord-features-list {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 14px !important;
-  margin-bottom: 28px !important;
-  width: 100% !important;
-  max-width: 560px !important;
-}
-
-.landlord-feature-item {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 12px !important;
-}
-
-.feature-icon-wrapper {
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 50% !important;
-  background: rgba(94, 209, 147, 0.2) !important;
-  border: 1px solid rgba(94, 209, 147, 0.4) !important;
-  color: #6de2a5 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  margin-top: 2px !important;
-}
-
-.feature-text {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
-}
-
-.feature-text strong {
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  color: #ffffff !important;
-}
-
-.feature-text span {
-  font-size: 13px !important;
-  color: rgba(255, 255, 255, 0.76) !important;
-  line-height: 1.45 !important;
-}
-
-.landlord-actions {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  gap: 12px !important;
-}
-
-.btn-landlord-primary {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-height: 44px !important;
-  padding: 0 22px !important;
-  border-radius: 9999px !important;
-  background: #ffffff !important;
-  color: #174026 !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  text-decoration: none !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18) !important;
-  transition: all 0.2s ease !important;
-}
-
-.btn-landlord-primary:hover {
-  background: #f0f7f2 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22) !important;
-}
-
-.btn-landlord-secondary {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  min-height: 44px !important;
-  padding: 0 18px !important;
-  border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.26) !important;
-  color: #ffffff !important;
-  font-size: 13.5px !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease !important;
-}
-
-.btn-landlord-secondary:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Right Visual Trust Card */
-.landlord-cta-visual {
-  position: relative !important;
-  z-index: 2 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.landlord-stat-card {
-  width: 100% !important;
-  max-width: 360px !important;
-  padding: 24px !important;
-  border-radius: 20px !important;
-  background: rgba(255, 255, 255, 0.11) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 18px 40px rgba(10, 32, 18, 0.22) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 18px !important;
-}
-
-.stat-card-header {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 11.5px !important;
-  font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.6px !important;
-  color: #7ee0a9 !important;
-}
-
-.stat-card-dot {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: #5ed193 !important;
-  box-shadow: 0 0 8px #5ed193 !important;
-}
-
-.stat-metrics-grid {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: 12px !important;
-  padding-bottom: 14px !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-
-.stat-metric-item {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 12px !important;
-  padding: 12px 14px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 3px !important;
-}
-
-.metric-number {
-  font-size: 24px !important;
-  font-weight: 800 !important;
-  color: #ffffff !important;
-  line-height: 1.1 !important;
+  color: #1a2a1f !important;
+  margin: 0 !important;
   letter-spacing: -0.02em !important;
 }
 
-.metric-label {
-  font-size: 11.5px !important;
-  color: #d1ebd8 !important;
-  font-weight: 500 !important;
-  line-height: 1.3 !important;
+.campaign-banner-card {
+  background: #ffffff !important;
+  border: 1px solid #dce8df !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 18px rgba(18, 48, 30, 0.05) !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease !important;
 }
 
-.landlord-tip-box {
-  background: rgba(18, 48, 29, 0.5) !important;
-  border: 1px dashed rgba(126, 224, 169, 0.35) !important;
-  border-radius: 12px !important;
-  padding: 12px 14px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 6px !important;
+.campaign-banner-card:hover {
+  border-color: #bad9c3 !important;
+  box-shadow: 0 8px 28px rgba(18, 48, 30, 0.08) !important;
 }
 
-.tip-header {
+.campaign-image-stage {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 16 / 4.5 !important;
+  max-height: 310px !important;
+  min-height: 180px !important;
+  overflow: hidden !important;
+  background: #144026 !important;
+}
+
+.campaign-image-link {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-decoration: none !important;
+}
+
+.campaign-image-link img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+  transition: transform 0.35s ease !important;
+}
+
+.campaign-banner-card:hover .campaign-image-link img {
+  transform: scale(1.015) !important;
+}
+
+.campaign-nav-arrow {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #1b3d27 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  font-size: 12px !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  opacity: 0 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 5 !important;
+}
+
+.campaign-banner-card:hover .campaign-nav-arrow {
+  opacity: 1 !important;
+}
+
+.campaign-nav-prev {
+  left: 16px !important;
+}
+
+.campaign-nav-prev svg {
+  transform: rotate(180deg) !important;
+}
+
+.campaign-nav-next {
+  right: 16px !important;
+}
+
+.campaign-nav-arrow:hover {
+  background: #ffffff !important;
+  color: #13aa8b !important;
+  transform: translateY(-50%) scale(1.08) !important;
+}
+
+.campaign-dots {
+  position: absolute !important;
+  bottom: 12px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: rgba(0, 0, 0, 0.38) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  padding: 5px 12px !important;
+  border-radius: 9999px !important;
+  z-index: 5 !important;
+}
+
+.campaign-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+}
+
+.campaign-dot.is-active {
+  width: 22px !important;
+  border-radius: 9999px !important;
+  background: #ffffff !important;
+}
+
+.campaign-info-bar {
+  padding: 18px 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+  background: #ffffff !important;
+  border-top: 1px solid #edf4ef !important;
+}
+
+.campaign-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+}
+
+.campaign-tag {
+  display: inline-block !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
-  color: #ffd166 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #245f3b !important;
+  margin-bottom: 2px !important;
 }
 
-.tip-header svg {
-  color: #ffd166 !important;
-  flex-shrink: 0 !important;
+.campaign-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1a2c20 !important;
+  margin: 0 !important;
+  line-height: 1.35 !important;
 }
 
-.landlord-tip-box p {
-  font-size: 12px !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+.campaign-desc {
+  font-size: 13.5px !important;
+  color: #556c5e !important;
   margin: 0 !important;
   line-height: 1.5 !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .districts-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+.campaign-action {
+  flex-shrink: 0 !important;
+}
+
+.campaign-cta-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px 24px !important;
+  background: #ff5722 !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  box-shadow: 0 4px 14px rgba(255, 87, 34, 0.28) !important;
+  transition: all 0.2s ease !important;
+}
+
+.campaign-cta-btn:hover {
+  background: #e64a19 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(255, 87, 34, 0.35) !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 900px) {
+  .campaign-image-stage {
+    aspect-ratio: 16 / 6 !important;
   }
-  .landlord-cta-container {
-    grid-template-columns: 1fr !important;
-    padding: 36px 30px !important;
-    gap: 30px !important;
-  }
-  .landlord-stat-card {
-    max-width: 100% !important;
+  .campaign-info-bar {
+    padding: 16px 20px !important;
+    gap: 16px !important;
   }
 }
 
-@media (max-width: 640px) {
-  .section-head-with-subtitle {
+@media (max-width: 680px) {
+  .campaign-image-stage {
+    aspect-ratio: 16 / 7.5 !important;
+  }
+  .campaign-info-bar {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 12px !important;
+    gap: 14px !important;
+    padding: 16px 18px !important;
   }
-  .districts-grid {
-    grid-template-columns: 1fr !important;
-  }
-  .district-media {
-    height: 170px !important;
-  }
-  .landlord-cta-container {
-    padding: 28px 20px !important;
-  }
-  .stat-metrics-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-  }
-  .landlord-actions {
-    flex-direction: column !important;
+  .campaign-action {
     width: 100% !important;
   }
-  .btn-landlord-primary,
-  .btn-landlord-secondary {
+  .campaign-cta-btn {
     width: 100% !important;
     justify-content: center !important;
   }
