@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import ReportDialog from "@/components/common/ReportDialog"
@@ -9,7 +9,7 @@ import { photos } from "@/mocks/content"
 import { isApiMode } from "@/services/apiClient"
 
 function ProfileAvatar({ initials, avatarUrl, className = "" }: { initials: string; avatarUrl?: string; className?: string }) {
-  return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : initials}</span>
+  return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" loading="lazy" decoding="async" /> : initials}</span>
 }
 
 function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
@@ -74,7 +74,7 @@ function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
         <div className="post-menu-wrap"><button aria-label="Tùy chọn bài viết" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Icon name="more"/></button>{menuOpen && <div className="post-menu">{isOwner ? <><button onClick={() => { setDraft(post.content); setEditing(true); setMenuOpen(false) }}><Icon name="edit" size={16}/>Sửa bài viết</button><button onClick={() => { if (window.confirm("Xóa bài viết này?")) { deletePost(post.id); toast("Đã xóa bài viết.", "info"); } }}><Icon name="trash" size={16}/>Xóa bài viết</button></> : <button onClick={() => { setReportOpen(true); setMenuOpen(false) }}><Icon name="shield" size={16}/>Báo cáo bài viết</button>}</div>}</div>
       </div>
       <p className="post-copy">{post.content}</p>
-      {post.image && <img className="post-image" src={post.image} alt={`Ảnh bài viết của ${post.name}`}/>}
+      {post.image && <img className="post-image" src={post.image} alt={`Ảnh bài viết của ${post.name}`} loading="lazy" decoding="async"/>}
       <div className="reaction-count"><span className="post-like-count" aria-label={`${post.likes} lượt thích`}><Icon name="heart" size={14}/><b>{post.likes}</b></span><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}>{post.commentsCount} bình luận</button></div>
       <div className="reaction-bar"><button className={liked ? "liked" : ""} onClick={() => user ? togglePostLike(post.id, user) : onLogin()}><Icon name="thumbs"/>{liked ? "Đã thích" : "Thích"}</button><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}><Icon name="chat"/>Bình luận</button><button onClick={async () => { await navigator.clipboard?.writeText(`${window.location.origin}/bai-viet/${post.id}`); setCopied(true); toast("Đã sao chép liên kết bài viết vào bộ nhớ tạm!", "success"); window.setTimeout(() => setCopied(false), 1600) }}><Icon name="share"/>{copied ? "Đã sao chép" : "Chia sẻ"}</button></div>
       {commentsOpen && <div className="post-comments">
@@ -140,6 +140,45 @@ export default function ForumPage() {
   const login = () => navigate("/dang-nhap", { state: { from: window.location.pathname } })
   const currentUserAvatarUrl = user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
 
+  const PAGE_SIZE = 5
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  // Reset pagination when filter or search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [topicFilter, query, id])
+
+  const displayedPosts = useMemo(
+    () => publicPosts.slice(0, visibleCount),
+    [publicPosts, visibleCount],
+  )
+  const hasMore = visibleCount < publicPosts.length
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isLoadingMore) {
+          setIsLoadingMore(true)
+          setTimeout(() => {
+            setVisibleCount((prev) => prev + PAGE_SIZE)
+            setIsLoadingMore(false)
+          }, 300)
+        }
+      },
+      { rootMargin: "250px" },
+    )
+
+    const el = sentinelRef.current
+    if (el) observer.observe(el)
+    return () => {
+      if (el) observer.unobserve(el)
+    }
+  }, [hasMore, isLoadingMore])
+
   const publish = async (event: FormEvent) => {
     event.preventDefault()
     if (!user) return login()
@@ -204,7 +243,36 @@ export default function ForumPage() {
             {error && <p className="form-message error">{error}</p>}
             <div className="composer-editor-actions"><span>Đừng đăng số giấy tờ hoặc địa chỉ riêng tư; có thể nhắn tin để trao đổi chi tiết.</span><Button icon="send">Đăng bài</Button></div>
           </form>}
-          {publicPosts.map((post) => <PostCard key={post.id} post={post} onLogin={login}/>)}
+          {displayedPosts.map((post) => (
+            <PostCard key={post.id} post={post} onLogin={login} />
+          ))}
+
+          {hasMore && (
+            <div ref={sentinelRef} className="forum-lazy-loader" role="status">
+              <div className="forum-lazy-spinner" aria-hidden="true" />
+              <span>Đang tải thêm bài viết...</span>
+              <button
+                type="button"
+                className="forum-btn-load-more"
+                onClick={() => {
+                  setIsLoadingMore(true)
+                  setTimeout(() => {
+                    setVisibleCount((prev) => prev + PAGE_SIZE)
+                    setIsLoadingMore(false)
+                  }, 200)
+                }}
+              >
+                Xem thêm ({publicPosts.length - visibleCount} bài còn lại)
+              </button>
+            </div>
+          )}
+
+          {!hasMore && publicPosts.length > PAGE_SIZE && (
+            <div className="forum-end-of-feed">
+              <Icon name="check" size={16} />
+              <span>Bạn đã xem hết tất cả {publicPosts.length} bài viết trên diễn đàn</span>
+            </div>
+          )}
           {!publicPosts.length && (
             <section className="empty-state">
               <span className="placeholder-icon">

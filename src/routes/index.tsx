@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react"
 import { createBrowserRouter } from "react-router"
 import MainLayout from "@/components/layout/MainLayout"
 import AdminLayout from "@/components/layout/AdminLayout"
@@ -11,7 +12,26 @@ import NotificationsPage from "@/pages/shared/NotificationsPage"
 import MyListingsPage from "@/pages/landlord/MyListingsPage"
 import ListingEditorPage from "@/pages/landlord/ListingEditorPage"
 import LandlordStatsPage from "@/pages/landlord/LandlordStatsPage"
-import ForumPage from "@/pages/community/ForumPage"
+const LazyForumPage = lazy(() => import("@/pages/community/ForumPage"))
+
+function ForumRouteWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <main className="page-bg forum-page">
+          <div className="container forum-layout" style={{ minHeight: "60vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div className="forum-lazy-loader">
+              <div className="forum-lazy-spinner" />
+              <span>Đang tải diễn đàn...</span>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <LazyForumPage />
+    </Suspense>
+  )
+}
 import MessagesPage from "@/pages/renter/MessagesPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminResourcePage from "@/pages/admin/AdminResourcePage"
@@ -43,10 +63,10 @@ export const router = createBrowserRouter([
       { path: "/", Component: HomePage },
       { path: "/tim-phong", Component: SearchPage },
       { path: "/phong/:id", Component: RoomDetailPage },
-      { path: "/dien-dan", Component: ForumPage },
+      { path: "/dien-dan", Component: ForumRouteWrapper },
       {
         path: "/bai-viet/:id",
-        Component: ForumPage,
+        Component: ForumRouteWrapper,
       },
       { path: "/nguoi-dung/:id", Component: PublicProfilePage },
       { path: "/dang-nhap", Component: LoginPage },
