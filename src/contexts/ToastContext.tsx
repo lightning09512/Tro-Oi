@@ -1,19 +1,27 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
 import { Icon } from "@/components/common/legacy"
 
-type ToastType = "success" | "error" | "info"
+export type ToastType = "success" | "error" | "info"
 
-interface Toast {
+export interface Toast {
   id: number
   message: string
   type: ToastType
 }
 
-interface ToastContextValue {
+export interface ToastContextValue {
   toast: (message: string, type?: ToastType) => void
 }
 
-const ToastContext = createContext<ToastContextValue | null>(null)
+const TOAST_CONTEXT_KEY = Symbol.for("__TRO_OI_TOAST_CONTEXT__")
+type GlobalWithToast = typeof globalThis & {
+  [TOAST_CONTEXT_KEY]?: React.Context<ToastContextValue | null>
+}
+
+// Preserve context reference across Vite HMR reloads
+export const ToastContext =
+  (globalThis as GlobalWithToast)[TOAST_CONTEXT_KEY] ??
+  ((globalThis as GlobalWithToast)[TOAST_CONTEXT_KEY] = createContext<ToastContextValue | null>(null))
 
 let nextId = 0
 
@@ -31,6 +39,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const dismiss = useCallback((id: number) => {
     setToasts((current) => current.filter((item) => item.id !== id))
   }, [])
+
+  // Listen to global events in case any component dispatches via fallback
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<{ message: string; type?: ToastType }>
+      if (custom.detail?.message) {
+        toast(custom.detail.message, custom.detail.type)
+      }
+    }
+    window.addEventListener("tro-oi-toast", handler)
+    return () => window.removeEventListener("tro-oi-toast", handler)
+  }, [toast])
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -61,10 +81,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useToast() {
+const fallbackToast: ToastContextValue = {
+  toast: (message: string, type: ToastType = "success") => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("tro-oi-toast", { detail: { message, type } }))
+    }
+  },
+}
+
+export function useToast(): ToastContextValue {
   const context = useContext(ToastContext)
-  if (!context) {
-    throw new Error("useToast must be used inside ToastProvider")
-  }
-  return context
+  return context ?? fallbackToast
 }
