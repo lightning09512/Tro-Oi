@@ -20,7 +20,7 @@ export default function RoomDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { user } = useAuth()
-  const { listings, reviews, saveReview, deleteReview, incrementListingViews, incrementListingContacts, startConversation } = usePlatform()
+  const { listings, users, reviews, saveReview, deleteReview, incrementListingViews, incrementListingContacts, startConversation } = usePlatform()
   const { isFavorite, toggleFavorite } = useFavorites()
   const { toast } = useToast()
   const [showPhone, setShowPhone] = useState(false)
@@ -72,12 +72,13 @@ export default function RoomDetailPage() {
 
   const saved = isFavorite(room.id)
   const ownerDisplayName = room.ownerName || "Chủ phòng"
+  const landlordAvatarUrl = room.ownerAvatarUrl || users?.find((u) => u.id === room.ownerId)?.avatarUrl
   const average = roomReviews.length ? roomReviews.reduce((sum, item) => sum + item.stars, 0) / roomReviews.length : 0
   const myReview = roomReviews.find((review) => review.authorId === user?.id)
   const canReview = user?.role === "renter" && room.currentTenantId === user.id
   const contact = async () => {
     if (!user) { navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } }); return }
-    const conversation = await startConversation({ accountId: user.id, name: room.ownerName, avatar: room.ownerName.split(" ").map((part) => part[0]).slice(-2).join(""), avatarUrl: room.ownerAvatarUrl, userId: room.ownerId, roomId: room.id })
+    const conversation = await startConversation({ accountId: user.id, name: room.ownerName, avatar: room.ownerName.split(" ").map((part) => part[0]).slice(-2).join(""), avatarUrl: landlordAvatarUrl || room.ownerAvatarUrl, userId: room.ownerId, roomId: room.id })
     if (!conversation) return
     incrementListingContacts(room.id)
     navigate(`/tin-nhan?conversation=${conversation}`)
@@ -146,7 +147,7 @@ export default function RoomDetailPage() {
         </div>
         <aside className="landlord-card room-contact-card">
           <div className="landlord-top">
-            {room.ownerAvatarUrl ? <img className="avatar large landlord-avatar-image" src={room.ownerAvatarUrl} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
+            {landlordAvatarUrl ? <img className="avatar large landlord-avatar-image" src={landlordAvatarUrl} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
             <div><small>Chủ trọ</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "● Đang hoạt động" : "Thông tin liên hệ đang cập nhật"}</span></div>
           </div>
           <div className="landlord-stats">
@@ -226,7 +227,7 @@ export default function RoomDetailPage() {
           {roomReviews.map((review) => (
             <article className="comment review-card" key={review.id}>
               <Link className="avatar peach profile-avatar-link" to={`/nguoi-dung/${review.authorId}`} aria-label={`Xem hồ sơ ${review.author}`}>
-                {users.find((u) => u.id === review.authorId)?.avatarUrl ? <img className="user-avatar-image" src={users.find((u) => u.id === review.authorId)?.avatarUrl} alt="" /> : review.initials}
+                {users?.find((u) => u.id === review.authorId)?.avatarUrl ? <img className="user-avatar-image" src={users.find((u) => u.id === review.authorId)?.avatarUrl} alt="" /> : review.initials}
               </Link>
               <div className="review-copy">
                 <div className="review-meta">
