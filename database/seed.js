@@ -42,18 +42,142 @@ const forumImages = [
 ]
 
 const forumPosts = [
-  { id: "seed-forum-01", authorId: "user-renter-01", daysAgo: 1, content: "Mẹo kiểm tra phòng trước khi đặt cọc: hãy quay video hiện trạng, hỏi rõ giá điện nước, tiền giữ xe và chụp lại chỉ số đồng hồ. Mình đã tránh được một khoản phí phát sinh nhờ kiểm tra từ đầu.", comments: [["user-renter-02", "Cảm ơn bạn, phần ghi nhận hiện trạng bằng video rất hữu ích."], ["user-landlord-01", "Chủ trọ minh bạch cũng nên gửi bảng giá dịch vụ trước khi hẹn xem."]], likes: ["user-renter-02", "user-renter-03", "user-landlord-01"] },
-  { id: "seed-forum-02", authorId: "user-renter-03", daysAgo: 2, content: "Mình đang tìm người ở ghép khu Bình Thạnh, ngân sách khoảng 2,5–3 triệu/người. Ưu tiên bạn nữ đi làm giờ hành chính, cùng giữ không gian chung sạch sẽ. Ai có kinh nghiệm chọn bạn ở ghép chia sẻ giúp mình nhé.", comments: [["user-renter-01", "Bạn nên gặp trực tiếp và thống nhất trước chuyện giờ giấc, khách đến chơi và chi phí chung."], ["user-renter-04", "Mình từng ở ghép, lập bảng chia tiền theo tháng sẽ dễ theo dõi hơn."]], likes: ["user-renter-01", "user-renter-04"] },
-  { id: "seed-forum-03", authorId: "user-renter-02", daysAgo: 3, content: "Khi xem hợp đồng thuê, mọi người nhớ đọc điều khoản tăng giá, thời hạn báo trước khi trả phòng và cách hoàn cọc. Nếu có thỏa thuận miệng thì nên ghi thêm vào hợp đồng hoặc tin nhắn để hai bên cùng xác nhận.", comments: [["user-landlord-02", "Đúng rồi, điều khoản rõ từ đầu giúp chủ trọ và người thuê đều yên tâm."], ["user-renter-03", "Mình sẽ bổ sung mục bàn giao chìa khóa và đồ đạc vào biên bản."]], likes: ["user-renter-03", "user-renter-04", "user-landlord-02"] },
-  { id: "seed-forum-04", authorId: "user-landlord-01", daysAgo: 4, content: "Chia sẻ từ phía chủ trọ: trước khi nhận phòng, hai bên nên chụp lại đồng hồ điện nước, tình trạng tường, thiết bị và lập biên bản bàn giao. Việc này giúp xử lý nhanh nếu có thắc mắc sau này.", comments: [["user-renter-01", "Mình rất thích cách làm có biên bản rõ ràng như vậy."], ["user-renter-02", "Có kèm ảnh hiện trạng thì càng dễ đối chiếu ạ."]], likes: ["user-renter-01", "user-renter-02", "user-renter-03"] },
-  { id: "seed-forum-05", authorId: "user-renter-04", daysAgo: 5, content: "Có ai thuê trọ gần khu công nghệ cao Thủ Đức không? Mình đang cân nhắc giữa phòng gần chỗ làm và phòng xa hơn nhưng có máy giặt, bãi xe rộng. Mọi người thường ưu tiên tiêu chí nào nhất?", comments: [["user-renter-03", "Nếu đi làm mỗi ngày thì thời gian di chuyển đáng để cân nhắc lắm."], ["user-renter-01", "Mình thường tính tổng cả tiền xăng, gửi xe và thời gian đi lại."], ["user-landlord-02", "Hãy đến xem khu vực vào giờ cao điểm để kiểm tra đường đi."]], likes: ["user-renter-01", "user-renter-02"] },
-  { id: "seed-forum-06", authorId: "user-renter-01", daysAgo: 6, content: "Cảnh báo nhỏ khi tìm phòng online: không chuyển tiền giữ chỗ nếu chưa xác minh người đăng, địa chỉ và điều kiện hoàn tiền. Nếu tin có giá rẻ bất thường, hãy rủ bạn bè đi xem cùng và trao đổi qua kênh có lưu lịch sử.", comments: [["user-renter-04", "Mình từng gặp tin dùng ảnh đẹp nhưng địa chỉ không khớp, mọi người nên kiểm tra kỹ."], ["user-admin-01", "Nếu thấy nội dung đáng ngờ, bạn có thể dùng chức năng báo cáo trên Trọ Ơi."]], likes: ["user-renter-02", "user-renter-03", "user-renter-04", "user-landlord-01"] },
-  { id: "seed-forum-07", authorId: "user-landlord-02", daysAgo: 7, content: "Một bảng chi phí minh bạch nên có tiền phòng, điện, nước, Internet, giữ xe và ngày chốt số. Chủ trọ nên thông báo trước khi thay đổi giá để người thuê chủ động kế hoạch chi tiêu.", comments: [["user-renter-02", "Bảng chi phí tách riêng từng mục như vậy rất dễ kiểm tra."], ["user-renter-01", "Mình mong nhiều nơi công khai đơn giá ngay từ tin đăng."]], likes: ["user-renter-01", "user-renter-02", "user-renter-03"] },
-  { id: "seed-forum-08", authorId: "user-renter-03", daysAgo: 8, content: "Cuối tuần này mình đi xem phòng lần đầu. Danh sách câu hỏi mình đã chuẩn bị gồm: giờ giấc ra vào, số người tối đa, có được nấu ăn không, phí phát sinh và cách xử lý khi hỏng thiết bị. Còn thiếu gì không mọi người?", comments: [["user-renter-04", "Hỏi thêm về ngập nước, tiếng ồn và chỗ phơi đồ nhé."], ["user-landlord-01", "Bạn cũng có thể hỏi thời gian sửa chữa trung bình khi có sự cố."], ["user-renter-02", "Đừng quên thử sóng điện thoại và Wi-Fi ngay tại phòng."]], likes: ["user-renter-01", "user-renter-02"] },
-  { id: "seed-forum-09", authorId: "user-renter-02", daysAgo: 9, content: "Bạn nào đang pass phòng có thể ghi rõ giá thuê, tiền cọc, ngày có thể nhận phòng, thời hạn hợp đồng và phí dịch vụ. Thông tin đủ từ đầu giúp người cần tìm phòng đỡ mất thời gian hỏi lại.", comments: [["user-renter-03", "Mình cũng nghĩ nên nói rõ lý do pass phòng để người nhận dễ cân nhắc."], ["user-admin-01", "Khi đăng bài pass phòng, không nên công khai giấy tờ hoặc dữ liệu cá nhân nhạy cảm."]], likes: ["user-renter-01", "user-renter-03", "user-renter-04"] },
-  { id: "seed-forum-10", authorId: "user-renter-04", daysAgo: 10, content: "Kinh nghiệm tiết kiệm điện ở phòng trọ: đặt điều hòa ở mức vừa phải, vệ sinh lưới lọc định kỳ và tắt bình nóng lạnh sau khi dùng. Tháng này hóa đơn của mình giảm đáng kể so với tháng trước.", comments: [["user-renter-01", "Mình cũng dùng ổ cắm có công tắc để tắt hẳn thiết bị chờ."], ["user-landlord-02", "Vệ sinh máy lạnh định kỳ cũng giúp máy chạy ổn định hơn."]], likes: ["user-renter-01", "user-renter-02"] },
-  { id: "seed-forum-11", authorId: "user-landlord-01", daysAgo: 11, content: "Nếu căn phòng có vấn đề nhỏ như vòi nước rỉ hoặc ổ điện chập chờn, người thuê nên báo sớm kèm ảnh hoặc video. Mô tả rõ thời điểm và tình trạng sẽ giúp chủ trọ xử lý nhanh hơn.", comments: [["user-renter-03", "Cách trao đổi có hình ảnh giúp hai bên hiểu đúng vấn đề hơn nhiều."], ["user-renter-04", "Mình thường lưu lại thời gian đã báo để tiện theo dõi."]], likes: ["user-renter-02", "user-renter-03", "user-renter-04"] },
-  { id: "seed-forum-12", authorId: "user-renter-01", daysAgo: 12, content: "Mình vừa chuyển trọ và thấy việc dọn đồ nhẹ nhàng hơn khi phân loại trước một tuần: đồ cần giữ, đồ thanh lý và đồ tặng lại. Mọi người có mẹo đóng gói hoặc tìm xe chở đồ tiết kiệm không?", comments: [["user-renter-02", "Dùng thùng giấy cùng kích cỡ và dán nhãn theo phòng sẽ dễ xếp hơn."], ["user-renter-03", "Mình thường đặt lịch xe trước vài ngày, nhất là cuối tuần."]], likes: ["user-renter-02", "user-renter-03", "user-renter-04", "user-landlord-01"] },
+  {
+    id: "seed-forum-01",
+    authorId: "user-renter-01",
+    daysAgo: 1,
+    content: "Kinh nghiệm xương máu cho mấy bạn tân sinh viên hoặc mới đi thuê trọ lần đầu: Lúc nhận phòng nhớ lôi điện thoại ra quay một chiếc video từ cửa vào trong thật kỹ nha mn! Chân tường ẩm mốc, vòi nước rỉ, ổ điện lỏng hay máy lạnh bám bụi thì quay rõ hết lại rồi gửi qua Zalo cho chủ trọ luôn để làm bằng chứng. Đợt trước mình chủ quan ko quay, lúc trả phòng bị trừ mất 600k tiền trầy tường oan ức cay ko chịu được :(",
+    comments: [
+      ["user-renter-02", "Chuẩn luôn b ơi, nhớ chụp luôn cả chỉ số đồng hồ điện nước ngày đầu dọn vào nữa nha, ko là gánh tiền tháng trước của ng ta ráng chịu á."],
+      ["user-landlord-01", "Chủ trọ như mình cũng khuyến khích các bạn làm vậy nhé. Có video bàn giao ngay từ đầu hai bên cùng thoải mái, sau này trả phòng đỡ phải lấn cấn chuyện gì."],
+      ["user-renter-03", "Bổ sung thêm là nhớ xả thử nước bồn cầu với vòi sen xem thoát nước có nhanh ko nha, trúng cống nghẹt là ám ảnh luôn."],
+    ],
+    likes: ["user-renter-02", "user-renter-03", "user-landlord-01"],
+  },
+  {
+    id: "seed-forum-02",
+    authorId: "user-renter-03",
+    daysAgo: 2,
+    content: "Góc tìm bạn ở ghép Bình Thạnh nè mn ơi 👋 Mình đang thuê 1 phòng studio ở hẻm Ung Văn Khiêm, gần ngã tư Hàng Xanh, muốn tìm 1 bạn nữ ở ghép để share tiền phòng tầm 2tr5 - 2tr8/tháng/người. Phòng đã có sẵn máy lạnh, tủ lạnh, bếp nấu ăn, giờ giấc tự do ko chung chủ. Ưu tiên bạn nào đi làm hoặc sinh viên năm 3-4, tính tình gọn gàng, sạch sẽ và biết tôn trọng không gian riêng tư nha. Ai thấy hợp vibe thì nhắn tin cho mình trao đổi thêm nhé!",
+    comments: [
+      ["user-renter-01", "Phòng xinh xắn quá bạn ơi, khu này đi làm qua Q1 hay Q3 đều tiện nè. Chúc b sớm tìm dc bạn hợp tính nha!"],
+      ["user-renter-04", "Vote hai bạn hẹn ra cà phê nc một buổi trước xem thói quen sinh hoạt có khớp nhau ko là chuẩn bài nhất."],
+    ],
+    likes: ["user-renter-01", "user-renter-04"],
+  },
+  {
+    id: "seed-forum-03",
+    authorId: "user-renter-02",
+    daysAgo: 3,
+    content: "Mọi người đi ký hợp đồng thuê trọ nhớ đọc kỹ 3 chỗ này giùm mình, đừng có ký vội vàng theo lời hứa miệng nha:\n1. Thời gian báo trước khi trả phòng: Thường là báo trước 30 ngày, nhiều chỗ gài 45-60 ngày là mất cọc như chơi.\n2. Chi phí phát sinh: Ngoài tiền phòng + điện nước, nhớ hỏi rõ phí thang máy, tiền rác, wifi, vệ sinh hành lang là bao nhiêu, ghi hẳn vào giấy.\n3. Điều kiện nhận lại cọc: Quy định rõ ràng trong bao nhiêu ngày sau khi trả phòng chủ phải chuyển khoản trả cọc.\nGiấy trắng mực đen cho chắc ăn mn ạ!",
+    comments: [
+      ["user-landlord-02", "Bài viết rất thực tế. Người thuê hỏi kỹ từ đầu thì chủ trọ đàng hoàng họ càng thích vì chứng tỏ bạn có trách nhiệm."],
+      ["user-renter-03", "Hôm trước mình vừa né được một quả hợp đồng ghi 'giá điện có thể thay đổi theo thỏa thuận', sợ quá chạy vội luôn á haha."],
+    ],
+    likes: ["user-renter-03", "user-renter-04", "user-landlord-02"],
+  },
+  {
+    id: "seed-forum-04",
+    authorId: "user-landlord-01",
+    daysAgo: 4,
+    content: "Góc chia sẻ thật lòng từ phía chủ trọ: Nhiều bạn cứ ngại báo mỗi khi trong phòng có thiết bị hỏng vặt. Nhưng thật ra vòi nước rò rỉ, phao bồn cầu kẹt hay aptomat nhảy các bạn cứ nhắn cho chủ trọ sớm giùm nha. Báo sớm thì mình cho thợ qua sửa trong ngày vừa tiết kiệm tiền nước cho các bạn, vừa giữ nhà bền đẹp. Đừng để nước ngấm hư hết sàn gỗ rồi lúc trả phòng lại khó xử cho cả đôi bên nè 😊",
+    comments: [
+      ["user-renter-01", "Gặp được chủ trọ có tâm và tâm lý như cô/chị là phước lành đi thuê trọ luôn á ❤️"],
+      ["user-renter-02", "Dạ đúng rồi ạ, có vấn đề gì nhắn kèm tấm ảnh hoặc video ngắn là chủ hiểu ngay, sửa nhanh gọn lẹ."],
+    ],
+    likes: ["user-renter-01", "user-renter-02", "user-renter-03"],
+  },
+  {
+    id: "seed-forum-05",
+    authorId: "user-renter-04",
+    daysAgo: 5,
+    content: "Chào mn, tháng tới mình bắt đầu đi làm ở Khu công nghệ cao Thủ Đức. Đang phân vân giữa 2 lựa chọn: một là thuê phòng ngay gần chỗ làm (tầm Lê Văn Việt) nhưng phòng hơi nhỏ và cũ xíu, hai là dạt về mạn Gò Vấp/Bình Thạnh phòng mới xịn xò có thang máy máy giặt nhưng phải đi làm mất 35-40 phút. Ai từng trải qua cảnh này cho mình xin lời khuyên với, đi làm mùa mưa Sài Gòn có ngán lắm ko ạ?",
+    comments: [
+      ["user-renter-03", "Né đi xa giùm mình bạn ơi 😭 Mùa mưa SG kẹt xe Đỗ Xuân Hợp với Xa Lộ Hà Nội là khóc tiếng Mán luôn, đi làm về chỉ muốn xỉu chứ chẳng còn sức chill phòng đẹp đâu."],
+      ["user-renter-01", "Vote thuê gần nha, dư ra mỗi ngày 1 tiếng rưỡi ngủ thêm với tập thể thao khỏe người hơn nhiều b à."],
+      ["user-landlord-02", "Bên mạn Tăng Nhơn Phú B hoặc Lã Xuân Oai có nhiều dãy trọ mới xây sạch đẹp lắm, bạn thử chạy lòng vòng xem thử nha."],
+    ],
+    likes: ["user-renter-01", "user-renter-02"],
+  },
+  {
+    id: "seed-forum-06",
+    authorId: "user-renter-01",
+    daysAgo: 6,
+    content: "CẢNH BÁO LỪA ĐẢO CỌC PHÒNG ẢO MỌI NGƯỜI CẨN THẬN ⚠️\nHôm qua con bạn em suýt bị lừa 1 triệu tiền cọc giữ chỗ. Chiêu trò của tụi nó là lấy ảnh căn hộ studio cực đẹp trên mạng xong đăng giá siêu rẻ (chỉ 2tr5 - 3tr ở Q1/Q3), ai nhắn tin hỏi thì bảo 'phòng đang có nhiều người hỏi thuê lắm, muốn giữ thì ck trước 500k-1tr'. Vừa chuyển khoản xong là nó chặn Zalo, block Facebook luôn!\nMn nhớ nguyên tắc bất di bất dịch: KHÔNG chuyển 1 xu nào nếu chưa đến tận nơi xem phòng, gặp trực tiếp chủ nhà nha!",
+    comments: [
+      ["user-renter-04", "Trò này cũ mèm mà năm nào cũng có người dính, nhất là mấy em tân sinh viên mới lên TP chưa rành đường."],
+      ["user-admin-01", "Mọi người thấy tin đăng nào có dấu hiệu bất thường hoặc giá rẻ vô lý thì bấm nút 'Báo cáo' ngay góc phải bài viết nhé, admin sẽ kiểm tra và khóa tài khoản vi phạm liền ạ."],
+    ],
+    likes: ["user-renter-02", "user-renter-03", "user-renter-04", "user-landlord-01"],
+  },
+  {
+    id: "seed-forum-07",
+    authorId: "user-landlord-02",
+    daysAgo: 7,
+    content: "Nhiều bạn hỏi mình cách tính chi phí sinh hoạt hàng tháng khi ở trọ sao cho khỏi bị hụt ví. Mình share bảng chi phí trung bình bên khu trọ mình quản lý để các bạn tham khảo lên ngân sách nhé:\n- Tiền phòng: 3tr5 (chia 2 bạn là 1tr750/người)\n- Điện: 3.5k x 120 số = tầm 420k (có máy lạnh bật tối)\n- Nước: 20k/khối x 4 khối = 80k/người\n- Wifi + Rác + Vệ sinh chung: 150k/phòng\nTổng cộng mỗi bạn tốn tầm 2tr1 - 2tr3/tháng tất tần tật. Mọi người ở khu khác có bảng giá tương đương ko?",
+    comments: [
+      ["user-renter-02", "Giá này bên anh tính quá hợp lý và minh bạch luôn á, nhiều chỗ tiền rác với xe máy đội lên cả nửa triệu khiếp vía."],
+      ["user-renter-01", "Phòng em ở Tân Bình tiền điện 4k/số mà tháng nào cũng 800k tiền điện, chắc phải học cách tiết kiệm máy lạnh lại thôi."],
+    ],
+    likes: ["user-renter-01", "user-renter-02", "user-renter-03"],
+  },
+  {
+    id: "seed-forum-08",
+    authorId: "user-renter-03",
+    daysAgo: 8,
+    content: "Cuối tuần này mình dẫn đứa em gái mới lên trường đi tìm phòng trọ, soạn sẵn chiếc checklist này mang theo. Mọi người xem còn thiếu gì ko nhắc mình thêm với nha:\n1. Giờ giấc ra vào: có giới nghiêm 23h ko hay mở khóa vân tay tự do?\n2. Bạn bè/người thân đến chơi qua đêm có phải đăng ký hay đóng phí ko?\n3. Áp lực nước trên lầu có mạnh ko, nước nóng năng lượng mặt trời hay bình nóng lạnh?\n4. Xung quanh có bị ngập lúc mưa lớn hay gần quán nhậu hát karaoke ầm ĩ ko?\n5. Cửa sổ có song sắt an toàn ko?\nCảm ơn cả nhà nhiều nhiều!",
+    comments: [
+      ["user-renter-04", "Nhớ test luôn sóng 4G/Wifi trong phòng nha b, nhiều phòng trong hẻm sâu tường dày vào tới nơi mất sạch sóng đt luôn á."],
+      ["user-landlord-01", "Checklist rất đầy đủ em nha. Nhớ hỏi thêm chỗ phơi đồ ngoài trời hay phơi trong phòng nhé, mùa mưa đồ lâu khô lắm."],
+      ["user-renter-02", "Hỏi thêm có chỗ sạc xe điện ko nha nếu em gái đi xe máy điện, nhiều chung cư mini cấm sạc đêm á."],
+    ],
+    likes: ["user-renter-01", "user-renter-02"],
+  },
+  {
+    id: "seed-forum-09",
+    authorId: "user-renter-02",
+    daysAgo: 9,
+    content: "[PASS PHÒNG GẤP CÓ TẶNG NỘI THẤT]\nDo chuyển công tác về Cần Thơ nên mình cần pass lại phòng trọ lầu 1 ở đường Cộng Hòa, P.13, Tân Bình (gần Etown).\n- Giá thuê: 3tr8/tháng, cọc 1 tháng. Hợp đồng còn 5 tháng.\n- Phòng có gác cao ko đụng đầu, ban công riêng siêu thoáng, máy lạnh Daikin mới toanh.\n- Anh chủ trọ trẻ tính cực kỳ thoải mái, xe để tầng trệt free.\nBạn nào dọn vào trước ngày 1 thì mình tặng lại luôn cái kệ bếp gỗ với giá treo quần áo còn mới 95% nha. Xem phòng thoải mái sau 18h các ngày trong tuần ạ.",
+    comments: [
+      ["user-renter-03", "Phòng nhìn sáng sủa thoáng mát ghê, cho mình xin số Zalo hoặc inbox hỏi thăm với nha b ơi."],
+      ["user-admin-01", "Lưu ý nhỏ: Hai bên nhớ nhờ chủ trọ làm lại phụ lục chuyển nhượng hợp đồng chính thức để sang tên cọc an toàn nhé ạ."],
+    ],
+    likes: ["user-renter-01", "user-renter-03", "user-renter-04"],
+  },
+  {
+    id: "seed-forum-10",
+    authorId: "user-renter-04",
+    daysAgo: 10,
+    content: "Chia sẻ xíu kinh nghiệm xài điều hòa tháng vừa rồi hóa đơn của mình giảm từ 700k xuống còn hơn 350k:\n1. Đặt nhiệt độ ở mức 26-27 độ kết hợp bật quạt gió thoang thoảng: Vừa mát đều khắp phòng vừa ko bị khô họng.\n2. Hẹn giờ tắt trước khi thức dậy 1 tiếng: Tầm 5h sáng trời mát rồi, phòng vẫn giữ hơi lạnh tới 6-7h dậy là vừa đẹp.\n3. Tháo lưới lọc bụi ra rửa 2 tuần 1 lần: Cái này quan trọng cực, bụi bám dày máy chạy gằn ăn điện gấp rưỡi mà ko mát.\nBác nào đang méo mặt vì tiền điện hè này thử áp dụng xem sao nha!",
+    comments: [
+      ["user-renter-01", "Ôi chuẩn luôn, nhà mình lắp thêm cái rèm cửa cản nắng che bớt kính ban công nhiệt độ giảm hẳn 2-3 độ luôn nè."],
+      ["user-landlord-02", "Lưới lọc sạch cũng giúp lốc máy lạnh bền hơn nhiều, đỡ hỏng hóc giữa mùa nóng."],
+    ],
+    likes: ["user-renter-01", "user-renter-02"],
+  },
+  {
+    id: "seed-forum-11",
+    authorId: "user-landlord-01",
+    daysAgo: 11,
+    content: "Chuyện nuôi boss ở trọ 🐱🐶\nDãy trọ bên mình hiện tại cho nuôi mèo và cún nhỏ, nhưng mình luôn dặn các bạn kỹ về chuyện tiêm phòng đầy đủ và dùng cát vệ sinh khử mùi. Mấy bé ngoan thì cưng xỉu, nhưng nếu để thú cưng cào rách lưới chống muỗi hay sủa đêm ảnh hưởng phòng bên cạnh thì chủ trọ cũng khó xử với cả xóm trọ lắm. Các bạn đi thuê trọ mang theo thú cưng thường tìm kiếm những tiêu chí gì nhất ở khu trọ ạ?",
+    comments: [
+      ["user-renter-03", "Dạ em nuôi 1 bé mèo, tiêu chí số 1 là có ban công rào chắn an toàn hoặc cửa sổ có song sắt để bé ko bị té ngã ạ."],
+      ["user-renter-04", "Nhiều khu trọ thấy nuôi thú cưng là hét giá thêm 300-500k/tháng vô lý ghê, gặp chỗ tâm lý như bên cô là quý lắm."],
+    ],
+    likes: ["user-renter-02", "user-renter-03", "user-renter-04"],
+  },
+  {
+    id: "seed-forum-12",
+    authorId: "user-renter-01",
+    daysAgo: 12,
+    content: "Chủ nhật này em chính thức dọn sang phòng mới, chia sẻ chút kinh nghiệm đóng gói đồ cho bạn nào chuẩn bị dọn trọ nha:\n- Quần áo: đừng gấp từng cái ra khỏi móc, cứ gom 10-15 cái móc chung một túi rác to màu đen túm cổ lại, qua phòng mới treo lên luôn mất đúng 3 giây!\n- Đồ sành sứ, ly chén: quấn bằng mấy cái áo thun cũ hoặc khăn tắm, vừa êm vừa ko tốn tiền mua xốp bọc nilon nổ.\n- Đồ linh tinh: dùng bút dạ ghi rõ tên phòng lên từng thùng carton (vd: đồ bếp, đồ tắm, mỹ phẩm...) dọn tới đâu mở tới đó cực kỳ nhàn.\nAi có mối xe ba gác hoặc xe tải nhỏ chuyển trọ uy tín giá sinh viên bên Bình Thạnh ko cho em xin contact với ạ!",
+    comments: [
+      ["user-renter-02", "Mẹo bọc quần áo cả móc thông minh ghê, đợt trước mình ngồi gấp đồ dọn trọ muốn gãy cái lưng haha."],
+      ["user-renter-03", "Bác tài xế xe tải nhỏ 0908... đợt trc chở cho mình nhiệt tình lắm, phụ bưng bê đồ lên lầu luôn ko tính thêm tiền nè b, để mình nhắn sđt cho."],
+      ["user-landlord-01", "Chúc em sang phòng mới nhiều may mắn, ở trọ vui vẻ thuận lợi nhé!"],
+    ],
+    likes: ["user-renter-02", "user-renter-03", "user-renter-04", "user-landlord-01"],
+  },
 ].map((post, index) => ({ ...post, image: forumImages[index] }))
 
 async function seedPostgres() {
@@ -72,6 +196,10 @@ async function seedPostgres() {
         [id, name, email, phone, passwordHash, role, avatarUrl],
       )
     }
+
+    // Assign active listings to demo landlords
+    await client.query(`UPDATE listings SET owner_id = 'user-landlord-01' WHERE id IN ('tromoi-105-ung-van-khiem', 'tromoi-binh-thanh-nguyen-van-dau')`)
+    await client.query(`UPDATE listings SET owner_id = 'user-landlord-02' WHERE id IN ('tromoi-phong-tro-huynh-van-nghe-tan-binh')`)
 
     const postIds = forumPosts.map((post) => post.id)
     await client.query("DELETE FROM forum_reactions WHERE post_id = ANY($1::text[])", [postIds])
@@ -95,6 +223,22 @@ async function seedPostgres() {
       }
     }
 
+    const sampleReviews = [
+      ["tromoi-105-ung-van-khiem", "user-renter-01", 5, "Mình từng ở trọ bên cô Ngọc gần 1 năm trước khi đổi chỗ làm. Phòng sạch sẽ, nước máy mạnh, cô chú chủ trọ cực kỳ dễ thương và tôn trọng sự riêng tư của khách thuê. Xe để tầng trệt có khóa vân tay rất an tâm nha mn."],
+      ["tromoi-105-ung-van-khiem", "user-renter-03", 5, "Vị trí ở Ung Văn Khiêm ra ngã tư Hàng Xanh siêu gần, đi học Hutech hay Ngoại Thương đều tiện. Phòng có ban công đón nắng tốt, giờ giấc tự do không chung chủ."],
+      ["tromoi-binh-thanh-nguyen-van-dau", "user-renter-02", 4, "Phòng ốc sạch đẹp y như ảnh chụp trên web, gác cao đứng thẳng người thoải mái ko sợ đụng đầu. Điểm trừ xíu là hẻm 241 hơi đông vào giờ tan tầm, nhưng bù lại an ninh tốt, hàng xóm văn minh."],
+      ["tromoi-phong-tro-huynh-van-nghe-tan-binh", "user-renter-04", 5, "Anh chủ trọ trẻ tính, dễ tính và nhiệt tình. Lúc nhận phòng anh kiểm tra máy lạnh quạt gió hoạt động tốt mới bàn giao. Giá điện nước tính đúng theo giá cam kết, ko phát sinh phụ phí gì."],
+    ]
+    for (const [listingId, authorId, stars, text] of sampleReviews) {
+      await client.query(
+        `INSERT INTO reviews(id, listing_id, author_id, stars, text, created_at, updated_at)
+         VALUES($1, $2, $3, $4, $5, now() - interval '3 days', now())
+         ON CONFLICT (listing_id, author_id) DO UPDATE SET
+           stars=EXCLUDED.stars, text=EXCLUDED.text, updated_at=now()`,
+        [`review-${listingId}-${authorId}`, listingId, authorId, stars, text],
+      )
+    }
+
     await client.query("COMMIT")
   } catch (error) {
     await client.query("ROLLBACK")
@@ -111,29 +255,66 @@ async function seedMongo() {
     { $setOnInsert: { sourceId: "notification-seed-01", userId: "user-renter-01", title: "Chào mừng đến Trọ Ơi", detail: "Dữ liệu này được tải từ MongoDB qua API.", read: false } },
     { upsert: true },
   )
+
+  const landlordRenterMsgs = [
+    { senderId: "user-renter-01", text: "Dạ em chào chị Ngọc ạ, em thấy tin phòng studio bên Ung Văn Khiêm của mình, hiện phòng còn trống không chị?", readBy: ["user-renter-01", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 26) },
+    { senderId: "user-landlord-01", text: "Chào em nha, phòng lầu 2 ban công thoáng bên chị vẫn còn nhé! Em tính khi nào dọn qua?", readBy: ["user-landlord-01", "user-renter-01"], createdAt: new Date(Date.now() - 3600_000 * 25) },
+    { senderId: "user-renter-01", text: "Dạ cuối tháng này em chuyển trọ á chị. Tầm chiều mai 5h30 em ghé xem phòng thực tế được không chị ha?", readBy: ["user-renter-01", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 24) },
+    { senderId: "user-landlord-01", text: "Được em nhé, tầm đó chị có ở nhà. Tới hẻm 105 Ung Văn Khiêm em cứ alo số chị 0987 654 321 chị ra đón vô xem nha.", readBy: ["user-landlord-01", "user-renter-01"], createdAt: new Date(Date.now() - 3600_000 * 23) },
+    { senderId: "user-renter-01", text: "Dạ chị ơi, cho em hỏi thêm là tiền điện nước với xe cộ bên mình tính sao chị ha?", readBy: ["user-renter-01", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 5) },
+    { senderId: "user-landlord-01", text: "Điện 3.5k/số đồng hồ riêng từng phòng em nha, nước máy 20k/khối. Xe máy để tầng trệt có khóa vân tay với camera 24/7, miễn phí 1 xe nhé em.", readBy: ["user-landlord-01", "user-renter-01"], createdAt: new Date(Date.now() - 3600_000 * 4) },
+    { senderId: "user-renter-01", text: "Dạ vâng chị, nghe ưng quá. Chiều mai 5h30 em qua alo chị liền nha, em cảm ơn chị!", readBy: ["user-renter-01", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 2) },
+    { senderId: "user-landlord-01", text: "Okie em, hẹn em chiều mai nhé!", readBy: ["user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 1) },
+  ]
+
   await Conversation.updateOne(
     { _id: "672000000000000000000001" },
     {
       $set: {
         participants: ["user-landlord-01", "user-renter-01"],
-        listingId: "room-thao-dien-studio",
+        listingId: "tromoi-105-ung-van-khiem",
         mutedBy: [],
-        messages: [
-          { senderId: "user-landlord-01", text: "Chào bạn, phòng bạn hỏi hiện vẫn còn nhé.", readBy: ["user-landlord-01"] },
-          { senderId: "user-renter-01", text: "Mình có thể hẹn xem phòng chiều mai không ạ?", readBy: ["user-renter-01"] },
-        ],
+        messages: landlordRenterMsgs,
       },
       $setOnInsert: { createdAt: new Date() },
     },
     { upsert: true },
   )
+
+  const activeUser = await pool.query("SELECT id FROM users WHERE id='11e095c2-caff-4698-9168-7480ac8a8d17'")
+  if (activeUser.rows[0]) {
+    const participants = ["11e095c2-caff-4698-9168-7480ac8a8d17", "user-landlord-01"].sort()
+    let conv = await Conversation.findOne({ participants: { $all: participants, $size: 2 } })
+    const userMessages = [
+      { senderId: "11e095c2-caff-4698-9168-7480ac8a8d17", text: "Dạ em chào chị Ngọc ạ, em thấy tin phòng trọ Ung Văn Khiêm của mình trên Trọ Ơi, phòng còn trống không chị?", readBy: ["11e095c2-caff-4698-9168-7480ac8a8d17", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 6) },
+      { senderId: "user-landlord-01", text: "Chào em nha, phòng bên Ung Văn Khiêm lầu 2 có ban công thoáng vẫn còn nha em! Em tính khi nào dọn qua?", readBy: ["user-landlord-01", "11e095c2-caff-4698-9168-7480ac8a8d17"], createdAt: new Date(Date.now() - 3600_000 * 5) },
+      { senderId: "11e095c2-caff-4698-9168-7480ac8a8d17", text: "Dạ cuối tháng này hợp đồng bên chỗ cũ của em hết hạn á chị. Chiều mai tầm 5h30 em ghé qua xem phòng được không chị ha?", readBy: ["11e095c2-caff-4698-9168-7480ac8a8d17", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 4) },
+      { senderId: "user-landlord-01", text: "Được em nhé, tầm đó chị có ở nhà trọ. Tới hẻm 105 Ung Văn Khiêm em cứ alo số 0987 654 321 chị ra đón vô xem nha.", readBy: ["user-landlord-01", "11e095c2-caff-4698-9168-7480ac8a8d17"], createdAt: new Date(Date.now() - 3600_000 * 3) },
+      { senderId: "11e095c2-caff-4698-9168-7480ac8a8d17", text: "Dạ chị ơi, cho em hỏi thêm là chi phí điện nước với chỗ để xe bên mình tính thế nào chị ha?", readBy: ["11e095c2-caff-4698-9168-7480ac8a8d17", "user-landlord-01"], createdAt: new Date(Date.now() - 3600_000 * 2) },
+      { senderId: "user-landlord-01", text: "Điện 3.5k/số đồng hồ riêng từng phòng em nha, nước máy 20k/khối. Xe máy để tầng trệt có khóa vân tay với camera an ninh 24/7, miễn phí 1 xe nhé em.", readBy: ["user-landlord-01", "11e095c2-caff-4698-9168-7480ac8a8d17"], createdAt: new Date(Date.now() - 3600_000 * 1) },
+      { senderId: "11e095c2-caff-4698-9168-7480ac8a8d17", text: "Dạ vâng nghe ưng quá chị. Chiều mai tầm 5h30 em chạy qua alo chị liền nha, em cảm ơn chị!", readBy: ["11e095c2-caff-4698-9168-7480ac8a8d17"], createdAt: new Date(Date.now() - 1800_000) },
+      { senderId: "user-landlord-01", text: "Okie em nha, hẹn em chiều mai nhé!", readBy: ["user-landlord-01"], createdAt: new Date(Date.now() - 900_000) },
+    ]
+    if (conv) {
+      conv.messages = userMessages
+      conv.listingId = "tromoi-105-ung-van-khiem"
+      await conv.save()
+    } else {
+      await Conversation.create({
+        participants,
+        listingId: "tromoi-105-ung-van-khiem",
+        messages: userMessages,
+        mutedBy: [],
+      })
+    }
+  }
 }
 
 try {
   await seedPostgres()
   await seedMongo()
   console.log("Seeded PostgreSQL and MongoDB successfully.")
-  console.log(`Added ${forumPosts.length} sample forum posts with comments and reactions.`)
+  console.log(`Added ${forumPosts.length} sample forum posts with natural comments and reactions.`)
   console.log("Development accounts: renter, landlord, and admin use the configured SEED_PASSWORD.")
 } finally {
   await Promise.allSettled([pool.end(), mongoose.disconnect()])

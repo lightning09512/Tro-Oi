@@ -18,7 +18,7 @@ async function formatConversation(conversation, selfId) {
   const other = otherResult.rows[0]
   return {
     id: String(conversation._id), accountId: selfId, name: other?.name ?? "Thành viên", avatar: initials(other?.name), avatarUrl: other?.avatar_url ?? undefined, active: false,
-    text: conversation.messages.at(-1)?.text ?? (conversation.listingId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện"),
+    text: conversation.messages.at(-1)?.text ?? (conversation.listingId ? "Quan tâm tin phòng này" : "Chưa có tin nhắn mới"),
     time: conversation.messages.at(-1) ? messageTime(conversation.messages.at(-1).createdAt) : messageTime(conversation.updatedAt),
     unread: conversation.messages.some((message) => message.senderId !== selfId && !message.readBy.includes(selfId)),
     muted: conversation.mutedBy.includes(selfId), roomId: conversation.listingId || "", userId: otherId,

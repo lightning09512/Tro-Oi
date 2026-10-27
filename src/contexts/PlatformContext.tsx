@@ -214,6 +214,30 @@ const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversa
     "/images/avatars/demo-owner-01.jpg",
     "/images/avatars/demo-owner-05.jpg",
   ]
+  const sampleMessages: { id: string; from: "me" | "them"; text: string; time: string }[][] = [
+    [
+      { id: "msg-1-1", from: "me", text: "Dạ em chào chị Ngọc ạ, em thấy tin phòng Ung Văn Khiêm của mình, hiện phòng còn trống không chị?", time: "09:30" },
+      { id: "msg-1-2", from: "them", text: "Chào em nha, phòng lầu 2 ban công thoáng bên chị vẫn còn nhé! Em tính khi nào dọn qua?", time: "09:45" },
+      { id: "msg-1-3", from: "me", text: "Dạ cuối tháng này em chuyển trọ á chị. Tầm chiều mai 5h30 em ghé xem phòng thực tế được không chị ha?", time: "10:05" },
+      { id: "msg-1-4", from: "them", text: "Được em nhé, tầm đó chị có ở nhà. Tới hẻm 105 Ung Văn Khiêm em cứ alo số chị ra đón vô xem nha.", time: "10:15" },
+      { id: "msg-1-5", from: "me", text: "Dạ vâng chị, tiền điện nước với xe cộ bên mình tính thế nào chị ha?", time: "10:20" },
+      { id: "msg-1-6", from: "them", text: "Điện 3.5k/số đồng hồ riêng từng phòng em nha, nước máy 20k/khối. Xe máy để tầng trệt có khóa vân tay với camera an ninh, miễn phí 1 xe nhé em.", time: "10:25" },
+      { id: "msg-1-7", from: "me", text: "Dạ ưng quá chị ơi, chiều mai 5h30 em qua alo chị liền nha. Em cảm ơn chị ạ!", time: "10:30" },
+      { id: "msg-1-8", from: "them", text: "Okie em nha, hẹn em chiều mai 5h30 qua xem phòng nhé!", time: "10:32" },
+    ],
+    [
+      { id: "msg-2-1", from: "them", text: "Chào bạn nha! Bạn đang đi làm hay sinh viên á? Tụi mình đang tìm 1 bạn nữ ở chung cho vui với share tiền phòng.", time: "08:50" },
+      { id: "msg-2-2", from: "me", text: "Mình đi làm văn phòng ở Q1 nè, giờ hành chính 8h-17h, tính mình gọn gàng ngăn nắp, ko tụ tập ồn ào nha.", time: "09:05" },
+      { id: "msg-2-3", from: "them", text: "Ui hợp vibe ghê á! Phòng có sẵn máy lạnh tủ lạnh với bếp rồi, chỉ xách vali vào ở thôi nè.", time: "09:10" },
+      { id: "msg-2-4", from: "them", text: "Tối nay rảnh ko b ghé phòng chơi nc xem hợp tính ko nè.", time: "09:15" },
+    ],
+    [
+      { id: "msg-3-1", from: "me", text: "Chào admin, mình thấy có tin đăng ở Bình Thạnh để giá ảo 1tr5 câu view xong đòi cọc trước á.", time: "T.2 14:00" },
+      { id: "msg-3-2", from: "them", text: "Chào bạn, Trọ Ơi đã tiếp nhận phản ánh của bạn. Đội ngũ kiểm duyệt đang xác minh tin đăng này.", time: "T.2 14:15" },
+      { id: "msg-3-3", from: "them", text: "Admin đã kiểm tra và gỡ tin đăng vi phạm rồi nhé! Cảm ơn bạn đã chung tay bảo vệ cộng đồng Trọ Ơi an toàn ạ.", time: "T.2 15:30" },
+    ],
+  ]
+
   return {
     ...conversation,
     accountId: index === 1 ? "user-landlord-01" : "user-renter-01",
@@ -221,13 +245,10 @@ const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversa
     avatar: ["MN", "HT", "AD"][index],
     avatarUrl: avatarUrls[index],
     id: `conversation-${index + 1}`,
-    roomId: "room-thao-dien-studio",
+    roomId: ["tromoi-105-ung-van-khiem", "tromoi-binh-thanh-nguyen-van-dau", ""][index],
     userId: ["user-landlord-01", "user-renter-01", "user-admin-01"][index],
-    unread: index === 0,
-    messages: [
-      { id: `message-${index}-1`, from: "them", text: "Chào bạn, phòng bạn hỏi hiện vẫn còn nhé.", time: "10:20" },
-      { id: `message-${index}-2`, from: "me", text: "Mình có thể hẹn xem phòng chiều mai không ạ?", time: "10:32" },
-    ],
+    unread: index === 1,
+    messages: sampleMessages[index] ?? [],
   }
 })
 
@@ -607,7 +628,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           avatar: person.avatar,
           avatarUrl: person.avatarUrl,
           active: true,
-          text: person.roomId ? "Bắt đầu cuộc trò chuyện về phòng" : "Bắt đầu cuộc trò chuyện",
+          text: person.roomId ? "Quan tâm tin phòng này" : "Chưa có tin nhắn mới",
           time: "Vừa xong",
           roomId: person.roomId,
           userId: person.userId,
