@@ -12,7 +12,7 @@ function ProfileAvatar({ initials, avatarUrl, className = "" }: { initials: stri
   return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" loading="lazy" decoding="async" /> : initials}</span>
 }
 
-function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
+function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogin: () => void; isDetail?: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
@@ -33,6 +33,9 @@ function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
   const role = author?.role
   const authorAvatarUrl = post.avatarUrl ?? author?.avatarUrl
   const currentUserAvatarUrl = user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
+
+  const isLong = post.content.length > 220 || post.content.split("\n").length > 4
+  const [expanded, setExpanded] = useState(isDetail)
 
   const submitComment = async (event: FormEvent) => {
     event.preventDefault()
@@ -73,7 +76,19 @@ function PostCard({ post, onLogin }: { post: ForumPost; onLogin: () => void }) {
         {!isOwner && <button className="post-message-action" onClick={messageAuthor}><Icon name="chat" size={16}/><span>Nhắn tin</span></button>}
         <div className="post-menu-wrap"><button aria-label="Tùy chọn bài viết" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Icon name="more"/></button>{menuOpen && <div className="post-menu">{isOwner ? <><button onClick={() => { setDraft(post.content); setEditing(true); setMenuOpen(false) }}><Icon name="edit" size={16}/>Sửa bài viết</button><button onClick={() => { if (window.confirm("Xóa bài viết này?")) { deletePost(post.id); toast("Đã xóa bài viết.", "info"); } }}><Icon name="trash" size={16}/>Xóa bài viết</button></> : <button onClick={() => { setReportOpen(true); setMenuOpen(false) }}><Icon name="shield" size={16}/>Báo cáo bài viết</button>}</div>}</div>
       </div>
-      <p className="post-copy">{post.content}</p>
+      <div className="post-copy-wrapper">
+        <p className={`post-copy${!expanded && isLong ? " is-collapsed" : ""}`}>{post.content}</p>
+        {isLong && (
+          <button
+            type="button"
+            className="post-expand-btn"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+          >
+            {expanded ? "Ẩn bớt" : "... Xem thêm"}
+          </button>
+        )}
+      </div>
       {post.image && <img className="post-image" src={post.image} alt={`Ảnh bài viết của ${post.name}`} loading="lazy" decoding="async"/>}
       <div className="reaction-count"><span className="post-like-count" aria-label={`${post.likes} lượt thích`}><Icon name="heart" size={14}/><b>{post.likes}</b></span><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}>{post.commentsCount} bình luận</button></div>
       <div className="reaction-bar"><button className={liked ? "liked" : ""} onClick={() => user ? togglePostLike(post.id, user) : onLogin()}><Icon name="thumbs"/>{liked ? "Đã thích" : "Thích"}</button><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}><Icon name="chat"/>Bình luận</button><button onClick={async () => { await navigator.clipboard?.writeText(`${window.location.origin}/bai-viet/${post.id}`); setCopied(true); toast("Đã sao chép liên kết bài viết vào bộ nhớ tạm!", "success"); window.setTimeout(() => setCopied(false), 1600) }}><Icon name="share"/>{copied ? "Đã sao chép" : "Chia sẻ"}</button></div>
@@ -198,7 +213,7 @@ export default function ForumPage() {
             <div className="composer-editor-actions"><span>Đừng đăng số giấy tờ hoặc địa chỉ riêng tư; có thể nhắn tin để trao đổi chi tiết.</span><Button icon="send">Đăng bài</Button></div>
           </form>}
           {displayedPosts.map((post) => (
-            <PostCard key={post.id} post={post} onLogin={login} />
+            <PostCard key={post.id} post={post} onLogin={login} isDetail={Boolean(id && id === post.id)} />
           ))}
 
           {hasMore && (

@@ -75,7 +75,11 @@ button,input,select{font:inherit}button{cursor:pointer}.icon{display:inline-bloc
 .post-menu{position:absolute;top:44px;right:0;z-index:5;width:180px;padding:6px;border:1px solid #dce8de;border-radius:10px;background:#fff;box-shadow:0 8px 24px rgba(30,60,40,.12)}
 .post-menu button{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;border:0;border-radius:7px;background:#fff;padding:0 10px;color:#39483f;text-align:left}
 .post-menu button:hover{background:#f2f7f2;color:#245f3b}
-.post-copy,.post-card>p{margin:14px 0;padding:0;color:#303b33;font-size:15px;line-height:1.7;overflow-wrap:anywhere}
+.post-copy-wrapper{margin:12px 0 14px}
+.post-copy,.post-card>p{margin:0;padding:0;color:#27382d;font-size:15px;line-height:1.68;white-space:pre-line;overflow-wrap:anywhere;word-break:break-word}
+.post-copy.is-collapsed{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
+.post-expand-btn{display:inline-block;margin-top:6px;padding:2px 0;border:0;background:transparent;color:#245f3b;font-size:13.5px;font-weight:700;cursor:pointer;transition:color .15s ease}
+.post-expand-btn:hover{color:#143d24;text-decoration:underline;text-underline-offset:3px}
 .post-image{display:block;width:100%;max-height:440px;aspect-ratio:16/10;border-radius:10px;background:#f2f6f2;object-fit:contain}
 .reaction-count{display:flex;align-items:center;justify-content:space-between;min-height:38px;margin-top:2px;padding:4px 2px;border-bottom:1px solid #e5ece6;color:#68766d;font-size:12px}
 .reaction-count .post-like-count{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:38px;min-height:34px;padding:0 11px;border:1px solid #e1eee3;border-radius:999px;background:#f0f7f1;color:#245f3b;font-size:13px;font-weight:650}.post-like-count .icon{color:#34794a}
@@ -97,7 +101,7 @@ button,input,select{font:inherit}button{cursor:pointer}.icon{display:inline-bloc
 .feed-comment-meta{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;min-height:22px}
 .feed-comment-meta strong{color:#293a2f;font-size:13px}
 .feed-comment-meta small{color:#77847b;font-size:11px}
-.feed-comment p{margin:2px 0 0;color:#3e4b42;line-height:1.55;overflow-wrap:anywhere}
+.feed-comment p{margin:2px 0 0;color:#3e4b42;line-height:1.55;overflow-wrap:anywhere;white-space:pre-line}
 .feed-comment-actions{display:flex;align-items:center;gap:4px;flex:none;margin-left:auto}
 .feed-comment-actions button,.feed-comment-report{display:grid;place-items:center;min-width:36px;min-height:36px;margin-left:auto;border:0;border-radius:8px;background:transparent;color:#64736a;font-size:12px}
 .feed-comment-actions button:hover,.feed-comment-report:hover{background:#f0f7f1;color:#245f3b}
@@ -12976,11 +12980,20 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .post-content-body {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #334155;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #26382e;
   margin: 0;
   white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.post-content-body.is-collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
 }
 
 .post-photo-wrap {

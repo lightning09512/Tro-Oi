@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import { useFavorites } from "@/contexts/FavoritesContext"
-import { usePlatform, type PlatformUser } from "@/contexts/PlatformContext"
+import { usePlatform, type PlatformUser, type ForumPost } from "@/contexts/PlatformContext"
 import { useToast } from "@/contexts/ToastContext"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 
@@ -17,6 +17,83 @@ type PublicProfile = {
   avatarUrl?: string
   phone?: string
   createdAt?: string
+}
+
+function ProfilePostCard({
+  post,
+  authorName,
+  onPreviewImage,
+}: {
+  post: ForumPost
+  authorName: string
+  onPreviewImage: (url: string) => void
+}) {
+  const isLong = post.content.length > 220 || post.content.split("\n").length > 4
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <article className="nhatot-post-item" key={post.id}>
+      <div className="post-header-line">
+        <div className="post-author-meta">
+          <span className="post-author-name">{authorName}</span>
+          <span className="post-time-meta">{post.time}</span>
+        </div>
+        <Link to="/dien-dan" className="post-forum-badge">Diễn đàn Trọ Ơi</Link>
+      </div>
+
+      <div className="post-copy-wrapper">
+        <p className={`post-content-body${!expanded && isLong ? " is-collapsed" : ""}`}>{post.content}</p>
+        {isLong && (
+          <button
+            type="button"
+            className="post-expand-btn"
+            onClick={() => setExpanded((prev) => !prev)}
+            aria-expanded={expanded}
+          >
+            {expanded ? "Ẩn bớt" : "... Xem thêm"}
+          </button>
+        )}
+      </div>
+
+      {post.image && (
+        <div
+          className="post-photo-wrap"
+          onClick={() => onPreviewImage(post.image ?? "")}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              onPreviewImage(post.image ?? "")
+            }
+          }}
+          title="Bấm để xem ảnh phóng to đầy đủ"
+        >
+          <img
+            src={post.image}
+            alt="Ảnh bài viết"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
+            }}
+          />
+          <span className="post-photo-zoom-hint">
+            <Icon name="search" size={13} />
+            <span>Xem ảnh phóng to</span>
+          </span>
+        </div>
+      )}
+
+      <div className="post-footer-line">
+        <div className="post-reaction-stats">
+          <span><Icon name="heart" size={14} /> {post.likes} thích</span>
+          <span><Icon name="chat" size={14} /> {post.commentsCount} bình luận</span>
+        </div>
+        <Link to={`/bai-viet/${post.id}`} className="post-read-link">
+          Xem chi tiết bài viết <Icon name="chevron" size={13} />
+        </Link>
+      </div>
+    </article>
+  )
 }
 
 export default function PublicProfilePage() {
@@ -476,55 +553,12 @@ export default function PublicProfilePage() {
             {publicPosts.length ? (
               <div className="nhatot-posts-stack">
                 {publicPosts.map((post) => (
-                  <article className="nhatot-post-item" key={post.id}>
-                    <div className="post-header-line">
-                      <div className="post-author-meta">
-                        <span className="post-author-name">{profile.name}</span>
-                        <span className="post-time-meta">{post.time}</span>
-                      </div>
-                      <Link to="/dien-dan" className="post-forum-badge">Diễn đàn Trọ Ơi</Link>
-                    </div>
-
-                    <p className="post-content-body">{post.content}</p>
-
-                    {post.image && (
-                      <div
-                        className="post-photo-wrap"
-                        onClick={() => setPreviewImage(post.image ?? null)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            setPreviewImage(post.image ?? null)
-                          }
-                        }}
-                        title="Bấm để xem ảnh phóng to đầy đủ"
-                      >
-                        <img
-                          src={post.image}
-                          alt="Ảnh bài viết"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
-                          }}
-                        />
-                        <span className="post-photo-zoom-hint">
-                          <Icon name="search" size={13} />
-                          <span>Xem ảnh phóng to</span>
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="post-footer-line">
-                      <div className="post-reaction-stats">
-                        <span><Icon name="heart" size={14} /> {post.likes} thích</span>
-                        <span><Icon name="chat" size={14} /> {post.commentsCount} bình luận</span>
-                      </div>
-                      <Link to={`/bai-viet/${post.id}`} className="post-read-link">
-                        Xem chi tiết bài viết <Icon name="chevron" size={13} />
-                      </Link>
-                    </div>
-                  </article>
+                  <ProfilePostCard
+                    key={post.id}
+                    post={post}
+                    authorName={profile.name}
+                    onPreviewImage={setPreviewImage}
+                  />
                 ))}
               </div>
             ) : (
