@@ -15,7 +15,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 *
   done(null, true)
 } })
 
-router.post("/image", requireAuth, requireRole("renter", "landlord"), upload.single("file"), async (req, res) => {
+router.post("/image", requireAuth, requireRole("renter", "landlord", "admin"), upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Vui lòng chọn một ảnh." })
   const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
   if (!hasCloudinary) {

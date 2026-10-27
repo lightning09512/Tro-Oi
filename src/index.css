@@ -9986,3 +9986,244 @@ input[type="file"]::file-selector-button:hover {
     padding: 4px 12px !important;
   }
 }
+
+/* ========================================================
+   ACCOUNT AVATAR MANAGEMENT & UPLOAD UI
+   ======================================================== */
+.account-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto 12px;
+}
+
+.account-avatar-display {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 88px !important;
+  height: 88px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  border: 3px solid #edf5ee !important;
+  box-shadow: 0 4px 14px rgba(22, 52, 33, 0.09) !important;
+  background: #edf5ee !important;
+  position: relative !important;
+}
+
+.account-avatar-display img,
+.account-avatar-display .user-avatar-image {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block !important;
+}
+
+.account-avatar-change-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #245f3b;
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.account-avatar-change-btn:hover {
+  background: #1b4d2e;
+  transform: scale(1.1);
+}
+
+.account-summary-edit-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 6px 14px;
+  border: 1px solid #d5e2d8;
+  border-radius: 999px;
+  background: #f7faf8;
+  color: #31583e;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.account-summary-edit-avatar-btn:hover {
+  background: #edf5ee;
+  border-color: #245f3b;
+  color: #245f3b;
+}
+
+.account-avatar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #dce8df;
+  border-radius: 14px;
+  background: #fbfdfb;
+  margin-bottom: 22px;
+}
+
+.account-avatar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.account-avatar-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #223528;
+}
+
+.account-avatar-hint {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #6a7c71;
+}
+
+.account-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.account-avatar-preview {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.account-avatar-spinner-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.account-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.account-avatar-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.account-avatar-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e5a4a4;
+  border-radius: 8px;
+  background: #fff8f8;
+  color: #c93b3b;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.account-avatar-remove-btn:hover {
+  background: #fce8e8;
+  border-color: #b72b2b;
+  color: #b72b2b;
+}
+
+.account-preset-avatars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-preset-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b6053;
+}
+
+.account-preset-grid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.account-preset-item {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.account-preset-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.account-preset-item:hover {
+  transform: scale(1.1);
+  border-color: #79a888;
+}
+
+.account-preset-item.is-selected {
+  border-color: #245f3b;
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px rgba(36, 95, 59, 0.25);
+}
+
+.account-preset-check {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 95, 59, 0.45);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.account-avatar-message {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 600px) {
+  .account-avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -126,8 +126,20 @@ router.get("/me", requireAuth, async (req, res) => {
 })
 
 router.patch("/me", requireAuth, async (req, res) => {
-  const input = z.object({ name: z.string().trim().min(2).max(120), email: z.email().transform((value) => value.toLowerCase()), phone: z.string().trim().min(9).max(20) }).parse(req.body)
-  const { rows } = await pool.query("UPDATE users SET name=$2,email=$3,phone=$4,updated_at=now() WHERE id=$1 RETURNING *", [req.user.id, input.name, input.email, input.phone.replace(/\s/g, "")])
+  const input = z.object({
+    name: z.string().trim().min(2).max(120),
+    email: z.email().transform((value) => value.toLowerCase()),
+    phone: z.string().trim().min(9).max(20),
+    avatarUrl: z.string().trim().max(1000).nullable().optional(),
+  }).parse(req.body)
+  const hasAvatar = input.avatarUrl !== undefined
+  const query = hasAvatar
+    ? "UPDATE users SET name=$2,email=$3,phone=$4,avatar_url=$5,updated_at=now() WHERE id=$1 RETURNING *"
+    : "UPDATE users SET name=$2,email=$3,phone=$4,updated_at=now() WHERE id=$1 RETURNING *"
+  const params = hasAvatar
+    ? [req.user.id, input.name, input.email, input.phone.replace(/\s/g, ""), input.avatarUrl || null]
+    : [req.user.id, input.name, input.email, input.phone.replace(/\s/g, "")]
+  const { rows } = await pool.query(query, params)
   if (!rows[0]) return res.status(404).json({ error: "Không tìm thấy tài khoản." })
   res.json({ user: publicUser(rows[0]) })
 })

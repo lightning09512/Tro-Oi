@@ -1,10 +1,20 @@
-import { useState, type FormEvent } from "react"
+import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Link } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import { authService } from "@/services/authService"
 import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform } from "@/contexts/PlatformContext"
+import { apiRequest, isApiMode } from "@/services/apiClient"
+
+const PRESET_AVATARS = [
+  { url: "/images/avatars/demo-owner-01.jpg", label: "Ảnh mẫu 1" },
+  { url: "/images/avatars/demo-owner-02.jpg", label: "Ảnh mẫu 2" },
+  { url: "/images/avatars/demo-owner-03.jpg", label: "Ảnh mẫu 3" },
+  { url: "/images/avatars/demo-owner-04.jpg", label: "Ảnh mẫu 4" },
+  { url: "/images/avatars/demo-owner-05.jpg", label: "Ảnh mẫu 5" },
+  { url: "/images/avatars/demo-owner-06.jpg", label: "Ảnh mẫu 6" },
+]
 
 export default function AccountPage({
   passwordMode = false,
@@ -18,12 +28,99 @@ export default function AccountPage({
   const currentRental = listings.find((item) => item.status === "rented" && item.currentTenantId === user?.id)
   const [name, setName] = useState(user?.name ?? "")
   const [phone, setPhone] = useState(user?.phone ?? "")
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [avatarFeedback, setAvatarFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setName(user?.name ?? "")
+    setPhone(user?.phone ?? "")
+    setAvatarUrl(user?.avatarUrl)
+  }, [user])
+
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [status, setStatus] =
     useState<"idle" | "loading" | "success" | "error">("idle")
+  const [errorMessage, setErrorMessage] = useState("")
+
+  const handleAvatarFileSelect = async (files?: FileList | null) => {
+    if (!files || !files[0]) return
+    const file = files[0]
+    if (!file.type.startsWith("image/")) {
+      setAvatarFeedback({ message: "Vui lòng chỉ chọn tệp hình ảnh (JPG, PNG, WebP, AVIF).", type: "error" })
+      return
+    }
+    const maxFileSize = isApiMode ? 3_000_000 : 1_000_000
+    if (file.size > maxFileSize) {
+      setAvatarFeedback({ message: isApiMode ? "Ảnh đại diện cần nhỏ hơn 3 MB." : "Ảnh cần nhỏ hơn 1 MB.", type: "error" })
+      return
+    }
+
+    setUploadingAvatar(true)
+    setAvatarFeedback(null)
+    setErrorMessage("")
+    try {
+      let url: string
+      if (isApiMode) {
+        const body = new FormData()
+        body.append("file", file)
+        const result = await apiRequest<{ url: string }>("uploads/image", { method: "POST", body })
+        url = result.url
+      } else {
+        url = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => (typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Không thể đọc ảnh.")))
+          reader.onerror = () => reject(new Error("Lỗi khi đọc tệp ảnh."))
+          reader.readAsDataURL(file)
+        })
+      }
+
+      setAvatarUrl(url)
+      if (user) {
+        await updateUser({ ...user, avatarUrl: url })
+      }
+      setAvatarFeedback({ message: "Đã tải lên và cập nhật ảnh đại diện mới thành công!", type: "success" })
+    } catch (caught) {
+      setAvatarFeedback({ message: caught instanceof Error ? caught.message : "Không thể tải ảnh lên.", type: "error" })
+    } finally {
+      setUploadingAvatar(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      window.setTimeout(() => setAvatarFeedback(null), 4000)
+    }
+  }
+
+  const handleSelectPresetAvatar = async (url: string) => {
+    setAvatarUrl(url)
+    setAvatarFeedback(null)
+    if (user) {
+      try {
+        await updateUser({ ...user, avatarUrl: url })
+        setAvatarFeedback({ message: "Đã đổi ảnh đại diện thành công!", type: "success" })
+        window.setTimeout(() => setAvatarFeedback(null), 3000)
+      } catch (caught) {
+        setAvatarFeedback({ message: caught instanceof Error ? caught.message : "Lỗi khi lưu ảnh đại diện.", type: "error" })
+      }
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    setAvatarUrl(undefined)
+    setAvatarFeedback(null)
+    if (user) {
+      try {
+        await updateUser({ ...user, avatarUrl: undefined })
+        setAvatarFeedback({ message: "Đã gỡ ảnh đại diện, chuyển về chữ cái viết tắt mặc định.", type: "success" })
+        window.setTimeout(() => setAvatarFeedback(null), 3000)
+      } catch (caught) {
+        setAvatarFeedback({ message: caught instanceof Error ? caught.message : "Lỗi khi gỡ ảnh.", type: "error" })
+      }
+    }
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setErrorMessage("")
@@ -41,7 +138,13 @@ export default function AccountPage({
         await authService.changePassword(user.id, currentPassword, newPassword)
       } else if (user) {
         const initials = name.trim().split(" ").slice(-2).map((part) => part[0]).join("").toUpperCase()
-        await updateUser({ ...user, name: name.trim(), phone: phone.trim(), initials })
+        await updateUser({
+          ...user,
+          name: name.trim(),
+          phone: phone.trim(),
+          initials,
+          avatarUrl: avatarUrl || undefined,
+        })
       }
       setStatus("success")
     } catch (caught) {
@@ -49,7 +152,6 @@ export default function AccountPage({
       setErrorMessage(caught instanceof Error ? caught.message : "Không thể lưu thay đổi.")
     }
   }
-  const [errorMessage, setErrorMessage] = useState("")
   const shortcuts = user?.role === "renter"
     ? [
         ...(currentRental ? [{ to: `/phong/${currentRental.id}`, title: "Đánh giá phòng đang thuê", detail: currentRental.title, icon: "star" }] : []),
@@ -76,14 +178,32 @@ export default function AccountPage({
     <main className="page-bg account-page">
       <div className="container account-layout">
         <aside className="account-summary">
-          <span className="avatar xlarge">
-            {user?.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : user?.initials}
-          </span>
+          <div className="account-avatar-wrapper">
+            <span className="avatar xlarge account-avatar-display">
+              {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
+            </span>
+            <button
+              type="button"
+              className="account-avatar-change-btn"
+              onClick={() => fileInputRef.current?.click()}
+              title="Đổi ảnh đại diện"
+              aria-label="Đổi ảnh đại diện"
+            >
+              <Icon name="upload" size={15} />
+            </button>
+          </div>
           <h2>{user?.name}</h2>
           <p>{user?.email}</p>
           <span className="role-badge">
             {user?.role === "admin" ? "Quản trị viên" : user?.role === "landlord" ? "Chủ trọ" : "Người thuê"}
           </span>
+          <button
+            type="button"
+            className="account-summary-edit-avatar-btn"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Icon name="upload" size={14} /> Đổi ảnh đại diện
+          </button>
         </aside>
         <section className="account-card">
           <div className="account-heading">
@@ -98,6 +218,96 @@ export default function AccountPage({
           <form className="auth-form" onSubmit={submit} noValidate>
             {!passwordMode ? (
               <>
+                <div className="account-avatar-section">
+                  <div className="account-avatar-header">
+                    <div>
+                      <span className="account-avatar-label">Ảnh đại diện</span>
+                      <p className="account-avatar-hint">Ảnh vuông định dạng JPG, PNG hoặc WebP (tối đa 3 MB).</p>
+                    </div>
+                  </div>
+
+                  <div className="account-avatar-row">
+                    <div className="account-avatar-preview">
+                      <span className="avatar xlarge account-avatar-display">
+                        {avatarUrl ? (
+                          <img className="user-avatar-image" src={avatarUrl} alt={user?.name ?? ""} />
+                        ) : (
+                          user?.initials
+                        )}
+                      </span>
+                      {uploadingAvatar && (
+                        <div className="account-avatar-spinner-overlay" role="status">
+                          <span className="upload-spinner" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="account-avatar-actions">
+                      <div className="account-avatar-btn-group">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/avif"
+                          style={{ display: "none" }}
+                          onChange={(e) => void handleAvatarFileSelect(e.target.files)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          icon="upload"
+                          disabled={uploadingAvatar}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          {uploadingAvatar ? "Đang tải lên..." : "Tải ảnh từ máy"}
+                        </Button>
+
+                        {avatarUrl && (
+                          <button
+                            type="button"
+                            className="account-avatar-remove-btn"
+                            onClick={() => void handleRemoveAvatar()}
+                            disabled={uploadingAvatar}
+                          >
+                            Gỡ ảnh
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="account-preset-avatars">
+                        <span className="account-preset-title">Hoặc chọn ảnh đại diện có sẵn:</span>
+                        <div className="account-preset-grid">
+                          {PRESET_AVATARS.map((preset) => {
+                            const isSelected = avatarUrl === preset.url
+                            return (
+                              <button
+                                key={preset.url}
+                                type="button"
+                                className={`account-preset-item${isSelected ? " is-selected" : ""}`}
+                                onClick={() => void handleSelectPresetAvatar(preset.url)}
+                                title={preset.label}
+                                aria-label={`Chọn ${preset.label}`}
+                              >
+                                <img src={preset.url} alt={preset.label} />
+                                {isSelected && (
+                                  <span className="account-preset-check">
+                                    <Icon name="check" size={12} />
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {avatarFeedback && (
+                    <p className={`form-message ${avatarFeedback.type} account-avatar-message`} role="status">
+                      {avatarFeedback.message}
+                    </p>
+                  )}
+                </div>
+
                 <label className="form-field">
                   <span>
                     Họ và tên <b>*</b>

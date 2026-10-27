@@ -134,7 +134,15 @@ export const authService = {
   },
   async updateProfile(user: AuthUser): Promise<void> {
     if (isApiMode) {
-      const result = await apiRequest<{ user: AuthUser }>("auth/me", { method: "PATCH", body: JSON.stringify({ name: user.name, email: user.email, phone: user.phone }) })
+      const result = await apiRequest<{ user: AuthUser }>("auth/me", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          avatarUrl: user.avatarUrl ?? null,
+        }),
+      })
       const target = window.localStorage.getItem(STORAGE_KEY) ? window.localStorage : window.sessionStorage
       target.setItem(STORAGE_KEY, JSON.stringify(result.user))
       return
