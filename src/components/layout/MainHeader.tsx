@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import BrandMark from "@/components/common/BrandMark"
 import LocationPicker from "@/components/common/LocationPicker"
+import NotificationPopover from "@/components/common/NotificationPopover"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform } from "@/contexts/PlatformContext"
 
@@ -22,7 +23,9 @@ const primaryLinks: NavigationLink[] = [
 export default function MainHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
   const avatarDropdownRef = useRef<HTMLDivElement>(null)
+  const notificationDropdownRef = useRef<HTMLDivElement>(null)
   const menuNavRef = useRef<HTMLElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [headerLocation, setHeaderLocation] = useState("TP. Hồ Chí Minh")
@@ -39,11 +42,14 @@ export default function MainHeader() {
   const closeMenu = () => setMenuOpen(false)
 
   useEffect(() => {
-    if (!avatarOpen && !menuOpen) return
+    if (!avatarOpen && !menuOpen && !notificationOpen) return
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node
       if (avatarOpen && avatarDropdownRef.current && !avatarDropdownRef.current.contains(target)) {
         setAvatarOpen(false)
+      }
+      if (notificationOpen && notificationDropdownRef.current && !notificationDropdownRef.current.contains(target)) {
+        setNotificationOpen(false)
       }
       if (menuOpen && menuNavRef.current && !menuNavRef.current.contains(target)) {
         setMenuOpen(false)
@@ -52,6 +58,7 @@ export default function MainHeader() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setAvatarOpen(false)
+        setNotificationOpen(false)
         setMenuOpen(false)
       }
     }
@@ -61,7 +68,7 @@ export default function MainHeader() {
       document.removeEventListener("pointerdown", handlePointerDown)
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [avatarOpen, menuOpen])
+  }, [avatarOpen, menuOpen, notificationOpen])
   const mobileLinks: NavigationLink[] =
     user?.role === "landlord"
       ? [
@@ -185,15 +192,30 @@ export default function MainHeader() {
                 </NavLink>
               )}
 
-              <button
-                className="relative inline-grid size-11 shrink-0 place-items-center rounded-full border border-[#dfe7e0] bg-white text-[#344b3a] transition-colors hover:border-[#bfd4c2] hover:bg-[#f4f8f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
-                aria-label={unreadNotifications ? `Thông báo, ${unreadNotifications} chưa đọc` : "Thông báo"}
-                title={unreadNotifications ? `${unreadNotifications} thông báo chưa đọc` : "Thông báo"}
-                onClick={() => navigate(user.role === "admin" ? "/admin/thong-bao" : "/thong-bao")}
-              >
-                <Icon name="bell" />
-                {unreadNotifications > 0 && <span className="absolute -right-0.5 -top-0.5 inline-grid min-h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-white bg-[#dc5b50] px-1 text-[9px] font-bold leading-none text-white">{unreadNotifications}</span>}
-              </button>
+              <div className="relative" ref={notificationDropdownRef}>
+                <button
+                  className={`relative inline-grid size-11 shrink-0 place-items-center rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a] ${
+                    notificationOpen
+                      ? "border-[#245f3b] bg-[#edf5ee] text-[#245f3b]"
+                      : "border-[#dfe7e0] bg-white text-[#344b3a] hover:border-[#bfd4c2] hover:bg-[#f4f8f4]"
+                  }`}
+                  aria-label={unreadNotifications ? `Thông báo, ${unreadNotifications} chưa đọc` : "Thông báo"}
+                  title={unreadNotifications ? `${unreadNotifications} thông báo chưa đọc` : "Thông báo"}
+                  onClick={() => setNotificationOpen((open) => !open)}
+                  aria-expanded={notificationOpen}
+                  aria-haspopup="dialog"
+                >
+                  <Icon name="bell" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 inline-grid min-h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-white bg-[#dc5b50] px-1 text-[9px] font-bold leading-none text-white">
+                      {unreadNotifications}
+                    </span>
+                  )}
+                </button>
+                {notificationOpen && (
+                  <NotificationPopover onClose={() => setNotificationOpen(false)} />
+                )}
+              </div>
 
               <NavLink
                 to="/tin-nhan"
