@@ -11537,3 +11537,31 @@ input[type="file"]::file-selector-button:hover {
 .notification-foot-close:hover {
   background: #edf5ee !important;
 }
+
+/* Badges for Transfer / Pass Room */
+.photo-badge.badge-transfer {
+  background: linear-gradient(135deg, #d97706, #ea580c) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+.verified.badge-transfer-detail {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  border: 1px solid #fdba74 !important;
+  font-weight: 700 !important;
+}
+
+.seller-transfer-tag {
+  font-size: 10px !important;
+  color: #c2410c !important;
+  background: #ffedd5 !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  margin-left: 4px !important;
+  display: inline-block !important;
+}
+

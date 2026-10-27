@@ -249,6 +249,7 @@ export function RoomCard({
   const { isFavorite, toggleFavorite } = useFavorites()
   const { toast } = useToast()
   const saved = isFavorite(room.id)
+  const isTransfer = room.type === "Chuyển nhượng"
   const sellerName = room.ownerName || "Chủ phòng"
   const initials = sellerName.split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase()
   return (
@@ -267,7 +268,12 @@ export function RoomCard({
     >
       <div className="room-photo">
         <img src={room.image} alt={room.title} />
-        <span className="photo-badge" aria-label={`Trạng thái tin: ${room.badge}`}>{room.badge}</span>
+        <span
+          className={`photo-badge ${isTransfer ? "badge-transfer" : ""}`}
+          aria-label={isTransfer ? "Tin chuyển nhượng phòng" : `Trạng thái tin: ${room.badge}`}
+        >
+          {isTransfer ? "🔄 Chuyển nhượng" : room.badge}
+        </span>
         {user?.role !== "admin" && <button
           className={saved ? "heart-btn saved" : "heart-btn"}
           aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}
@@ -303,7 +309,7 @@ export function RoomCard({
         </div>
         <div className="seller">
           {room.ownerAvatarUrl ? <img className="mini-avatar seller-avatar-image" src={room.ownerAvatarUrl} alt="" /> : <span className="mini-avatar">{initials}</span>}
-          <span>{sellerName}</span>
+          <span>{sellerName} {isTransfer && <span className="seller-transfer-tag">Người pass</span>}</span>
           <button
             className="room-card-cta"
             type="button"

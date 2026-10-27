@@ -126,7 +126,9 @@ export default function RoomDetailPage() {
           </section>}
           <header className="room-detail-summary room-detail-summary-primary">
             <div className="room-detail-summary-top">
-              <span className="verified">{room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : room.badge}</span>
+              <span className={`verified ${room.type === "Chuyển nhượng" ? "badge-transfer-detail" : ""}`}>
+                {room.type === "Chuyển nhượng" ? "🔄 Tin chuyển nhượng phòng trọ" : room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : room.badge}
+              </span>
               {user?.role !== "admin" && room.status === "active" && (
                 <button
                   className={saved ? "save-big saved" : "save-big"}
@@ -156,14 +158,14 @@ export default function RoomDetailPage() {
         <aside className="landlord-card room-contact-card">
           <div className="landlord-top">
             {landlordAvatarUrl ? <img className="avatar large landlord-avatar-image" src={landlordAvatarUrl} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
-            <div><small>Chủ trọ</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "● Đang hoạt động" : "Thông tin liên hệ đang cập nhật"}</span></div>
+            <div><small>{room.type === "Chuyển nhượng" ? "Người pass phòng (Người thuê)" : "Chủ trọ"}</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "● Đang hoạt động" : "Thông tin liên hệ đang cập nhật"}</span></div>
           </div>
           <div className="landlord-stats">
             <span><b>{room.views}</b>Lượt xem</span>
             <span><b>{room.ownerId ? room.contacts : galleryPhotos.length}</b>{room.ownerId ? "Lượt liên hệ" : "Ảnh phòng"}</span>
             <span><b>{roomReviews.length ? average.toFixed(1) : "—"}</b>Đánh giá</span>
           </div>
-          {room.ownerId && room.status === "active" && user?.role !== "admin" && <Button icon="chat" onClick={contact}>Nhắn tin hỏi phòng</Button>}
+          {room.ownerId && room.status === "active" && user?.role !== "admin" && <Button icon="chat" onClick={contact}>{room.type === "Chuyển nhượng" ? "Nhắn tin hỏi pass phòng" : "Nhắn tin hỏi phòng"}</Button>}
           {room.ownerId && room.status === "active" && <Button variant="outline" icon="phone" onClick={async () => { if (!showPhone) { const phone = isApiMode ? await incrementListingContacts(room.id) : room.phone; setContactPhone(phone ?? ""); setShowPhone(true) } }}>{showPhone ? contactPhone || "Chưa có số liên hệ" : "Hiện số điện thoại"}</Button>}
           {!room.ownerId && room.status === "active" && <p><Icon name="shield" size={17}/>Thông tin liên hệ của tin này đang được cập nhật trên Trọ Ơi.</p>}
           {room.ownerId && <p><Icon name="shield" size={17}/>{room.status === "rented" ? "Thông tin phòng được giữ lại để người thuê hiện tại gửi đánh giá." : "Kiểm tra giấy tờ và chi phí trước khi đặt cọc."}</p>}
