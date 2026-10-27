@@ -8,9 +8,11 @@ import {
 } from "@/components/common/legacy"
 import { useNavigate } from "react-router"
 import { usePlatform } from "@/contexts/PlatformContext"
+import useAuth from "@/hooks/useAuth"
 
 function Home() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { listings, categories, posts } = usePlatform()
   const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
   const availableRooms = listings.filter((room) => room.status === "active")
@@ -23,6 +25,18 @@ function Home() {
   const [maxPrice, setMaxPrice] = useState("")
   const [areaRange, setAreaRange] = useState("all")
   const [nearbyMessage, setNearbyMessage] = useState("")
+  const [shareMessage, setShareMessage] = useState("")
+  const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : "/dang-ky"
+
+  const shareTroOi = async () => {
+    const shareUrl = `${window.location.origin}/dang-ky`
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setShareMessage("Đã sao chép liên kết Trọ Ơi để bạn chia sẻ.")
+    } catch {
+      setShareMessage("Không thể sao chép tự động. Hãy sao chép địa chỉ trang Trọ Ơi trên thanh trình duyệt.")
+    }
+  }
 
   const buildSearchUrl = (roomType?: string) => {
     const params = new URLSearchParams()
@@ -169,6 +183,43 @@ function Home() {
                 onClick={() => navigate(`/phong/${room.id}`)}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-promotions" aria-labelledby="home-promotions-title">
+        <div className="container">
+          <div className="promotion-panel">
+            <div className="promotion-banner">
+              <div className="promotion-copy">
+                <span className="promotion-eyebrow">Ưu đãi / Chương trình</span>
+                <h2 id="home-promotions-title">Khởi đầu dễ dàng cùng Trọ Ơi</h2>
+                <p>Tìm phòng, đăng tin và kết nối ngay trên một nền tảng. Các tính năng hiện có của Trọ Ơi đang được sử dụng miễn phí.</p>
+                <Link className="promotion-primary" to={landlordProgramUrl}>Đăng tin miễn phí <Icon name="chevron" size={16}/></Link>
+              </div>
+              <div className="promotion-art" aria-hidden="true">
+                <span className="promotion-spark promotion-spark-one">✦</span>
+                <span className="promotion-spark promotion-spark-two">✧</span>
+                <div className="promotion-ticket"><small>TRỌ ƠI</small><strong>0đ</strong><span>phí đăng tin</span></div>
+                <div className="promotion-art-note">Tìm phòng<br/>Dễ dàng hơn</div>
+              </div>
+            </div>
+            <div className="promotion-programs" id="chuong-trinh-chi-tiet">
+              <article className="promotion-card">
+                <span className="promotion-card-icon" aria-hidden="true">⌂</span>
+                <div><span className="promotion-card-label">Dành cho chủ trọ</span><h3>Đăng tin cho thuê miễn phí</h3><p>Thêm ảnh, giá và tiện ích để người thuê dễ tìm thấy phòng của bạn. Tin đăng được duyệt trước khi hiển thị.</p><Link to={landlordProgramUrl}>Bắt đầu đăng tin <Icon name="chevron" size={15}/></Link></div>
+              </article>
+              <article className="promotion-card">
+                <span className="promotion-card-icon" aria-hidden="true">♡</span>
+                <div><span className="promotion-card-label">Dành cho người thuê</span><h3>Tìm và lưu phòng yêu thích</h3><p>Lọc theo khu vực, giá và diện tích; lưu lại những lựa chọn phù hợp để xem sau.</p><Link to="/tim-phong">Khám phá phòng <Icon name="chevron" size={15}/></Link></div>
+              </article>
+              <article className="promotion-card">
+                <span className="promotion-card-icon" aria-hidden="true">↗</span>
+                <div><span className="promotion-card-label">Chia sẻ Trọ Ơi</span><h3>Rủ bạn cùng tìm nơi ở</h3><p>Gửi đường dẫn đăng ký cho bạn bè đang tìm phòng hoặc muốn đăng tin cho thuê.</p><button type="button" onClick={shareTroOi}>Sao chép liên kết <Icon name="chevron" size={15}/></button></div>
+              </article>
+            </div>
+            {shareMessage && <p className="promotion-share-message" role="status">{shareMessage}</p>}
+            <p className="promotion-terms">Chương trình áp dụng cho các tính năng hiện có trên Trọ Ơi. Không bao gồm quà tặng hoặc tiền thưởng giới thiệu.</p>
           </div>
         </div>
       </section>

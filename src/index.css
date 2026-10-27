@@ -5409,3 +5409,341 @@ select:focus-visible, textarea:focus-visible {
     height: 60px;
   }
 }
+.home-promotions {
+  padding: 4px 0 54px;
+}
+
+.promotion-panel {
+  overflow: hidden;
+  border: 1px solid #e3e9e5;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 12px 36px rgba(30, 72, 51, .06);
+}
+
+.promotion-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, .7fr);
+  min-height: 235px;
+  overflow: hidden;
+  background: linear-gradient(112deg, #f1a752 0%, #f4b975 46%, #f7e2b9 100%);
+}
+
+.promotion-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 740px;
+  padding: 31px 38px;
+}
+
+.promotion-eyebrow {
+  color: #6b4323;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.promotion-copy h2 {
+  max-width: 620px;
+  margin: 10px 0 9px;
+  color: #26372d;
+  font-family: var(--font-display);
+  font-size: clamp(25px, 3vw, 37px);
+  font-weight: 600;
+  line-height: 1.16;
+}
+
+.promotion-copy p {
+  max-width: 580px;
+  margin: 0;
+  color: #4f5d4e;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.promotion-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  margin-top: 18px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #245f3b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.promotion-primary:hover {
+  transform: translateY(-1px);
+  background: #194b2d;
+}
+
+.promotion-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 235px;
+  background: radial-gradient(ellipse at 55% 48%, rgba(255,255,255,.45), transparent 58%);
+}
+
+.promotion-ticket {
+  display: grid;
+  width: 152px;
+  height: 158px;
+  align-content: center;
+  justify-items: center;
+  transform: rotate(5deg);
+  border: 1px solid rgba(112, 76, 37, .12);
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 18px 35px rgba(104, 63, 21, .18);
+}
+
+.promotion-ticket small {
+  color: #748076;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.promotion-ticket strong {
+  margin: -3px 0;
+  color: #d96a2d;
+  font-size: 48px;
+  line-height: 1.2;
+}
+
+.promotion-ticket span {
+  color: #46564b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.promotion-art-note {
+  position: absolute;
+  right: 9%;
+  bottom: 30px;
+  color: rgba(68, 74, 47, .82);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.15;
+  transform: rotate(-8deg);
+}
+
+.promotion-spark {
+  position: absolute;
+  color: #fff8dc;
+  font-size: 31px;
+}
+
+.promotion-spark-one {
+  top: 30px;
+  right: 22%;
+}
+
+.promotion-spark-two {
+  bottom: 33px;
+  left: 14%;
+  font-size: 22px;
+}
+
+.promotion-programs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+}
+
+.promotion-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid #e7ebe8;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.promotion-card-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: #eef6ef;
+  color: #245f3b;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.promotion-card-label {
+  color: #7c897e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.promotion-card h3 {
+  margin: 5px 0 6px;
+  color: #293930;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.promotion-card p {
+  min-height: 56px;
+  margin: 0;
+  color: #69756d;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.promotion-card a,
+.promotion-card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 11px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #245f3b;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.promotion-card a:hover,
+.promotion-card button:hover {
+  color: #b35b28;
+}
+
+.promotion-share-message {
+  margin: 0 18px 8px;
+  color: #245f3b;
+  font-size: 11px;
+}
+
+.promotion-terms {
+  margin: 0;
+  padding: 0 18px 15px;
+  color: #89928b;
+  font-size: 10px;
+}
+
+@media (max-width: 850px) {
+  .promotion-programs {
+    grid-template-columns: 1fr;
+  }
+
+  .promotion-card p {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-promotions {
+    padding: 0 0 36px;
+  }
+
+  .promotion-panel {
+    border-radius: 13px;
+  }
+
+  .promotion-banner {
+    grid-template-columns: minmax(0, 1fr) 112px;
+    min-height: 205px;
+  }
+
+  .promotion-copy {
+    padding: 23px 18px;
+  }
+
+  .promotion-eyebrow {
+    font-size: 9px;
+  }
+
+  .promotion-copy h2 {
+    font-size: 24px;
+  }
+
+  .promotion-copy p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .promotion-primary {
+    min-height: 38px;
+    margin-top: 13px;
+    padding-inline: 13px;
+    font-size: 10px;
+  }
+
+  .promotion-art {
+    min-height: 205px;
+  }
+
+  .promotion-ticket {
+    width: 95px;
+    height: 118px;
+    border-radius: 12px;
+  }
+
+  .promotion-ticket strong {
+    font-size: 36px;
+  }
+
+  .promotion-ticket small {
+    font-size: 8px;
+  }
+
+  .promotion-ticket span {
+    font-size: 9px;
+  }
+
+  .promotion-art-note {
+    display: none;
+  }
+
+  .promotion-programs {
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .promotion-card {
+    gap: 10px;
+    padding: 13px;
+  }
+
+  .promotion-card-icon {
+    width: 35px;
+    height: 35px;
+    flex-basis: 35px;
+  }
+
+  .promotion-card h3 {
+    font-size: 13px;
+  }
+
+  .promotion-card p {
+    font-size: 10px;
+  }
+
+  .promotion-terms {
+    padding-inline: 12px;
+    line-height: 1.45;
+  }
+}
