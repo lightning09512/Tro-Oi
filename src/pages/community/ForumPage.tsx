@@ -168,7 +168,67 @@ export default function ForumPage() {
             </section>
           )}
         </section>
-        <aside className="forum-right"><div className="side-card"><div className="side-title"><h3>Bài viết được quan tâm</h3></div>{trendingPosts.map((post, index) => <Link to={`/bai-viet/${post.id}`} className="trending-post" key={post.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{post.content}</strong><small>{post.likes + post.commentsCount} lượt tương tác</small></div></Link>)}{!trendingPosts.length && <p className="forum-side-empty">Chưa có bài viết để hiển thị.</p>}</div><div className="side-card"><h3>Người thuê và chủ trọ</h3>{users.filter((item) => item.status === "active" && item.role !== "admin" && item.id !== user?.id).slice(0, 3).map((item) => <div className="member" key={item.id}><Link className="profile-avatar-link" to={`/nguoi-dung/${item.id}`} aria-label={`Xem hồ sơ ${item.name}`}><ProfileAvatar initials={item.initials} avatarUrl={item.avatarUrl}/></Link><div><Link className="member-profile-name" to={`/nguoi-dung/${item.id}`}>{item.name}</Link><small>{item.role === "landlord" ? "Chủ trọ" : "Người thuê"}</small></div><button onClick={async () => { if (!user) return login(); const conversation = await startConversation({ accountId: user.id, name: item.name, avatar: item.initials, avatarUrl: item.avatarUrl, userId: item.id, roomId: "" }); if (conversation) navigate(`/tin-nhan?conversation=${conversation}`) }}>Nhắn tin</button></div>)}</div></aside>
+        <aside className="forum-right">
+          <div className="side-card">
+            <div className="side-title">
+              <h3>Bài viết được quan tâm</h3>
+            </div>
+            {trendingPosts.map((post, index) => {
+              const snippet = post.content.split("\n")[0].trim()
+              const titleText = snippet.length > 90 ? snippet.slice(0, 90).trim() + "..." : snippet
+              return (
+                <Link to={`/bai-viet/${post.id}`} className="trending-post" key={post.id}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <strong>{titleText}</strong>
+                    <small>
+                      <span>{post.name}</span>
+                      <span>•</span>
+                      <span>{post.likes + post.commentsCount} tương tác</span>
+                    </small>
+                  </div>
+                </Link>
+              )
+            })}
+            {!trendingPosts.length && <p className="forum-side-empty">Chưa có bài viết để hiển thị.</p>}
+          </div>
+
+          <div className="side-card">
+            <h3>Người thuê và chủ trọ</h3>
+            {users
+              .filter((item) => item.status === "active" && item.role !== "admin" && item.id !== user?.id)
+              .slice(0, 3)
+              .map((item) => (
+                <div className="member" key={item.id}>
+                  <Link className="profile-avatar-link" to={`/nguoi-dung/${item.id}`} aria-label={`Xem hồ sơ ${item.name}`}>
+                    <ProfileAvatar initials={item.initials} avatarUrl={item.avatarUrl} />
+                  </Link>
+                  <div>
+                    <Link className="member-profile-name" to={`/nguoi-dung/${item.id}`}>
+                      {item.name}
+                    </Link>
+                    <small>{item.role === "landlord" ? "Chủ trọ" : "Người thuê"}</small>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!user) return login()
+                      const conversation = await startConversation({
+                        accountId: user.id,
+                        name: item.name,
+                        avatar: item.initials,
+                        avatarUrl: item.avatarUrl,
+                        userId: item.id,
+                        roomId: "",
+                      })
+                      if (conversation) navigate(`/tin-nhan?conversation=${conversation}`)
+                    }}
+                  >
+                    Nhắn tin
+                  </button>
+                </div>
+              ))}
+          </div>
+        </aside>
       </div>
     </main>
   )
