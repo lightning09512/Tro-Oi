@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
-import { Button, Icon } from "@/components/common/legacy"
+import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform, type PlatformUser } from "@/contexts/PlatformContext"
 import { useToast } from "@/contexts/ToastContext"
@@ -18,23 +18,22 @@ type PublicProfile = {
   createdAt?: string
 }
 
-const roleName = (role: PlatformUser["role"]) => role === "landlord" ? "Chủ trọ" : "Người thuê"
-
 export default function PublicProfilePage() {
   const { id = "" } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
-  const { users, posts, listings, reviews, addReport, startConversation } = usePlatform()
+  const { users, posts, listings, addReport, startConversation } = usePlatform()
   const [remoteProfile, setRemoteProfile] = useState<PublicProfile | null>(null)
   const [loadState, setLoadState] = useState<ProfileLoadState>(isApiMode ? "loading" : "ready")
   const [retryKey, setRetryKey] = useState(0)
   const [messageError, setMessageError] = useState("")
-  const [activeTab, setActiveTab] = useState<"listings" | "posts" | "about">("listings")
+  const [activeTab, setActiveTab] = useState<"listings" | "posts">("listings")
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [reportReason, setReportReason] = useState("Tài khoản có dấu hiệu lừa đảo / cọc ảo")
   const [reportDescription, setReportDescription] = useState("")
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -80,7 +79,6 @@ export default function PublicProfilePage() {
     [publicListings],
   )
 
-  // Default tab based on available items
   useEffect(() => {
     if (publicListings.length === 0 && publicPosts.length > 0) {
       setActiveTab("posts")
@@ -91,19 +89,18 @@ export default function PublicProfilePage() {
 
   const contactPhone = profile?.phone || publicListings[0]?.phone || ""
   const joinDate = useMemo(() => {
-    if (!profile?.createdAt) return "Tháng 10, 2026"
+    if (!profile?.createdAt) return "Tháng 10/2026"
     const d = new Date(profile.createdAt)
-    return `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`
+    return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`
   }, [profile?.createdAt])
 
-  const userReviews = useMemo(() => {
-    const listingIds = new Set(publicListings.map((l) => l.id))
-    return reviews.filter((r) => listingIds.has(r.listingId))
-  }, [reviews, publicListings])
-
-  const averageRating = userReviews.length
-    ? (userReviews.reduce((sum, r) => sum + r.stars, 0) / userReviews.length).toFixed(1)
-    : "5.0"
+  const userDistrict = useMemo(() => {
+    if (!publicListings.length) return "TP. Hồ Chí Minh"
+    const loc = publicListings[0].location
+    const parts = loc.split(",").map((s) => s.trim()).filter(Boolean)
+    if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
+    return loc
+  }, [publicListings])
 
   const openMessage = async () => {
     if (!profile) return
@@ -130,7 +127,7 @@ export default function PublicProfilePage() {
 
   const handleShareProfile = () => {
     navigator.clipboard?.writeText(window.location.href)
-    toast("Đã sao chép liên kết hồ sơ vào bộ nhớ tạm!", "success")
+    toast("Đã sao chép liên kết trang cá nhân!", "success")
   }
 
   const handleCopyPhone = () => {
@@ -143,359 +140,266 @@ export default function PublicProfilePage() {
   }
 
   if (loadState === "loading") return (
-    <main className="page-bg public-profile-page">
-      <div className="container"><section className="public-profile-state" role="status">Đang tải hồ sơ…</section></div>
+    <main className="nhatot-page-wrapper">
+      <div className="nhatot-container"><section className="nhatot-state-box" role="status">Đang tải trang cá nhân…</section></div>
     </main>
   )
 
   if (loadState === "error") return (
-    <main className="page-bg public-profile-page">
-      <div className="container"><section className="public-profile-state">
-        <span className="placeholder-icon"><Icon name="users"/></span>
-        <h1>Không tải được hồ sơ</h1>
-        <p>Đã xảy ra lỗi khi kết nối. Hãy thử tải lại hồ sơ.</p>
-        <div><Button onClick={() => setRetryKey((value) => value + 1)}>Thử lại</Button><Button variant="outline" onClick={() => navigate(-1)}>Quay lại</Button></div>
+    <main className="nhatot-page-wrapper">
+      <div className="nhatot-container"><section className="nhatot-state-box">
+        <span className="state-icon"><Icon name="users" size={32}/></span>
+        <h2>Không tải được thông tin</h2>
+        <p>Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại.</p>
+        <div className="state-actions">
+          <button className="nhatot-btn-chat" onClick={() => setRetryKey((v) => v + 1)}>Thử lại</button>
+          <button className="nhatot-btn-secondary" onClick={() => navigate(-1)}>Quay lại</button>
+        </div>
       </section></div>
     </main>
   )
 
   if (loadState === "unavailable" || !profile || profile.status !== "active" || profile.role === "admin") return (
-    <main className="page-bg public-profile-page">
-      <div className="container"><section className="public-profile-state">
-        <span className="placeholder-icon"><Icon name="users"/></span>
-        <h1>Hồ sơ không khả dụng</h1>
-        <p>Hồ sơ này không tồn tại hoặc tài khoản không còn hoạt động.</p>
-        <div><Button onClick={() => navigate(-1)}>Quay lại</Button><Button variant="outline" onClick={() => navigate("/dien-dan")}>Về diễn đàn</Button></div>
+    <main className="nhatot-page-wrapper">
+      <div className="nhatot-container"><section className="nhatot-state-box">
+        <span className="state-icon"><Icon name="users" size={32}/></span>
+        <h2>Tài khoản không tồn tại</h2>
+        <p>Người dùng này không tồn tại hoặc đã tạm dừng hoạt động.</p>
+        <div className="state-actions">
+          <button className="nhatot-btn-chat" onClick={() => navigate(-1)}>Quay lại</button>
+          <button className="nhatot-btn-secondary" onClick={() => navigate("/dien-dan")}>Về diễn đàn</button>
+        </div>
       </section></div>
     </main>
   )
 
   return (
-    <main className="page-bg public-profile-page">
-      <div className="container public-profile-container">
-        {/* HERO PROFILE CARD */}
-        <section className="profile-hero-card">
-          {/* Decorative Cover Banner */}
-          <div className="profile-cover-banner">
-            <button
-              type="button"
-              className="profile-cover-back-btn"
-              onClick={() => navigate(-1)}
-              title="Quay lại"
-            >
-              <Icon name="chevron" size={16} />
-              <span>Quay lại</span>
-            </button>
-            <div className="profile-cover-tagline">
-              <Icon name="shield" size={14} />
-              <span>Hồ sơ thành viên Trọ Ơi</span>
-            </div>
-          </div>
+    <main className="nhatot-page-wrapper">
+      <div className="nhatot-container">
+        {/* Breadcrumbs Navigation */}
+        <nav className="nhatot-breadcrumb" aria-label="Đường dẫn">
+          <Link to="/" className="breadcrumb-link"><Icon name="home" size={14} /> Trang chủ</Link>
+          <span className="breadcrumb-separator">/</span>
+          <Link to="/dien-dan" className="breadcrumb-link">Cộng đồng</Link>
+          <span className="breadcrumb-separator">/</span>
+          <span className="breadcrumb-current">{profile.name}</span>
+        </nav>
 
-          {/* Profile Identity Bar */}
-          <div className="profile-identity-bar">
-            <div className="profile-avatar-stack">
-              <div className="profile-avatar-wrapper">
-                {profile.avatarUrl ? (
-                  <img className="profile-avatar-img" src={profile.avatarUrl} alt={profile.name} />
+        {/* Profile Card (Nhà Tốt / Chợ Tốt Style) */}
+        <section className="nhatot-profile-header-card">
+          <div className="nhatot-profile-row">
+            {/* Avatar */}
+            <div className="nhatot-avatar-column">
+              <div className="nhatot-avatar-box">
+                {profile.avatarUrl && !avatarFailed ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt={profile.name}
+                    className="nhatot-avatar-image"
+                    onError={() => setAvatarFailed(true)}
+                  />
                 ) : (
-                  <span className="profile-avatar-initials">{profile.initials}</span>
+                  <span className="nhatot-avatar-fallback">{profile.initials}</span>
                 )}
-                <span className="profile-avatar-online" title="Thành viên đang hoạt động" />
+                {profile.status === "active" && <span className="nhatot-status-dot" title="Đang online" />}
               </div>
             </div>
 
-            <div className="profile-meta-info">
-              <div className="profile-name-row">
-                <h1 className="profile-user-fullname">{profile.name}</h1>
-                <span className={`profile-role-badge ${hasTransferListings ? "badge-transfer-role" : ""}`}>
-                  {hasTransferListings
-                    ? "🔄 Người pass phòng"
-                    : profile.role === "landlord"
-                    ? "Chủ trọ chính chủ"
-                    : "Người thuê phòng"}
-                </span>
+            {/* Info */}
+            <div className="nhatot-info-column">
+              <div className="nhatot-name-line">
+                <h1 className="nhatot-name-heading">{profile.name}</h1>
+                <span className="nhatot-badge-tag">Cá nhân</span>
+                {hasTransferListings && (
+                  <span className="nhatot-badge-transfer">🔄 Đang pass phòng</span>
+                )}
               </div>
 
-              {/* Trust & Metric Chips */}
-              <div className="profile-trust-chips">
-                <span className="trust-chip verified" title="Tài khoản đã xác minh danh tính">
-                  <Icon name="shield" size={14} />
-                  <span>Đã xác thực CCCD/SĐT</span>
-                </span>
-                <span className="trust-chip rating" title="Đánh giá từ cộng đồng">
-                  <Icon name="star" size={14} />
-                  <span>{userReviews.length ? `${averageRating}/5 (${userReviews.length} đánh giá)` : "5.0 (Rất uy tín)"}</span>
-                </span>
-                <span className="trust-chip join-date">
-                  <Icon name="calendar" size={14} />
-                  <span>Tham gia {joinDate}</span>
-                </span>
+              <div className="nhatot-details-grid">
+                <div className="nhatot-detail-cell">
+                  <Icon name="calendar" size={15} />
+                  <span>Tham gia: <b>{joinDate}</b></span>
+                </div>
+                <div className="nhatot-detail-cell">
+                  <Icon name="pin" size={15} />
+                  <span>Khu vực: <b>{userDistrict}</b></span>
+                </div>
+                <div className="nhatot-detail-cell">
+                  <Icon name="chat" size={15} />
+                  <span>Phản hồi chat: <b>Thường trong 15 phút</b></span>
+                </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="profile-header-actions">
-              {user?.role !== "admin" && (
-                <button type="button" className="btn-profile-primary" onClick={openMessage}>
-                  <Icon name="chat" size={18} />
-                  <span>Nhắn tin</span>
+            <div className="nhatot-actions-column">
+              {user?.id !== profile.id && user?.role !== "admin" && (
+                <button type="button" className="nhatot-btn-chat" onClick={openMessage}>
+                  <Icon name="chat" size={16} />
+                  <span>Chat với {profile.name.split(" ").slice(-1)[0]}</span>
                 </button>
               )}
 
               {contactPhone && (
-                <button type="button" className="btn-profile-secondary" onClick={handleCopyPhone} title={`Gọi hoặc sao chép: ${contactPhone}`}>
-                  <Icon name="phone" size={17} />
-                  <span>Sao chép SĐT</span>
+                <button type="button" className="nhatot-btn-phone" onClick={handleCopyPhone} title="Bấm để sao chép số">
+                  <Icon name="phone" size={15} />
+                  <span>{contactPhone}</span>
                 </button>
               )}
 
-              <button type="button" className="btn-profile-icon" onClick={handleShareProfile} title="Sao chép liên kết trang cá nhân">
-                <Icon name="share" size={18} />
+              <button type="button" className="nhatot-btn-share" onClick={handleShareProfile} title="Sao chép liên kết">
+                <Icon name="share" size={16} />
+                <span>Chia sẻ</span>
               </button>
             </div>
           </div>
-          {messageError && <p className="form-message error profile-msg-error" role="alert">{messageError}</p>}
+
+          {messageError && <p className="nhatot-error-msg">{messageError}</p>}
         </section>
 
-        {/* 2-COLUMN MAIN CONTENT & SIDEBAR */}
-        <div className="profile-content-grid">
-          {/* LEFT: TABS & CONTENT */}
-          <div className="profile-main-column">
-            {/* Tab Navigation */}
-            <div className="profile-tabs-header">
-              <button
-                type="button"
-                className={`profile-tab-item ${activeTab === "listings" ? "active" : ""}`}
-                onClick={() => setActiveTab("listings")}
-              >
-                <Icon name="building" size={16} />
-                <span>
-                  {hasTransferListings ? "Tin chuyển nhượng / Cho thuê" : "Tin phòng cho thuê"}
-                  <strong className="tab-counter">({publicListings.length})</strong>
-                </span>
-              </button>
+        {/* Tabs Bar */}
+        <div className="nhatot-tabs-bar">
+          <button
+            type="button"
+            className={`nhatot-tab-btn ${activeTab === "listings" ? "active" : ""}`}
+            onClick={() => setActiveTab("listings")}
+          >
+            <span>Tin đăng cho thuê / Pass phòng</span>
+            <span className="tab-pill-count">{publicListings.length}</span>
+          </button>
 
-              <button
-                type="button"
-                className={`profile-tab-item ${activeTab === "posts" ? "active" : ""}`}
-                onClick={() => setActiveTab("posts")}
-              >
-                <Icon name="chat" size={16} />
-                <span>
-                  Bài viết cộng đồng
-                  <strong className="tab-counter">({publicPosts.length})</strong>
-                </span>
-              </button>
+          <button
+            type="button"
+            className={`nhatot-tab-btn ${activeTab === "posts" ? "active" : ""}`}
+            onClick={() => setActiveTab("posts")}
+          >
+            <span>Bài viết diễn đàn</span>
+            <span className="tab-pill-count">{publicPosts.length}</span>
+          </button>
+        </div>
 
-              <button
-                type="button"
-                className={`profile-tab-item ${activeTab === "about" ? "active" : ""}`}
-                onClick={() => setActiveTab("about")}
-              >
-                <Icon name="info" size={16} />
-                <span>Giới thiệu & Uy tín</span>
-              </button>
-            </div>
+        {/* TAB 1: LISTINGS */}
+        {activeTab === "listings" && (
+          <section className="nhatot-listings-section">
+            {publicListings.length ? (
+              <div className="nhatot-listings-stack">
+                {publicListings.map((listing) => (
+                  <Link to={`/phong/${listing.id}`} className="nhatot-listing-item" key={listing.id}>
+                    <div className="listing-item-cover">
+                      <img
+                        src={listing.image}
+                        alt={listing.title}
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/rooms/scandinavian-room.jpg"
+                        }}
+                      />
+                      <span className={`listing-type-tag ${listing.type === "Chuyển nhượng" ? "transfer" : "normal"}`}>
+                        {listing.type === "Chuyển nhượng" ? "🔄 Chuyển nhượng" : listing.type}
+                      </span>
+                    </div>
 
-            {/* TAB 1: LISTINGS */}
-            {activeTab === "listings" && (
-              <div className="profile-tab-body">
-                {publicListings.length ? (
-                  <div className="profile-listings-grid">
-                    {publicListings.map((listing) => (
-                      <Link to={`/phong/${listing.id}`} className="profile-room-card" key={listing.id}>
-                        <div className="room-card-photo">
-                          <img src={listing.image} alt={listing.title} />
-                          <span className={`room-type-badge ${listing.type === "Chuyển nhượng" ? "transfer" : "rent"}`}>
-                            {listing.type === "Chuyển nhượng" ? "🔄 Chuyển nhượng" : listing.type}
-                          </span>
-                        </div>
+                    <div className="listing-item-info">
+                      <h2 className="listing-item-title">{listing.title}</h2>
+                      <div className="listing-item-price-line">
+                        <strong className="listing-price-text">{listing.price}</strong>
+                        <span className="listing-period-text">/tháng</span>
+                        <span className="listing-dot-separator">·</span>
+                        <span className="listing-area-text">{listing.area || "25 m²"}</span>
+                      </div>
 
-                        <div className="room-card-content">
-                          <h3 className="room-card-title">{listing.title}</h3>
-                          <div className="room-card-price-row">
-                            <span className="room-card-price">{listing.price}</span>
-                            <small className="room-card-period">/ tháng</small>
-                          </div>
+                      <p className="listing-item-address">
+                        <Icon name="pin" size={14} />
+                        <span>{listing.location}</span>
+                      </p>
 
-                          <div className="room-card-specs">
-                            <span><Icon name="building" size={13} /> {listing.area || "25 m²"}</span>
-                            <span><Icon name="shield" size={13} /> {listing.deposit || "Cọc thỏa thuận"}</span>
-                          </div>
+                      <div className="listing-item-footer">
+                        <span className="listing-deposit-tag">
+                          <Icon name="shield" size={13} />
+                          <span>{listing.deposit || "Cọc thỏa thuận"}</span>
+                        </span>
+                        <span className="listing-cta-link">
+                          Xem chi tiết <Icon name="chevron" size={13} />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="nhatot-empty-box">
+                <Icon name="building" size={32} />
+                <p>Thành viên này hiện không có tin phòng nào đang mở.</p>
+              </div>
+            )}
+          </section>
+        )}
 
-                          <p className="room-card-address">
-                            <Icon name="pin" size={14} />
-                            <span>{listing.location}</span>
-                          </p>
+        {/* TAB 2: POSTS */}
+        {activeTab === "posts" && (
+          <section className="nhatot-posts-section">
+            {publicPosts.length ? (
+              <div className="nhatot-posts-stack">
+                {publicPosts.map((post) => (
+                  <article className="nhatot-post-item" key={post.id}>
+                    <div className="post-header-line">
+                      <div className="post-author-meta">
+                        <span className="post-author-name">{profile.name}</span>
+                        <span className="post-time-meta">{post.time}</span>
+                      </div>
+                      <Link to="/dien-dan" className="post-forum-badge">Diễn đàn Trọ Ơi</Link>
+                    </div>
 
-                          <div className="room-card-cta">
-                            <span>Xem chi tiết tin</span>
-                            <Icon name="chevron" size={14} />
-                          </div>
-                        </div>
+                    <p className="post-content-body">{post.content}</p>
+
+                    {post.image && (
+                      <div className="post-photo-wrap">
+                        <img src={post.image} alt="Ảnh bài viết" />
+                      </div>
+                    )}
+
+                    <div className="post-footer-line">
+                      <div className="post-reaction-stats">
+                        <span><Icon name="heart" size={14} /> {post.likes} thích</span>
+                        <span><Icon name="chat" size={14} /> {post.commentsCount} bình luận</span>
+                      </div>
+                      <Link to="/dien-dan" className="post-read-link">
+                        Xem trên Diễn đàn <Icon name="chevron" size={13} />
                       </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="profile-tab-empty">
-                    <span className="empty-icon"><Icon name="building" size={32} /></span>
-                    <h3>Chưa có tin phòng đang mở</h3>
-                    <p>Thành viên này hiện tại chưa có tin cho thuê hoặc chuyển nhượng phòng đang hiển thị trên Trọ Ơi.</p>
-                  </div>
-                )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="nhatot-empty-box">
+                <Icon name="chat" size={32} />
+                <p>Thành viên này chưa có bài viết nào trên Diễn đàn.</p>
               </div>
             )}
+          </section>
+        )}
 
-            {/* TAB 2: POSTS */}
-            {activeTab === "posts" && (
-              <div className="profile-tab-body">
-                {publicPosts.length ? (
-                  <div className="profile-posts-list">
-                    {publicPosts.map((post) => (
-                      <article className="profile-post-card" key={post.id}>
-                        <div className="post-card-top">
-                          <span className="post-date-tag">
-                            <Icon name="calendar" size={13} />
-                            <span>{post.time}</span>
-                          </span>
-                          <Link to={`/dien-dan`} className="post-forum-tag">Cộng đồng Trọ Ơi</Link>
-                        </div>
-
-                        <p className="post-body-text">{post.content}</p>
-
-                        {post.image && (
-                          <div className="post-image-container">
-                            <img src={post.image} alt="Ảnh bài viết" />
-                          </div>
-                        )}
-
-                        <div className="post-card-bottom">
-                          <div className="post-stats-row">
-                            <span><Icon name="heart" size={14} /> {post.likes} lượt thích</span>
-                            <span><Icon name="chat" size={14} /> {post.commentsCount} bình luận</span>
-                          </div>
-
-                          {user?.role !== "admin" && (
-                            <button
-                              type="button"
-                              className="post-discuss-btn"
-                              onClick={() => navigate("/dien-dan")}
-                            >
-                              <span>Xem trên Diễn đàn</span>
-                              <Icon name="chevron" size={14} />
-                            </button>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="profile-tab-empty">
-                    <span className="empty-icon"><Icon name="chat" size={32} /></span>
-                    <h3>Chưa có bài viết công khai</h3>
-                    <p>Thành viên chưa chia sẻ bài viết hoặc kinh nghiệm nào trên diễn đàn.</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 3: ABOUT */}
-            {activeTab === "about" && (
-              <div className="profile-tab-body">
-                <div className="profile-about-card">
-                  <h3 className="about-section-heading">Giới thiệu thành viên</h3>
-                  <p className="about-bio-text">
-                    Xin chào! Tôi là {profile.name}. Tôi tham gia cộng đồng Trọ Ơi để kết nối tìm phòng trọ văn minh, minh bạch và an toàn. Mọi thông tin tin đăng và liên hệ đều được xác thực chính chủ.
-                  </p>
-
-                  <h3 className="about-section-heading" style={{ marginTop: 24 }}>Chỉ số phản hồi & Uy tín</h3>
-                  <div className="about-metrics-grid">
-                    <div className="about-metric-box">
-                      <strong>98%</strong>
-                      <span>Tỷ lệ phản hồi tin nhắn</span>
-                      <small>Thường trả lời trong vài phút</small>
-                    </div>
-                    <div className="about-metric-box">
-                      <strong>5.0 ⭐</strong>
-                      <span>Đánh giá trung bình</span>
-                      <small>Được các thành viên tin cậy</small>
-                    </div>
-                    <div className="about-metric-box">
-                      <strong>100%</strong>
-                      <span>Thông tin phòng thật</span>
-                      <small>Được đội ngũ Trọ Ơi duyệt</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT: SIDEBAR */}
-          <aside className="profile-side-column">
-            {/* Widget 1: Account Trust Badges */}
-            <div className="profile-side-widget">
-              <h4 className="widget-title">
-                <Icon name="shield" size={16} />
-                <span>Chứng nhận tài khoản</span>
-              </h4>
-              <ul className="widget-checklist">
-                <li className="checked">
-                  <span className="check-bullet"><Icon name="check" size={13} /></span>
-                  <div>
-                    <strong>Đã xác minh số điện thoại</strong>
-                    <span>Số điện thoại chính chủ đang hoạt động</span>
-                  </div>
-                </li>
-                <li className="checked">
-                  <span className="check-bullet"><Icon name="check" size={13} /></span>
-                  <div>
-                    <strong>Đã xác thực giấy tờ cá nhân</strong>
-                    <span>Thông tin CCCD đã được hệ thống đối soát</span>
-                  </div>
-                </li>
-                <li className="checked">
-                  <span className="check-bullet"><Icon name="check" size={13} /></span>
-                  <div>
-                    <strong>Thành viên tích cực Trọ Ơi</strong>
-                    <span>Tuân thủ đầy đủ quy chế cộng đồng</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            {/* Widget 2: Safety Notice */}
-            <div className="profile-side-widget safety-widget">
-              <h4 className="widget-title safety-title">
-                <Icon name="shield" size={16} />
-                <span>Giao dịch an toàn</span>
-              </h4>
-              <p className="safety-note-text">
-                Trọ Ơi khuyến cáo bạn luôn đến tận nơi kiểm tra phòng thực tế và ký phụ lục hợp đồng sang tên cọc có chủ nhà xác nhận trước khi thực hiện giao dịch chuyển nhượng hoặc đặt cọc.
-              </p>
-              <button
-                type="button"
-                className="btn-report-account"
-                onClick={() => setReportModalOpen(true)}
-              >
-                <Icon name="flag" size={14} />
-                <span>Báo cáo tài khoản này</span>
-              </button>
-            </div>
-          </aside>
+        {/* Subtle Footer Report Link */}
+        <div className="nhatot-profile-footer">
+          <button
+            type="button"
+            className="nhatot-report-link"
+            onClick={() => setReportModalOpen(true)}
+          >
+            <Icon name="flag" size={14} />
+            <span>Báo cáo tài khoản nếu có dấu hiệu gian lận</span>
+          </button>
         </div>
 
         {/* Report Modal */}
         {reportModalOpen && (
           <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setReportModalOpen(false) }}>
-            <section className="action-dialog report-dialog" role="dialog" aria-modal="true" aria-labelledby="report-user-title">
+            <section className="action-dialog report-dialog" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
               <button className="dialog-close" onClick={() => setReportModalOpen(false)} aria-label="Đóng"><Icon name="close" /></button>
               <div className="dialog-header-custom">
                 <span className="dialog-badge-icon report-badge-icon"><Icon name="flag" size={22} /></span>
                 <div>
-                  <h2 id="report-user-title">Báo cáo tài khoản</h2>
-                  <p className="dialog-subtitle">Gửi phản ánh về hành vi của {profile.name} tới Ban quản trị Trọ Ơi</p>
+                  <h2 id="report-modal-title">Báo cáo người dùng</h2>
+                  <p className="dialog-subtitle">Gửi phản ánh về {profile.name} tới Ban quản trị Trọ Ơi</p>
                 </div>
               </div>
 
@@ -525,9 +429,9 @@ export default function PublicProfilePage() {
                 </div>
 
                 <div className="report-field-group">
-                  <label className="schedule-label" htmlFor="report-user-desc">Mô tả chi tiết vi phạm:</label>
+                  <label className="schedule-label" htmlFor="report-profile-desc">Mô tả chi tiết vi phạm:</label>
                   <textarea
-                    id="report-user-desc"
+                    id="report-profile-desc"
                     className="report-desc-input"
                     rows={3}
                     value={reportDescription}
