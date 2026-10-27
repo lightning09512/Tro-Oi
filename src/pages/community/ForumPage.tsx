@@ -109,7 +109,6 @@ export default function ForumPage() {
   const { user } = useAuth()
   const { posts, users, savePost, startConversation } = usePlatform()
   const [query, setQuery] = useState("")
-  const [topicFilter, setTopicFilter] = useState<"all" | "pass" | "roommate" | "tips">("all")
   const [composerOpen, setComposerOpen] = useState(false)
   const [draft, setDraft] = useState("")
   const [image, setImage] = useState(isApiMode ? "" : photos[5])
@@ -118,23 +117,8 @@ export default function ForumPage() {
     () =>
       posts
         .filter((post) => post.status === "active" && (!id || post.id === id))
-        .filter((post) => {
-          if (topicFilter === "pass") {
-            const lower = post.content.toLowerCase()
-            return lower.includes("pass") || lower.includes("chuyển nhượng") || lower.includes("sang nhượng")
-          }
-          if (topicFilter === "roommate") {
-            const lower = post.content.toLowerCase()
-            return lower.includes("ở ghép") || lower.includes("tìm bạn")
-          }
-          if (topicFilter === "tips") {
-            const lower = post.content.toLowerCase()
-            return lower.includes("kinh nghiệm") || lower.includes("cảnh báo") || lower.includes("lưu ý")
-          }
-          return true
-        })
         .filter((post) => !query || `${post.content} ${post.name}`.toLocaleLowerCase("vi").includes(query.toLocaleLowerCase("vi"))),
-    [posts, id, topicFilter, query],
+    [posts, id, query],
   )
   const trendingPosts = useMemo(() => [...posts].filter((post) => post.status === "active").sort((a, b) => (b.likes + b.commentsCount) - (a.likes + a.commentsCount)).slice(0, 3), [posts])
   const login = () => navigate("/dang-nhap", { state: { from: window.location.pathname } })
@@ -148,7 +132,7 @@ export default function ForumPage() {
   // Reset pagination when filter or search changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [topicFilter, query, id])
+  }, [query, id])
 
   const displayedPosts = useMemo(
     () => publicPosts.slice(0, visibleCount),
@@ -199,36 +183,6 @@ export default function ForumPage() {
         <aside className="forum-left"><h3>Diễn đàn</h3><button className="active" onClick={() => navigate("/dien-dan")}><Icon name="home"/>Bảng tin</button><button onClick={() => user ? navigate("/tai-khoan/ho-so") : login()}><Icon name="users"/>Trang cá nhân</button><button onClick={() => user ? navigate("/tin-nhan") : login()}><Icon name="chat"/>Tin nhắn</button><div className="forum-banner"><Icon name="shield"/><strong>Giữ thông tin riêng tư</strong><p>Chia sẻ khu vực và tầm giá là đủ. Nếu gặp nội dung vi phạm, bạn có thể gửi báo cáo để quản trị viên xem xét.</p><button onClick={() => user ? navigate("/bao-cao-cua-toi") : login()}>Báo cáo của tôi</button></div></aside>
         <section className="feed">
           <label className="forum-search"><Icon name="search"/><input className="forum-search-field" aria-label="Tìm bài viết" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết trong cộng đồng" autoComplete="off" spellCheck={false}/>{query && <button type="button" onClick={() => setQuery("")}>Xóa</button>}</label>
-          <div className="forum-topic-chips" role="tablist" aria-label="Chủ đề diễn đàn">
-            <button
-              type="button"
-              className={`forum-topic-chip ${topicFilter === "all" ? "active" : ""}`}
-              onClick={() => setTopicFilter("all")}
-            >
-              Tất cả bài viết
-            </button>
-            <button
-              type="button"
-              className={`forum-topic-chip ${topicFilter === "pass" ? "active" : ""}`}
-              onClick={() => setTopicFilter("pass")}
-            >
-              🔄 Pass phòng / Chuyển nhượng
-            </button>
-            <button
-              type="button"
-              className={`forum-topic-chip ${topicFilter === "roommate" ? "active" : ""}`}
-              onClick={() => setTopicFilter("roommate")}
-            >
-              👥 Tìm ở ghép
-            </button>
-            <button
-              type="button"
-              className={`forum-topic-chip ${topicFilter === "tips" ? "active" : ""}`}
-              onClick={() => setTopicFilter("tips")}
-            >
-              💡 Kinh nghiệm & Cảnh báo
-            </button>
-          </div>
           <div className="composer"><div><ProfileAvatar initials={user?.initials ?? "?"} avatarUrl={currentUserAvatarUrl}/><button onClick={() => user ? setComposerOpen(true) : login()}>{user ? "Bạn muốn chia sẻ điều gì?" : "Đăng nhập để chia sẻ với cộng đồng"}</button></div><div><button onClick={() => user ? setComposerOpen(true) : login()}><Icon name="image"/>Thêm ảnh</button><button onClick={() => user ? setComposerOpen(true) : login()}><Icon name="edit"/>Viết bài</button></div></div>
           {composerOpen && <form className="composer-editor" onSubmit={publish}>
             <div className="composer-editor-head">
