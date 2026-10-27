@@ -191,8 +191,10 @@ function Home() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { listings, categories, posts } = usePlatform()
-  const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
-  const availableRooms = listings.filter((room) => room.status === "active")
+  const roomTypes = categories
+    .filter((item) => item.type === "Loại phòng" && item.status === "active" && item.name !== "Chuyển nhượng")
+    .map((item) => item.name)
+  const availableRooms = listings.filter((room) => room.status === "active" && room.type !== "Chuyển nhượng")
   const roomTypeCounts = availableRooms.reduce<Map<string, number>>((counts, room) => {
     counts.set(room.type, (counts.get(room.type) ?? 0) + 1)
     return counts

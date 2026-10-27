@@ -185,7 +185,9 @@ function Filters({
 
 export default function SearchPage() {
   const { listings, categories } = usePlatform()
-  const roomTypes = categories.filter((item) => item.type === "Loại phòng" && item.status === "active").map((item) => item.name)
+  const roomTypes = categories
+    .filter((item) => item.type === "Loại phòng" && item.status === "active" && item.name !== "Chuyển nhượng")
+    .map((item) => item.name)
   const amenities = categories.filter((item) => item.type === "Tiện ích" && item.status === "active").map((item) => item.name)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -255,7 +257,7 @@ export default function SearchPage() {
     const minPrice = Number(appliedFilters.minPrice)
     const maxPrice = Number(appliedFilters.maxPrice)
     return (isApiMode ? remoteRooms : listings)
-      .filter((room) => room.status === "active")
+      .filter((room) => room.status === "active" && room.type !== "Chuyển nhượng")
       .filter((room) => !isNearSearch || (Number.isFinite(room.latitude) && Number.isFinite(room.longitude)))
       .filter((room) => !isNearSearch || distanceInKm(latitude, longitude, room.latitude, room.longitude) <= radiusKm)
       .filter((room) => {

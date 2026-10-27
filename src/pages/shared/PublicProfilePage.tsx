@@ -91,9 +91,13 @@ export default function PublicProfilePage() {
     [listings, id],
   )
 
-  const hasTransferListings = useMemo(
-    () => publicListings.some((listing) => listing.type === "Chuyển nhượng"),
-    [publicListings],
+  const hasPassPost = useMemo(
+    () =>
+      publicPosts.some((post) => {
+        const lower = post.content.toLowerCase()
+        return lower.includes("pass") || lower.includes("chuyển nhượng") || lower.includes("sang nhượng")
+      }),
+    [publicPosts],
   )
 
   useEffect(() => {
@@ -112,12 +116,21 @@ export default function PublicProfilePage() {
   }, [profile?.createdAt])
 
   const userDistrict = useMemo(() => {
-    if (!publicListings.length) return "TP. Hồ Chí Minh"
-    const loc = publicListings[0].location
-    const parts = loc.split(",").map((s) => s.trim()).filter(Boolean)
-    if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
-    return loc
-  }, [publicListings])
+    if (publicListings.length) {
+      const loc = publicListings[0].location
+      const parts = loc.split(",").map((s) => s.trim()).filter(Boolean)
+      if (parts.length >= 2) return `${parts[parts.length - 2]}, ${parts[parts.length - 1]}`
+      return loc
+    }
+    if (publicPosts.length) {
+      const fullText = publicPosts.map((p) => p.content).join(" ")
+      if (/bình thạnh/i.test(fullText)) return "Bình Thạnh, TP. Hồ Chí Minh"
+      if (/quận 10/i.test(fullText)) return "Quận 10, TP. Hồ Chí Minh"
+      if (/tân bình/i.test(fullText)) return "Tân Bình, TP. Hồ Chí Minh"
+      if (/thủ đức/i.test(fullText)) return "TP. Thủ Đức, TP. Hồ Chí Minh"
+    }
+    return "TP. Hồ Chí Minh"
+  }, [publicListings, publicPosts])
 
   const openMessage = async () => {
     if (!profile) return
@@ -226,9 +239,9 @@ export default function PublicProfilePage() {
             <div className="nhatot-info-column">
               <div className="nhatot-name-line">
                 <h1 className="nhatot-name-heading">{profile.name}</h1>
-                <span className="nhatot-badge-tag">Cá nhân</span>
-                {hasTransferListings && (
-                  <span className="nhatot-badge-transfer">🔄 Đang pass phòng</span>
+                <span className="nhatot-badge-tag">{profile.role === "landlord" ? "Chủ trọ" : "Người thuê"}</span>
+                {hasPassPost && (
+                  <span className="nhatot-badge-transfer">🔄 Đang pass phòng trên Diễn đàn</span>
                 )}
               </div>
 
@@ -276,14 +289,16 @@ export default function PublicProfilePage() {
 
         {/* Tabs Bar */}
         <div className="nhatot-tabs-bar">
-          <button
-            type="button"
-            className={`nhatot-tab-btn ${activeTab === "listings" ? "active" : ""}`}
-            onClick={() => setActiveTab("listings")}
-          >
-            <span>Tin đăng cho thuê / Pass phòng</span>
-            <span className="tab-pill-count">{publicListings.length}</span>
-          </button>
+          {publicListings.length > 0 && (
+            <button
+              type="button"
+              className={`nhatot-tab-btn ${activeTab === "listings" ? "active" : ""}`}
+              onClick={() => setActiveTab("listings")}
+            >
+              <span>Phòng cho thuê</span>
+              <span className="tab-pill-count">{publicListings.length}</span>
+            </button>
+          )}
 
           <button
             type="button"

@@ -259,7 +259,7 @@ const loadMessages = () => storage("messages", initialMessages).map((conversatio
 
 const initialCategories: CategoryRecord[] = [
   ...["Thủ Đức", "Gò Vấp", "Bình Thạnh", "Tân Phú"].map((name, i) => ({ id: `district-${i}`, type: "Khu vực" as const, name, status: "active" as const })),
-  ...["Phòng trọ", "Căn hộ mini", "Căn hộ", "Ở ghép", "Ký túc xá", "Nhà nguyên căn", "Chuyển nhượng"].map((name, i) => ({ id: `room-type-${i}`, type: "Loại phòng" as const, name, status: "active" as const })),
+  ...["Phòng trọ", "Căn hộ mini", "Căn hộ", "Ở ghép", "Ký túc xá", "Nhà nguyên căn"].map((name, i) => ({ id: `room-type-${i}`, type: "Loại phòng" as const, name, status: "active" as const })),
   ...["Máy lạnh", "Bãi đỗ xe", "Ban công", "Máy giặt", "Cho nuôi thú cưng"].map((name, i) => ({ id: `amenity-${i}`, type: "Tiện ích" as const, name, status: "active" as const })),
 ]
 

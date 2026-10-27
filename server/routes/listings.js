@@ -38,7 +38,7 @@ const canManage = (req, row) => req.user.role === "admin" || row.owner_id === re
 
 router.get("/", async (req, res) => {
   const query = z.object({ q: z.string().optional(), location: z.string().optional(), type: z.string().optional(), amenities: z.string().optional(), minPrice: z.coerce.number().optional(), maxPrice: z.coerce.number().optional(), minArea: z.coerce.number().optional(), maxArea: z.coerce.number().optional(), lat: z.coerce.number().optional(), lng: z.coerce.number().optional(), radiusKm: z.coerce.number().min(1).max(100).optional(), sort: z.enum(["newest", "price_asc", "price_desc", "area_desc", "nearby"]).default("newest"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(60).default(24) }).parse(req.query)
-  const filters = ["l.status='active'"]
+  const filters = ["l.status='active'", "l.room_type <> 'Chuyển nhượng'"]
   const values = []
   let nearbyLngIndex
   let nearbyLatIndex
