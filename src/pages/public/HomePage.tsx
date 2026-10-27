@@ -62,7 +62,9 @@ function HomeFilterDropdown({
         onClick={() => setOpen((current) => !current)}
       >
         <span>{selectedOption?.label ?? "Chọn mức lọc"}</span>
-        <span className="home-filter-chevron" aria-hidden="true">⌄</span>
+        <span className={`home-filter-chevron${open ? " is-flipped" : ""}`} aria-hidden="true">
+          <Icon name="chevronDown" size={15} />
+        </span>
       </button>
       {open && (
         <div
@@ -99,7 +101,11 @@ function HomeFilterDropdown({
                 }}
               >
                 <span>{option.label}</span>
-                {selected && <span className="home-filter-check" aria-hidden="true">✓</span>}
+                {selected && (
+                  <span className="home-filter-check" aria-hidden="true">
+                    <Icon name="check" size={14} />
+                  </span>
+                )}
               </button>
             )
           })}
