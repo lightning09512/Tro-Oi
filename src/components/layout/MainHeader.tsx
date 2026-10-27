@@ -71,7 +71,7 @@ export default function MainHeader() {
           Trọ <span className="text-[#34794a]">Ơi</span>
         </NavLink>
 
-        <div className="header-location-picker hidden w-[min(22vw,276px)] shrink-0 min-[1120px]:block">
+        <div className="header-location-picker hidden shrink-0 min-[1120px]:block">
           <LocationPicker
             value={headerLocation}
             variant="filter"
@@ -83,7 +83,7 @@ export default function MainHeader() {
         </div>
 
         <form
-          className="group hidden h-12 min-w-[200px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-4 pr-1.5 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex min-[1120px]:max-w-[620px]"
+          className="group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
           onSubmit={(event) => {
             event.preventDefault()
             const params = new URLSearchParams()

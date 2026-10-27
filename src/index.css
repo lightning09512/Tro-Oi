@@ -9704,3 +9704,39 @@ input[type="file"]::file-selector-button:hover {
   border-color: #245f3b !important;
   transform: translateY(-1px) !important;
 }
+
+
+/* ========================================================
+   COMPACT & PROPORTIONAL HEADER LOCATION PICKER
+   ======================================================== */
+.header-location-picker {
+  width: auto !important;
+  max-width: 195px !important;
+  flex-shrink: 0 !important;
+}
+
+.header-location-picker .location-picker--filter .location-picker-trigger {
+  width: auto !important;
+  max-width: 190px !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 0 12px 0 14px !important;
+  gap: 7px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.header-location-picker .location-picker--filter .location-picker-trigger > span:nth-of-type(1) {
+  flex: 0 1 auto !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.header-location-picker .location-picker--filter .location-picker-chevron {
+  flex: 0 0 auto !important;
+  margin-left: 2px !important;
+}
