@@ -1,5 +1,6 @@
 import { Link } from "react-router"
 import { Icon } from "@/components/common/legacy"
+import BrandMark from "@/components/common/BrandMark"
 import useAuth from "@/hooks/useAuth"
 
 type FooterLink = { label: string; to: string }
@@ -22,7 +23,7 @@ export default function SiteFooter({ variant = "full" }: { variant?: "full" | "c
   if (variant === "compact") {
     return <footer className="site-footer site-footer--compact">
       <div className="container footer-compact-row">
-        <Link className="logo" to="/">Trọ <span>Ơi</span></Link>
+        <Link className="logo gap-2" to="/"><BrandMark size={30} /><span style={{ color: "inherit" }}>Trọ <span>Ơi</span></span></Link>
         <nav className="footer-compact-links" aria-label="Điều hướng cuối trang">
           <Link to="/tim-phong">Tìm phòng</Link>
           <Link to="/dien-dan">Diễn đàn</Link>
@@ -68,7 +69,7 @@ export default function SiteFooter({ variant = "full" }: { variant?: "full" | "c
     <div className="container">
       <div className="footer-intro">
         <div className="footer-brand">
-          <Link className="logo" to="/">Trọ <span>Ơi</span></Link>
+          <Link className="logo gap-2" to="/"><BrandMark size={34} /><span style={{ color: "inherit" }}>Trọ <span>Ơi</span></span></Link>
           <p>Nền tảng tìm phòng và kết nối cộng đồng người thuê trọ.</p>
         </div>
         <Link className="admin-link" to="/admin/dang-nhap">Trang quản trị</Link>

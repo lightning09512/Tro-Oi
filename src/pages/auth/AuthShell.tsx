@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { NavLink } from "react-router"
 import { photos } from "@/mocks/content"
 import { Icon } from "@/components/common/legacy"
+import BrandMark from "@/components/common/BrandMark"
 
 export default function AuthShell({
   eyebrow,
@@ -17,8 +18,9 @@ export default function AuthShell({
   return (
     <main className="auth-page">
       <section className="auth-card">
-        <NavLink className="logo auth-logo" to="/">
-          Trọ <span>Ơi</span>
+        <NavLink className="logo auth-logo gap-2" to="/">
+          <BrandMark size={34} />
+          <span style={{ color: "inherit" }}>Trọ <span>Ơi</span></span>
         </NavLink>
         <div className="auth-heading">
           <span>{eyebrow}</span>

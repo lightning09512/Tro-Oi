@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
+import BrandMark from "@/components/common/BrandMark"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform } from "@/contexts/PlatformContext"
 
@@ -22,7 +23,7 @@ export default function AdminLayout() {
     <main className="admin-layout admin-shell">
       <aside className="admin-side">
         <NavLink className="admin-logo" to="/admin">
-          <span className="admin-monogram">TƠ</span><b>Trọ Ơi</b>
+          <BrandMark size={32} /><b>Trọ Ơi</b>
         </NavLink>
         <small>QUẢN TRỊ HỆ THỐNG</small>
         {items.map(([to, icon, label]) => (

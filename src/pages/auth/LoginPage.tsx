@@ -19,6 +19,14 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const fillDemo = (demoEmail: string, demoRole: UserRole) => {
+    setIdentifier(demoEmail)
+    setPassword(authService.demoPassword)
+    setRole(demoRole)
+    setError("")
+  }
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError("")
@@ -28,7 +36,12 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
     }
     setLoading(true)
     try {
-      const user = await login({ identifier, password, remember, role })
+      const user = await login({
+        identifier,
+        password,
+        remember,
+        role: admin ? "admin" : undefined,
+      })
       const requested = (location.state as { from?: string } | null)?.from
       navigate(
         requested ??
@@ -45,6 +58,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
       setLoading(false)
     }
   }
+
   return (
     <AuthShell
       eyebrow={admin ? "Khu vực quản trị" : "Chào mừng trở lại"}
@@ -78,6 +92,15 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
                 onChange={() => setRole("landlord")}
               />{" "}
               Chủ trọ
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="login-role"
+                checked={role === "admin"}
+                onChange={() => setRole("admin")}
+              />{" "}
+              Quản trị viên
             </label>
           </fieldset>
         )}
@@ -131,7 +154,67 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
           </p>
         )}
         <Button disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
-        <div className="demo-credentials"><strong>Tài khoản trình diễn</strong><span>Người thuê: trang.nguyen@example.com</span><span>Chủ trọ: minhngoc@example.com</span><span>Quản trị: admin@phongtroplus.vn</span><small>Mật khẩu: {authService.demoPassword}</small>{!admin && <NavLink to="/admin/dang-nhap">Đăng nhập quản trị</NavLink>}</div>
+        <div className="demo-credentials">
+          <div className="demo-credentials-header">
+            <strong>Tài khoản thử nghiệm</strong>
+            <small>Bấm vào tài khoản bên dưới để tự động điền nhanh:</small>
+          </div>
+          {admin ? (
+            <div className="demo-cred-buttons">
+              <button
+                type="button"
+                className={`demo-cred-btn ${identifier === "admin@phongtroplus.vn" ? "active" : ""}`}
+                onClick={() => fillDemo("admin@phongtroplus.vn", "admin")}
+                title="Bấm để điền tài khoản quản trị"
+              >
+                <span className="demo-cred-badge admin">Quản trị viên</span>
+                <span className="demo-cred-email">admin@phongtroplus.vn</span>
+              </button>
+            </div>
+          ) : (
+            <div className="demo-cred-buttons">
+              <button
+                type="button"
+                className={`demo-cred-btn ${identifier === "trang.nguyen@example.com" ? "active" : ""}`}
+                onClick={() => fillDemo("trang.nguyen@example.com", "renter")}
+                title="Bấm để điền tài khoản người thuê"
+              >
+                <span className="demo-cred-badge renter">Người thuê</span>
+                <span className="demo-cred-email">trang.nguyen@example.com</span>
+              </button>
+              <button
+                type="button"
+                className={`demo-cred-btn ${identifier === "minhngoc@example.com" ? "active" : ""}`}
+                onClick={() => fillDemo("minhngoc@example.com", "landlord")}
+                title="Bấm để điền tài khoản chủ trọ"
+              >
+                <span className="demo-cred-badge landlord">Chủ trọ</span>
+                <span className="demo-cred-email">minhngoc@example.com</span>
+              </button>
+              <button
+                type="button"
+                className={`demo-cred-btn ${identifier === "admin@phongtroplus.vn" ? "active" : ""}`}
+                onClick={() => fillDemo("admin@phongtroplus.vn", "admin")}
+                title="Bấm để điền tài khoản quản trị"
+              >
+                <span className="demo-cred-badge admin">Quản trị viên</span>
+                <span className="demo-cred-email">admin@phongtroplus.vn</span>
+              </button>
+            </div>
+          )}
+          <div className="demo-cred-footer">
+            <span>Mật khẩu: <code>{authService.demoPassword}</code></span>
+            {!admin ? (
+              <NavLink to="/admin/dang-nhap" className="demo-admin-link">
+                Cổng đăng nhập quản trị riêng &rarr;
+              </NavLink>
+            ) : (
+              <NavLink to="/dang-nhap" className="demo-admin-link">
+                &larr; Về trang đăng nhập thành viên
+              </NavLink>
+            )}
+          </div>
+        </div>
         {!admin && (
           <p className="auth-switch">
             Chưa có tài khoản? <NavLink to="/dang-ky">Đăng ký ngay</NavLink>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { NavLink, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
+import BrandMark from "@/components/common/BrandMark"
 import LocationPicker from "@/components/common/LocationPicker"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform } from "@/contexts/PlatformContext"
@@ -91,11 +92,13 @@ export default function MainHeader() {
         </button>
 
         <NavLink
-          className="shrink-0 rounded-lg text-[24px] font-extrabold tracking-[-1.2px] text-[#26382e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#34794a] sm:text-[26px]"
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg text-[24px] font-extrabold tracking-[-1.2px] text-[#26382e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#34794a] sm:text-[26px]"
           to="/"
           onClick={closeMenu}
+          aria-label="Trọ Ơi - Trang chủ"
         >
-          Trọ <span className="text-[#34794a]">Ơi</span>
+          <BrandMark size={34} />
+          <span>Trọ <span className="text-[#34794a]">Ơi</span></span>
         </NavLink>
 
         <div className="header-location-picker hidden shrink-0 min-[1120px]:block">

@@ -114,7 +114,8 @@ router.post("/login", async (req, res) => {
   const identifier = input.identifier.toLowerCase()
   const { rows } = await pool.query("SELECT * FROM users WHERE lower(email)=$1 OR regexp_replace(phone, '[[:space:]]', '', 'g')=$2 LIMIT 1", [identifier, input.identifier.replace(/\s/g, "")])
   const account = rows[0]
-  if (!account || !(await bcrypt.compare(input.password, account.password_hash)) || (input.role && input.role !== account.role)) return res.status(401).json({ error: "Thông tin đăng nhập chưa chính xác." })
+  if (!account || !(await bcrypt.compare(input.password, account.password_hash))) return res.status(401).json({ error: "Thông tin đăng nhập chưa chính xác." })
+  if (input.role === "admin" && account.role !== "admin") return res.status(403).json({ error: "Tài khoản này không có quyền quản trị." })
   if (account.status === "locked") return res.status(403).json({ error: "Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên." })
   res.json(session(account))
 })

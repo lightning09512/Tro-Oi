@@ -4884,15 +4884,128 @@ select:focus-visible, textarea:focus-visible {
 }
 
 .demo-credentials {
-  gap: 7px;
+  gap: 10px;
   padding: 14px 16px;
-  border-color: #dfe8e1;
-  border-radius: 10px;
-  background: #f7faf7;
+  border: 1px solid #dce6de;
+  border-radius: 12px;
+  background: #f8faf8;
 }
 
-.demo-credentials strong {
+.demo-credentials-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.demo-credentials-header strong {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
   margin-bottom: 2px;
+}
+
+.demo-credentials-header small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.demo-cred-buttons {
+  display: grid;
+  gap: 6px;
+}
+
+.demo-cred-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  background: #fff;
+  border: 1px solid #dfe7e1;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--ink);
+}
+
+.demo-cred-btn:hover {
+  background: #f0f7f2;
+  border-color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.demo-cred-btn.active {
+  border-color: var(--teal);
+  background: #edf6ef;
+  box-shadow: 0 0 0 1px var(--teal);
+}
+
+.demo-cred-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.demo-cred-badge.renter {
+  background: #e8f3ed;
+  color: #1a6f4c;
+}
+
+.demo-cred-badge.landlord {
+  background: #fef3e2;
+  color: #b56209;
+}
+
+.demo-cred-badge.admin {
+  background: #feecee;
+  color: #c02636;
+}
+
+.demo-cred-email {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  color: #2b3b33;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-cred-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #d8e4da;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.demo-cred-footer code {
+  background: #e7ede8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #164e3b;
+  font-size: 11.5px;
+}
+
+.demo-admin-link {
+  color: var(--teal-dark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.demo-admin-link:hover {
+  color: var(--teal);
 }
 
 @media (max-width: 767px) {

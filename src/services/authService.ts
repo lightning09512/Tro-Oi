@@ -41,10 +41,10 @@ export const authService = {
     await wait()
     const identifier = credentials.identifier.trim().toLocaleLowerCase("vi")
     const account = getAccounts().find((item) =>
-      (item.email.toLocaleLowerCase("vi") === identifier || item.phone.replace(/\s/g, "") === identifier.replace(/\s/g, "")) &&
-      (!credentials.role || item.role === credentials.role),
+      item.email.toLocaleLowerCase("vi") === identifier || item.phone.replace(/\s/g, "") === identifier.replace(/\s/g, ""),
     )
     if (!account || account.password !== credentials.password) throw new Error("Thông tin đăng nhập chưa chính xác.")
+    if (credentials.role === "admin" && account.role !== "admin") throw new Error("Tài khoản này không có quyền quản trị.")
     if (account.status === "locked") throw new Error("Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.")
     const user: AuthUser = { id: account.id, name: account.name, email: account.email, phone: account.phone, role: account.role, initials: account.initials }
     const storage = credentials.remember ? window.localStorage : window.sessionStorage
