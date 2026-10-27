@@ -9682,3 +9682,25 @@ textarea:focus-visible,
   font-size: 14px !important;
   box-sizing: border-box !important;
 }
+
+
+/* Beautiful File Selector Button Fallback */
+input[type="file"]::file-selector-button {
+  border: 1px solid #c8dece !important;
+  padding: 8px 18px !important;
+  border-radius: 9999px !important;
+  background-color: #eaf4ec !important;
+  color: #245f3b !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-right: 14px !important;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #245f3b !important;
+  color: #ffffff !important;
+  border-color: #245f3b !important;
+  transform: translateY(-1px) !important;
+}
