@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { NavLink, useNavigate } from "react-router"
+import { NavLink, useLocation, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import BrandMark from "@/components/common/BrandMark"
 import LocationPicker from "@/components/common/LocationPicker"
@@ -30,6 +30,12 @@ export default function MainHeader() {
   const { notifications } = usePlatform()
   const unreadNotifications = notifications.filter((item) => item.userId === user?.id && !item.read).length
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const isAuthPage =
+    pathname === "/dang-nhap" ||
+    pathname === "/dang-ky" ||
+    pathname === "/quen-mat-khau" ||
+    pathname === "/dat-lai-mat-khau"
   const closeMenu = () => setMenuOpen(false)
 
   useEffect(() => {
@@ -101,45 +107,49 @@ export default function MainHeader() {
           <span>Trọ <span className="text-[#34794a]">Ơi</span></span>
         </NavLink>
 
-        <div className="header-location-picker hidden shrink-0 min-[1120px]:block">
-          <LocationPicker
-            value={headerLocation}
-            variant="filter"
-            onChange={(location) => {
-              setHeaderLocation(location)
-              navigate(location ? `/tim-phong?location=${encodeURIComponent(location)}` : "/tim-phong")
-            }}
-          />
-        </div>
+        {!isAuthPage && (
+          <>
+            <div className="header-location-picker hidden shrink-0 min-[1120px]:block">
+              <LocationPicker
+                value={headerLocation}
+                variant="filter"
+                onChange={(location) => {
+                  setHeaderLocation(location)
+                  navigate(location ? `/tim-phong?location=${encodeURIComponent(location)}` : "/tim-phong")
+                }}
+              />
+            </div>
 
-        <form
-          className="group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
-          onSubmit={(event) => {
-            event.preventDefault()
-            const params = new URLSearchParams()
-            if (searchQuery.trim()) params.set("location", searchQuery.trim())
-            navigate(`/tim-phong?${params.toString()}`)
-          }}
-        >
-          <Icon name="search" size={20} />
-          <input
-            className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[14px] text-[#26382e] outline-none placeholder:text-[#84908a]"
-            aria-label="Tìm kiếm"
-            placeholder="Tìm phòng, khu vực, tiện nghi..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <button
-            className="inline-grid size-9 shrink-0 place-items-center rounded-full bg-[#245f3b] text-white shadow-sm transition-all hover:bg-[#1c4e30] hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
-            type="submit"
-            aria-label="Tìm kiếm phòng"
-            title="Tìm kiếm"
-          >
-            <Icon name="search" size={16} />
-          </button>
-        </form>
+            <form
+              className="group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
+              onSubmit={(event) => {
+                event.preventDefault()
+                const params = new URLSearchParams()
+                if (searchQuery.trim()) params.set("location", searchQuery.trim())
+                navigate(`/tim-phong?${params.toString()}`)
+              }}
+            >
+              <Icon name="search" size={20} />
+              <input
+                className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[14px] text-[#26382e] outline-none placeholder:text-[#84908a]"
+                aria-label="Tìm kiếm"
+                placeholder="Tìm phòng, khu vực, tiện nghi..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                className="inline-grid size-9 shrink-0 place-items-center rounded-full bg-[#245f3b] text-white shadow-sm transition-all hover:bg-[#1c4e30] hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
+                type="submit"
+                aria-label="Tìm kiếm phòng"
+                title="Tìm kiếm"
+              >
+                <Icon name="search" size={16} />
+              </button>
+            </form>
+          </>
+        )}
 
         <nav
           ref={menuNavRef}
@@ -265,10 +275,24 @@ export default function MainHeader() {
             </>
           ) : (
             <div className="flex items-center gap-1 sm:gap-2">
-              <button className="inline-flex h-10 items-center justify-center rounded-full px-2.5 text-[13px] font-semibold text-[#315b3d] transition-colors hover:bg-[#f0f6f1] sm:px-3" onClick={() => navigate("/dang-nhap")}>
+              <button
+                className={`inline-flex h-10 items-center justify-center rounded-full px-2.5 text-[13px] font-semibold transition-colors sm:px-3 ${
+                  pathname === "/dang-nhap"
+                    ? "bg-[#edf5ee] text-[#245f3b]"
+                    : "text-[#315b3d] hover:bg-[#f0f6f1]"
+                }`}
+                onClick={() => navigate("/dang-nhap")}
+              >
                 Đăng nhập
               </button>
-              <button className="inline-flex h-10 items-center justify-center rounded-full border border-[#cdddcf] bg-white px-3 text-[13px] font-semibold text-[#315b3d] transition-colors hover:border-[#9fbea4] hover:bg-[#f6faf6] sm:px-4" onClick={() => navigate("/dang-ky")}>
+              <button
+                className={`inline-flex h-10 items-center justify-center rounded-full border px-3 text-[13px] font-semibold transition-colors sm:px-4 ${
+                  pathname === "/dang-ky"
+                    ? "border-[#34794a] bg-[#edf5ee] text-[#245f3b]"
+                    : "border-[#cdddcf] bg-white text-[#315b3d] hover:border-[#9fbea4] hover:bg-[#f6faf6]"
+                }`}
+                onClick={() => navigate("/dang-ky")}
+              >
                 Đăng ký
               </button>
             </div>
