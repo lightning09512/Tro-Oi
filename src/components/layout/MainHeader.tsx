@@ -142,7 +142,7 @@ export default function MainHeader() {
             </div>
 
             <form
-              className="header-search-form group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
+              className="header-search-form group hidden h-10 min-w-[220px] max-w-[340px] xl:max-w-[380px] 2xl:max-w-[440px] flex-1 items-center gap-2 rounded-full border border-[#dfe7e1] bg-[#f4f7f4] px-3.5 text-[#5e7165] transition-all focus-within:border-[#245f3b] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#245f3b]/10 min-[1120px]:flex"
               onSubmit={(event) => {
                 event.preventDefault()
                 const params = new URLSearchParams()
@@ -150,24 +150,34 @@ export default function MainHeader() {
                 navigate(`/tim-phong?${params.toString()}`)
               }}
             >
-              <Icon name="search" size={20} />
-              <input
-                className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[14px] text-[#26382e] outline-none placeholder:text-[#84908a]"
+              <button
+                type="submit"
+                className="shrink-0 p-0 text-[#657a6d] transition-colors hover:text-[#245f3b]"
                 aria-label="Tìm kiếm"
-                placeholder="Tìm tên phòng, khu vực…"
+                title="Tìm kiếm"
+              >
+                <Icon name="search" size={17} />
+              </button>
+              <input
+                className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[13.5px] text-[#26382e] outline-none placeholder:text-[#88988e]"
+                aria-label="Tìm kiếm"
+                placeholder="Tìm phòng trọ, khu vực…"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 autoComplete="off"
                 spellCheck={false}
               />
-              <button
-                className="inline-grid size-9 shrink-0 place-items-center rounded-full bg-[#245f3b] text-white shadow-sm transition-all hover:bg-[#1c4e30] hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
-                type="submit"
-                aria-label="Tìm kiếm phòng"
-                title="Tìm kiếm"
-              >
-                <Icon name="search" size={16} />
-              </button>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="shrink-0 text-[#88988e] transition-colors hover:text-[#26382e]"
+                  aria-label="Xóa nội dung tìm kiếm"
+                  title="Xóa"
+                >
+                  <Icon name="close" size={15} />
+                </button>
+              )}
             </form>
           </>
         )}

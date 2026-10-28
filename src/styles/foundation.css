@@ -139,7 +139,8 @@ input, textarea { caret-color: var(--teal-dark); }
 .location-picker-overlay .location-picker-footer button { flex: 1; min-height: 46px; padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; }
 .location-picker-overlay .location-btn-reset { border: 1px solid #cdd9cf; background: white; color: var(--ink); }
 .location-picker-overlay .location-btn-apply { border: 1px solid var(--teal-dark); background: var(--teal-dark); color: white; }
-@media (min-width: 1440px) { .site-header--authenticated .header-search-form { display: flex; max-width: 240px; } }
+@media (min-width: 1120px) { .site-header--authenticated .header-search-form { display: flex; max-width: 300px; } }
+@media (min-width: 1440px) { .site-header--authenticated .header-search-form { display: flex; max-width: 360px; } }
 @media (max-width: 1279px) { .site-header .header-manage-link, .site-header .header-message-link { display: none; } }
 @media (max-width: 400px) { .site-header .header-guest-login { display: none; } }
 .site-header .header-location-picker { max-width: 190px; }
