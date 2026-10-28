@@ -48,6 +48,25 @@ const HERO_COMMUNITY_QUOTES = [
 
 type HomeFilterOption = { value: string; label: string }
 
+const LOCATION_OPTIONS: HomeFilterOption[] = [
+  { value: "TP. Hồ Chí Minh", label: "TP. Hồ Chí Minh" },
+  { value: "Hà Nội", label: "Hà Nội" },
+  { value: "Đà Nẵng", label: "Đà Nẵng" },
+  { value: "Bình Dương", label: "Bình Dương" },
+  { value: "Bình Thạnh", label: "Bình Thạnh (TP.HCM)" },
+  { value: "Gò Vấp", label: "Gò Vấp (TP.HCM)" },
+  { value: "Quận 7", label: "Quận 7 (TP.HCM)" },
+  { value: "Quận 10", label: "Quận 10 (TP.HCM)" },
+  { value: "Tân Bình", label: "Tân Bình (TP.HCM)" },
+  { value: "Thủ Đức", label: "TP. Thủ Đức" },
+  { value: "Phú Nhuận", label: "Phú Nhuận (TP.HCM)" },
+  { value: "Cầu Giấy", label: "Cầu Giấy (Hà Nội)" },
+  { value: "Đống Đa", label: "Đống Đa (Hà Nội)" },
+  { value: "Nam Từ Liêm", label: "Nam Từ Liêm (Hà Nội)" },
+  { value: "Hải Châu", label: "Hải Châu (Đà Nẵng)" },
+  { value: "", label: "Tất cả khu vực" },
+]
+
 function HomeFilterDropdown({
   label,
   value,
@@ -71,7 +90,9 @@ function HomeFilterDropdown({
     width: number
     maxHeight: number
   }>({ top: 0, left: 0, width: 220, maxHeight: 280 })
-  const selectedOption = options.find((option) => option.value === value) ?? options[0]
+  const selectedOption =
+    options.find((option) => option.value === value) ??
+    (value ? { value, label: value } : options.find((option) => option.value === "") ?? options[0])
 
   useLayoutEffect(() => {
     if (!open) return
@@ -404,17 +425,37 @@ function Home() {
             }}
           >
             <div className="hero-search-keyword">
-              <Icon name="search" size={18} />
+              <span className="hero-search-icon-wrap" aria-hidden="true">
+                <Icon name="search" size={18} />
+              </span>
               <input
                 type="text"
+                className="hero-search-input"
                 placeholder="Tìm tên phòng, trường học…"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
+                autoComplete="off"
               />
+              {keyword && (
+                <button
+                  type="button"
+                  className="hero-search-clear-btn"
+                  aria-label="Xóa từ khóa"
+                  onClick={() => setKeyword("")}
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              )}
             </div>
-            <div className="hero-location-field">
+            <div className="home-filter-field">
               <span>Khu vực</span>
-              <LocationPicker value={location} onChange={setLocation} />
+              <HomeFilterDropdown
+                label="Khu vực tìm phòng"
+                value={location}
+                onChange={setLocation}
+                icon="pin"
+                options={LOCATION_OPTIONS}
+              />
             </div>
             <div className="home-filter-field">
               <span>Khoảng giá</span>
