@@ -217,7 +217,18 @@ export default function MessagesPage() {
 
             <div className="chat-body">
               {relatedRoom && (
-                <button className="chat-room-card" onClick={() => navigate(`/phong/${relatedRoom.id}`)}>
+                <div
+                  className="chat-room-card"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/phong/${relatedRoom.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      navigate(`/phong/${relatedRoom.id}`)
+                    }
+                  }}
+                >
                   <img src={relatedRoom.image} alt={relatedRoom.title} />
                   <div>
                     <small>Bạn đang hỏi về phòng</small>
@@ -229,7 +240,7 @@ export default function MessagesPage() {
                     </span>
                   </div>
                   <Icon name="chevron" size={17} />
-                </button>
+                </div>
               )}
               <div className={selected.messages.length ? "chat-history" : "chat-history empty"}>
                 {selected.messages.length ? (

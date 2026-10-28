@@ -4261,27 +4261,43 @@ select:focus-visible, textarea:focus-visible {
 }
 
 .chat-room-card {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
   grid-template-columns: 76px minmax(0, 1fr) 20px;
   gap: 14px;
   padding: 12px;
-  margin-bottom: 10px;
-  border-color: #dfe8e3;
+  margin-bottom: 16px;
+  background: #ffffff;
+  border: 1px solid #dfe8e3;
   border-radius: 10px;
   text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.chat-room-card img { width: 76px; height: 64px; border-radius: 7px; }
+.chat-room-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(36, 100, 64, 0.08);
+}
+
+.chat-room-card img { width: 76px; height: 64px; border-radius: 7px; object-fit: cover; }
 .chat-room-card div { min-width: 0; gap: 5px; }
-.chat-room-card small { font-size: 11px; }
-.chat-room-card strong { font-size: 13px; line-height: 1.4; }
-.chat-room-card span { display: flex; flex-wrap: wrap; gap: 4px 7px; font-size: 11px; line-height: 1.4; }
+.chat-room-card small { font-size: 11px; color: #7f8a88; }
+.chat-room-card strong { font-size: 13px; line-height: 1.4; color: #203129; }
+.chat-room-card span { display: flex; flex-wrap: wrap; gap: 4px 7px; font-size: 11px; line-height: 1.4; color: #62716c; }
 .chat-room-card span b { color: #246440; font-weight: 700; }
 .chat-room-card span i { font-style: normal; }
 
 .chat-date {
-  margin: auto 0 12px;
-  padding-top: 10px;
+  display: block;
+  text-align: center;
+  margin: 10px auto 16px;
+  padding: 4px 12px;
   font-size: 11px;
+  color: #7d8b87;
+  width: fit-content;
 }
 
 .bubble {
