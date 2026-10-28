@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from "react"
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { useFavorites } from "@/contexts/FavoritesContext"
@@ -7,6 +7,8 @@ import ReportDialog from "@/components/common/ReportDialog"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { isApiMode } from "@/services/apiClient"
+import { formatRelativeTime } from "@/utils/formatTime"
+import useDialogFocus from "@/hooks/useDialogFocus"
 import { resolveLocationCoordinates } from "@/utils/mapCoordinates"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
@@ -15,18 +17,24 @@ export default function RoomDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { user } = useAuth()
-  const { listings, users, reviews, saveReview, deleteReview, incrementListingViews, incrementListingContacts, startConversation } = usePlatform()
+  const { listings, users, reviews, connectionState, saveReview, deleteReview, incrementListingViews, incrementListingContacts, startConversation } = usePlatform()
   const { isFavorite, toggleFavorite } = useFavorites()
   const { toast } = useToast()
   const [showPhone, setShowPhone] = useState(false)
   const [contactPhone, setContactPhone] = useState("")
+  const [ownerAvatarFailed, setOwnerAvatarFailed] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState(0)
   const [text, setText] = useState("")
   const [stars, setStars] = useState(5)
   const [editingReview, setEditingReview] = useState<RoomReview | null>(null)
   const [expanded, setExpanded] = useState(false)
-  const normalizedId = id ? decodeURIComponent(id).trim() : ""
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState("")
+  const [actionError, setActionError] = useState("")
+  const lightboxRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(lightboxRef, () => setLightboxOpen(false), lightboxOpen)
+  const normalizedId = (() => { try { return id ? decodeURIComponent(id).trim() : "" } catch { return id ?? "" } })()
   const room = listings.find((item) => {
     const isMatch = item.id === id || item.id === normalizedId || (normalizedId && item.id === normalizedId.replace(/\s+/g, "-"))
     return isMatch && (
@@ -64,13 +72,25 @@ export default function RoomDetailPage() {
       .slice(0, 4)
       .map(({ listing }) => listing)
   }, [listings, room])
-  const roomReviews = useMemo(() => reviews.filter((review) => review.listingId === id), [reviews, id])
-  const galleryPhotos = room ? [...new Set([room.image, ...(room.gallery ?? [])])].slice(0, 6) : []
+  const roomReviews = useMemo(() => reviews.filter((review) => review.listingId === room?.id), [reviews, room?.id])
+  const galleryPhotos = room ? [...new Set([room.image, ...(room.gallery ?? [])].filter(Boolean))].slice(0, 6) : []
   const activeGalleryPhoto = galleryPhotos[galleryIndex] ?? galleryPhotos[0]
 
-  useEffect(() => { if (id && room) incrementListingViews(room.id) }, [id])
-  useEffect(() => { setGalleryIndex(0) }, [id])
-  if (!room) return <main className="workspace-page"><div className="container workspace-container"><section className="empty-state"><span className="placeholder-icon"><Icon name="building"/></span><h1>Phòng này không còn hiển thị</h1><p>Có thể tin đã được cho thuê hoặc chủ trọ đã tạm ẩn.</p><Button onClick={() => navigate("/tim-phong")}>Tìm phòng khác</Button></section></div></main>
+  useEffect(() => { if (room?.id) void incrementListingViews(room.id).catch(() => undefined) }, [room?.id])
+  useEffect(() => { setGalleryIndex(0); setOwnerAvatarFailed(false); setShowPhone(false); setContactPhone(""); setLightboxOpen(false); setExpanded(false); setText(""); setEditingReview(null); setActionError("") }, [id])
+  useEffect(() => {
+    if (!lightboxOpen || !galleryPhotos.length) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault()
+        setGalleryIndex((index) => (index + (event.key === "ArrowRight" ? 1 : -1) + galleryPhotos.length) % galleryPhotos.length)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [lightboxOpen, galleryPhotos.length])
+  if (!room && connectionState === "loading") return <main className="page-bg detail-page"><div className="container public-empty-state" role="status" aria-busy="true"><Icon name="building" size={28}/><h1>Đang tải thông tin phòng…</h1><p>Ảnh và thông tin phòng sẽ xuất hiện trong giây lát.</p></div></main>
+  if (!room) return <main className="workspace-page detail-page"><div className="container workspace-container"><section className="empty-state"><span className="placeholder-icon"><Icon name="building"/></span><h1>{connectionState === "error" ? "Chưa tải được thông tin phòng" : "Phòng này không còn hiển thị"}</h1><p>{connectionState === "error" ? "Hãy kiểm tra kết nối và thử tải lại trang." : "Có thể tin đã được cho thuê hoặc chủ trọ đã tạm ẩn."}</p><Button onClick={() => navigate("/tim-phong")}>Tìm phòng khác</Button></section></div></main>
 
   const saved = isFavorite(room.id)
   const ownerDisplayName = room.ownerName || "Chủ phòng"
@@ -80,10 +100,14 @@ export default function RoomDetailPage() {
   const canReview = user?.role === "renter" && room.currentTenantId === user.id
   const contact = async () => {
     if (!user) { navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } }); return }
-    const conversation = await startConversation({ accountId: user.id, name: room.ownerName, avatar: room.ownerName.split(" ").map((part) => part[0]).slice(-2).join(""), avatarUrl: landlordAvatarUrl || room.ownerAvatarUrl, userId: room.ownerId, roomId: room.id })
-    if (!conversation) return
-    incrementListingContacts(room.id)
-    navigate(`/tin-nhan?conversation=${conversation}`)
+    if (pendingAction) return
+    setPendingAction("contact")
+    setActionError("")
+    try {
+      const conversation = await startConversation({ accountId: user.id, name: ownerDisplayName, avatar: ownerDisplayName.split(" ").map((part) => part[0]).slice(-2).join(""), avatarUrl: landlordAvatarUrl, userId: room.ownerId, roomId: room.id })
+      if (conversation) navigate(`/tin-nhan?conversation=${conversation}`)
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Chưa mở được cuộc trò chuyện. Hãy thử lại.") }
+    finally { setPendingAction("") }
   }
   const submitReview = async (event: FormEvent) => {
     event.preventDefault()
@@ -91,15 +115,16 @@ export default function RoomDetailPage() {
       if (!user) navigate("/dang-nhap", { state: { from: `/phong/${room.id}` } })
       return
     }
-    if (!text.trim()) return
+    if (!text.trim() || pendingAction) return
+    setPendingAction("review")
+    setActionError("")
     const previousReview = editingReview ?? myReview
     try {
       await saveReview({ id: previousReview?.id ?? `review-${Date.now()}`, listingId: room.id, authorId: user.id, author: user.name, initials: user.initials, stars, text: text.trim(), createdAt: previousReview?.createdAt ?? "Vừa xong" })
       setText("")
       setEditingReview(null)
-    } catch {
-      // Shared API status banner reports remote validation failures.
-    }
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Chưa lưu được đánh giá. Hãy thử lại.") }
+    finally { setPendingAction("") }
   }
 
   return (
@@ -115,7 +140,7 @@ export default function RoomDetailPage() {
         <div className="room-detail-main-column">
           {activeGalleryPhoto && <section className="room-gallery-carousel" aria-label={`Thư viện ảnh của ${room.title}`}>
             <div className="room-gallery-stage">
-              <img className="room-gallery-main" src={activeGalleryPhoto} alt={`${room.title} — ảnh ${galleryIndex + 1}`}/>
+              <button type="button" className="room-gallery-open" onClick={() => setLightboxOpen(true)} aria-label={`Mở ảnh ${galleryIndex + 1} ở kích thước lớn`}><img className="room-gallery-main" src={activeGalleryPhoto} alt={`${room.title} — ảnh ${galleryIndex + 1}`} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/tro-oi-icon.svg"; event.currentTarget.alt = "Ảnh phòng chưa tải được" }}/><span className="room-gallery-expand"><Icon name="image" size={17}/>Xem ảnh lớn</span></button>
               <span className="room-gallery-count">{galleryIndex + 1}/{galleryPhotos.length}</span>
               {galleryPhotos.length > 1 && <>
                 <button className="room-gallery-arrow room-gallery-previous" type="button" aria-label="Ảnh trước" onClick={() => setGalleryIndex((index) => (index - 1 + galleryPhotos.length) % galleryPhotos.length)}><Icon name="chevron" size={24}/></button>
@@ -126,19 +151,22 @@ export default function RoomDetailPage() {
           </section>}
           <header className="room-detail-summary room-detail-summary-primary">
             <div className="room-detail-summary-top">
-              <span className={`verified ${room.type === "Chuyển nhượng" ? "badge-transfer-detail" : ""}`}>
-                {room.type === "Chuyển nhượng" ? "🔄 Tin chuyển nhượng phòng trọ" : room.status === "rented" ? "Đã cho thuê · Người thuê có thể đánh giá" : room.badge}
-              </span>
+              <span className="verified">{room.status === "rented" ? "Đã cho thuê" : "Đang cho thuê"}</span>
               {user?.role !== "admin" && room.status === "active" && (
                 <button
                   className={saved ? "save-big saved" : "save-big"}
                   aria-pressed={saved}
-                  onClick={() => {
+                  disabled={Boolean(pendingAction)}
+                  onClick={async () => {
                     if (!user) {
                       navigate("/dang-nhap", { state: { from: "/phong/" + room.id } })
                       return
                     }
-                    toggleFavorite(room.id)
+                    setPendingAction("favorite")
+                    setActionError("")
+                    try { await toggleFavorite(room.id) }
+                    catch (error) { setActionError(error instanceof Error ? error.message : "Chưa lưu được tin phòng.") }
+                    finally { setPendingAction("") }
                   }}
                 >
                   <Icon name="heart" />{saved ? "Đã lưu" : "Lưu tin"}
@@ -157,16 +185,17 @@ export default function RoomDetailPage() {
         </div>
         <aside className="landlord-card room-contact-card">
           <div className="landlord-top">
-            {landlordAvatarUrl ? <img className="avatar large landlord-avatar-image" src={landlordAvatarUrl} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
-            <div><small>{room.type === "Chuyển nhượng" ? "Người pass phòng (Người thuê)" : "Chủ trọ"}</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "● Đang hoạt động" : "Thông tin liên hệ đang cập nhật"}</span></div>
+            {landlordAvatarUrl && !ownerAvatarFailed ? <img className="avatar large landlord-avatar-image" src={landlordAvatarUrl} onError={() => setOwnerAvatarFailed(true)} alt={`Ảnh đại diện ${ownerDisplayName}`} /> : room.ownerId ? <Link className="profile-avatar-link" to={"/nguoi-dung/" + room.ownerId} aria-label={"Xem hồ sơ " + room.ownerName}><span className="avatar large">{room.ownerName.split(" ").map((part) => part[0]).slice(-2).join("")}</span></Link> : <span className="avatar large">CT</span>}
+            <div><small>Chủ trọ</small>{room.ownerId ? <Link className="landlord-profile-name" to={"/nguoi-dung/" + room.ownerId}><h3>{room.ownerName}</h3></Link> : <h3>{ownerDisplayName}</h3>}<span>{room.ownerId ? "Người đăng trên Trọ Ơi" : "Thông tin liên hệ đang cập nhật"}</span></div>
           </div>
           <div className="landlord-stats">
             <span><b>{room.views}</b>Lượt xem</span>
             <span><b>{room.ownerId ? room.contacts : galleryPhotos.length}</b>{room.ownerId ? "Lượt liên hệ" : "Ảnh phòng"}</span>
             <span><b>{roomReviews.length ? average.toFixed(1) : "—"}</b>Đánh giá</span>
           </div>
-          {room.ownerId && room.status === "active" && user?.role !== "admin" && <Button icon="chat" onClick={contact}>{room.type === "Chuyển nhượng" ? "Nhắn tin hỏi pass phòng" : "Nhắn tin hỏi phòng"}</Button>}
-          {room.ownerId && room.status === "active" && <Button variant="outline" icon="phone" onClick={async () => { if (!showPhone) { const phone = isApiMode ? await incrementListingContacts(room.id) : room.phone; setContactPhone(phone ?? ""); setShowPhone(true) } }}>{showPhone ? contactPhone || "Chưa có số liên hệ" : "Hiện số điện thoại"}</Button>}
+          {room.ownerId && room.ownerId !== user?.id && room.status === "active" && user?.role !== "admin" && <Button icon="chat" disabled={Boolean(pendingAction)} onClick={contact}>{pendingAction === "contact" ? "Đang mở cuộc trò chuyện…" : "Nhắn tin hỏi phòng"}</Button>}
+          {room.ownerId && room.status === "active" && <Button variant="outline" icon="phone" disabled={Boolean(pendingAction)} onClick={async () => { if (!showPhone) { setPendingAction("phone"); setActionError(""); try { const phone = isApiMode ? await incrementListingContacts(room.id) : room.phone; setContactPhone(phone ?? ""); setShowPhone(true) } catch (error) { setActionError(error instanceof Error ? error.message : "Chưa tải được số điện thoại.") } finally { setPendingAction("") } } }}>{showPhone ? contactPhone || "Chưa có số liên hệ" : "Hiện số điện thoại"}</Button>}
+          {actionError && <p className="public-action-error" role="alert">{actionError}</p>}
           {!room.ownerId && room.status === "active" && <p><Icon name="shield" size={17}/>Thông tin liên hệ của tin này đang được cập nhật trên Trọ Ơi.</p>}
           {room.ownerId && <p><Icon name="shield" size={17}/>{room.status === "rented" ? "Thông tin phòng được giữ lại để người thuê hiện tại gửi đánh giá." : "Kiểm tra giấy tờ và chi phí trước khi đặt cọc."}</p>}
           {room.status === "active" && user?.role !== "admin" && <button className="report" onClick={() => setReportOpen(true)}>Báo cáo tin đăng</button>}
@@ -231,7 +260,7 @@ export default function RoomDetailPage() {
           <section className="room-detail-panel room-description-panel">
             <div className="room-detail-panel-heading"><div><h2>Mô tả chi tiết</h2></div></div>
             <p className={expanded ? "room-description-copy expanded" : "room-description-copy"}>{room.description || "Người đăng chưa bổ sung mô tả cho phòng này."}</p>
-            {room.description.length > 240 && <button className="text-link room-description-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Thu gọn" : "Xem thêm"}</button>}
+            {(room.description?.length ?? 0) > 240 && <button className="text-link room-description-toggle" type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Thu gọn" : "Xem thêm"}</button>}
           </section>
         <section className="detail-section reviews">
           <div className="review-head">
@@ -243,7 +272,7 @@ export default function RoomDetailPage() {
               <div className="review-rating-summary" aria-label={`Điểm trung bình ${average.toFixed(1)} trên 5`}>
                 <strong>{average.toFixed(1)}</strong>
                 <div>
-                  <span className="review-average-stars" aria-hidden="true">★★★★★</span>
+                  <span className="review-average-stars" aria-hidden="true">{[1,2,3,4,5].map((value) => <Icon key={value} name="star" size={14}/>)}</span>
                   <small>Điểm trung bình</small>
                 </div>
               </div>
@@ -257,15 +286,15 @@ export default function RoomDetailPage() {
               <div className="review-copy">
                 <div className="review-meta">
                   <Link className="review-author-link" to={`/nguoi-dung/${review.authorId}`}>{review.author}</Link>
-                  <span className="stars" aria-label={`${review.stars} sao`}>{"★".repeat(review.stars)}{"☆".repeat(5 - review.stars)}</span>
-                  <small>{review.createdAt}</small>
+                  <span className="stars" aria-label={`${review.stars} sao`}>{[1,2,3,4,5].map((value) => <span className={value <= review.stars ? "star-filled" : ""} key={value}><Icon name="star" size={14}/></span>)}</span>
+                  <small>{formatRelativeTime(review.createdAt)}</small>
                 </div>
                 <p>{review.text}</p>
               </div>
               {review.authorId === user?.id && (
                 <div className="review-actions">
                   <button type="button" onClick={() => { setEditingReview(review); setText(review.text); setStars(review.stars) }}>Sửa</button>
-                  <button type="button" onClick={() => { if (window.confirm("Xóa đánh giá này?")) { deleteReview(review.id); toast("Đã xóa đánh giá.", "info"); } }}>Xóa</button>
+                  <button type="button" disabled={Boolean(pendingAction)} onClick={async () => { if (!window.confirm("Xóa đánh giá này?")) return; setPendingAction("delete-review"); setActionError(""); try { await deleteReview(review.id); toast("Đã xóa đánh giá.", "info") } catch (error) { setActionError(error instanceof Error ? error.message : "Chưa xóa được đánh giá.") } finally { setPendingAction("") } }}>Xóa</button>
                 </div>
               )}
             </article>
@@ -274,14 +303,14 @@ export default function RoomDetailPage() {
             <form className="review-form" onSubmit={submitReview}>
               <label className="form-field">
                 <span>{myReview ? "Cập nhật đánh giá của bạn" : "Chia sẻ trải nghiệm thuê phòng"}</span>
-                <div className="star-picker" role="radiogroup" aria-label="Số sao">
+                <div className="star-picker" role="group" aria-label="Số sao">
                   {[1, 2, 3, 4, 5].map((value) => (
-                    <button type="button" aria-label={`${value} sao`} aria-pressed={stars === value} key={value} onClick={() => setStars(value)}>{value <= stars ? "★" : "☆"}</button>
+                    <button type="button" aria-label={`${value} sao`} aria-pressed={stars === value} key={value} onClick={() => setStars(value)}><span className={value <= stars ? "star-filled" : ""}><Icon name="star" size={24}/></span></button>
                   ))}
                 </div>
-                <textarea rows={3} value={text} onChange={(event) => setText(event.target.value)} placeholder="Phòng có đúng như mô tả không? Chủ trọ phản hồi thế nào?" />
+                <textarea required minLength={5} maxLength={2000} rows={3} value={text} onChange={(event) => setText(event.target.value)} placeholder="Phòng có đúng như mô tả không? Chủ trọ phản hồi thế nào?" />
               </label>
-              <Button icon="send">{editingReview || myReview ? "Lưu đánh giá" : "Gửi đánh giá"}</Button>
+              <Button icon="send" disabled={Boolean(pendingAction)}>{pendingAction === "review" ? "Đang lưu…" : editingReview || myReview ? "Lưu đánh giá" : "Gửi đánh giá"}</Button>
             </form>
           ) : (
             <p className="review-login-hint">{!user ? "Đăng nhập bằng tài khoản người thuê được ghi nhận cho phòng để gửi đánh giá." : user.role !== "renter" ? "Chỉ người thuê mới có thể đánh giá phòng." : "Chủ trọ cần ghi nhận bạn là người thuê hiện tại của phòng này trước khi gửi đánh giá."}</p>
@@ -302,6 +331,7 @@ export default function RoomDetailPage() {
           <div className="similar-listings-empty"><Icon name="building" size={22}/><span>Chưa có tin đang hiển thị để gợi ý. Hãy xem tất cả phòng để khám phá thêm.</span><Link to="/tim-phong">Tìm phòng</Link></div>
         )}
       </section>
+      {lightboxOpen && <div className="room-photo-dialog-backdrop" onClick={() => setLightboxOpen(false)}><div ref={lightboxRef} className="room-photo-dialog" role="dialog" aria-modal="true" aria-label={`Ảnh phòng ${room.title}`} onClick={(event) => event.stopPropagation()}><div className="room-photo-dialog-toolbar"><span>Ảnh {galleryIndex + 1} / {galleryPhotos.length}</span><button type="button" aria-label="Đóng ảnh lớn" onClick={() => setLightboxOpen(false)}><Icon name="close" size={22}/></button></div><img src={activeGalleryPhoto} alt={`${room.title} — ảnh ${galleryIndex + 1}`}/>{galleryPhotos.length > 1 && <div className="room-photo-dialog-navigation"><button type="button" onClick={() => setGalleryIndex((index) => (index - 1 + galleryPhotos.length) % galleryPhotos.length)}><Icon name="chevron" size={18}/>Ảnh trước</button><button type="button" onClick={() => setGalleryIndex((index) => (index + 1) % galleryPhotos.length)}>Ảnh sau<Icon name="chevron" size={18}/></button></div>}</div></div>}
       {reportOpen && <ReportDialog targetType="Tin phòng" targetId={room.id} targetTitle={room.title} onClose={() => setReportOpen(false)}/>}
     </div></main>
   )

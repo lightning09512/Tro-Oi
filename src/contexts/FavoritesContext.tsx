@@ -18,7 +18,7 @@ type FavoritesByUser = Record<string, string[]>
 interface FavoritesContextValue {
   favoriteIds: string[]
   isFavorite: (roomId: string) => boolean
-  toggleFavorite: (roomId: string) => void
+  toggleFavorite: (roomId: string) => Promise<void>
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null)
@@ -83,8 +83,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     if (isApiMode) {
       if (!user?.id) return
       const saved = !favoriteIds.includes(roomId)
-      try { await apiRequest(`favorites/${encodeURIComponent(roomId)}`, { method: "PUT", body: JSON.stringify({ saved }) }) }
-      catch { return }
+      await apiRequest(`favorites/${encodeURIComponent(roomId)}`, { method: "PUT", body: JSON.stringify({ saved }) })
       setFavoritesByUser((current) => ({ ...current, [userKey]: saved ? [...(current[userKey] ?? []), roomId] : (current[userKey] ?? []).filter((id) => id !== roomId) }))
       return
     }

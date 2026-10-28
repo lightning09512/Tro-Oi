@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
+import ReportDialog from "@/components/common/ReportDialog"
+import useDialogFocus from "@/hooks/useDialogFocus"
+import { useRef, useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
@@ -102,7 +104,7 @@ export default function PublicProfilePage() {
   const { user } = useAuth()
   const { favoriteIds } = useFavorites()
   const { toast } = useToast()
-  const { users, posts, listings, addReport, startConversation } = usePlatform()
+  const { users, posts, listings, startConversation } = usePlatform()
 
   const isPersonalRoute = !id || id === "me" || window.location.pathname === "/trang-ca-nhan"
   const isOwner = Boolean(user && (isPersonalRoute || user.id === id))
@@ -116,27 +118,11 @@ export default function PublicProfilePage() {
   const [messageError, setMessageError] = useState("")
   const [activeTab, setActiveTab] = useState<"listings" | "posts" | "favorites">("posts")
   const [reportModalOpen, setReportModalOpen] = useState(false)
-  const [reportReason, setReportReason] = useState("Tài khoản có dấu hiệu lừa đảo / cọc ảo")
-  const [reportDescription, setReportDescription] = useState("")
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const previewDialogRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(previewDialogRef, () => setPreviewImage(null), Boolean(previewImage))
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPreviewImage(null)
-    }
-    if (previewImage) {
-      window.addEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
-    }
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      document.body.style.overflow = ""
-    }
-  }, [previewImage])
 
   useEffect(() => {
     if (isPersonalRoute && !user) {
@@ -232,7 +218,7 @@ export default function PublicProfilePage() {
       if (/tân bình/i.test(fullText)) return "Tân Bình, TP. Hồ Chí Minh"
       if (/thủ đức/i.test(fullText)) return "TP. Thủ Đức, TP. Hồ Chí Minh"
     }
-    return "TP. Hồ Chí Minh"
+    return "Chưa cập nhật khu vực"
   }, [publicListings, publicPosts])
 
   const openMessage = async () => {
@@ -258,16 +244,22 @@ export default function PublicProfilePage() {
     }
   }
 
-  const handleShareProfile = () => {
+  const handleShareProfile = async () => {
     const url = isOwner ? `${window.location.origin}/nguoi-dung/${profile?.id}` : window.location.href
-    navigator.clipboard?.writeText(url)
-    toast("Đã sao chép liên kết trang cá nhân!", "success")
+    try {
+      if (!navigator.clipboard) throw new Error("Trình duyệt chưa cho phép sao chép. Hãy sao chép địa chỉ trang.")
+      await navigator.clipboard.writeText(url)
+      toast("Đã sao chép liên kết trang cá nhân.", "success")
+    } catch (caught) { toast(caught instanceof Error ? caught.message : "Không thể sao chép liên kết.", "error") }
   }
 
-  const handleCopyPhone = () => {
+  const handleCopyPhone = async () => {
     if (contactPhone) {
-      navigator.clipboard?.writeText(contactPhone)
-      toast(`Đã sao chép số điện thoại: ${contactPhone}`, "success")
+      try {
+        if (!navigator.clipboard) throw new Error("Trình duyệt chưa cho phép sao chép.")
+        await navigator.clipboard.writeText(contactPhone)
+        toast("Đã sao chép số điện thoại.", "success")
+      } catch (caught) { toast(caught instanceof Error ? caught.message : "Không thể sao chép số điện thoại.", "error") }
     } else {
       toast("Thành viên chưa công khai số điện thoại.", "info")
     }
@@ -342,7 +334,7 @@ export default function PublicProfilePage() {
                 ) : (
                   <span className="nhatot-avatar-fallback">{profile.initials}</span>
                 )}
-                {profile.status === "active" && <span className="nhatot-status-dot" title="Đang online" />}
+                
               </div>
             </div>
 
@@ -497,7 +489,7 @@ export default function PublicProfilePage() {
                         <strong className="listing-price-text">{listing.price}</strong>
                         <span className="listing-period-text">/tháng</span>
                         <span className="listing-dot-separator">·</span>
-                        <span className="listing-area-text">{listing.area || "25 m²"}</span>
+                        <span className="listing-area-text">{listing.area || "Chưa cập nhật diện tích"}</span>
                       </div>
 
                       <p className="listing-item-address">
@@ -600,7 +592,7 @@ export default function PublicProfilePage() {
                         <strong className="listing-price-text">{listing.price}</strong>
                         <span className="listing-period-text">/tháng</span>
                         <span className="listing-dot-separator">·</span>
-                        <span className="listing-area-text">{listing.area || "25 m²"}</span>
+                        <span className="listing-area-text">{listing.area || "Chưa cập nhật diện tích"}</span>
                       </div>
 
                       <p className="listing-item-address">
@@ -634,7 +626,7 @@ export default function PublicProfilePage() {
         )}
 
         {/* Subtle Footer Report Link (Only for other users) */}
-        {!isOwner && (
+        {!isOwner && publicListings.length > 0 && (
           <div className="nhatot-profile-footer">
             <button
               type="button"
@@ -642,105 +634,18 @@ export default function PublicProfilePage() {
               onClick={() => setReportModalOpen(true)}
             >
               <Icon name="flag" size={14} />
-              <span>Báo cáo tài khoản nếu có dấu hiệu gian lận</span>
+              <span>Báo cáo tin phòng của người đăng</span>
             </button>
           </div>
         )}
 
-        {/* Report Modal */}
-        {reportModalOpen && (
-          <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setReportModalOpen(false) }}>
-            <section className="action-dialog report-dialog" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
-              <button className="dialog-close" onClick={() => setReportModalOpen(false)} aria-label="Đóng"><Icon name="close" /></button>
-              <div className="dialog-header-custom">
-                <span className="dialog-badge-icon report-badge-icon"><Icon name="flag" size={22} /></span>
-                <div>
-                  <h2 id="report-modal-title">Báo cáo người dùng</h2>
-                  <p className="dialog-subtitle">Gửi phản ánh về {profile.name} tới Ban quản trị Trọ Ơi</p>
-                </div>
-              </div>
-
-              <div className="report-form-body">
-                <div className="report-field-group">
-                  <label className="schedule-label">Lý do báo cáo:</label>
-                  <div className="report-radio-list">
-                    {[
-                      "Tài khoản có dấu hiệu lừa đảo / cọc ảo",
-                      "Thông tin phòng hoặc giá thuê sai lệch thực tế",
-                      "Ngôn từ quấy rối, xúc phạm hoặc thái độ không phù hợp",
-                      "Spam hoặc quảng cáo dịch vụ trái phép",
-                      "Khác",
-                    ].map((reason) => (
-                      <label key={reason} className="report-radio-label">
-                        <input
-                          type="radio"
-                          name="profileReportReason"
-                          value={reason}
-                          checked={reportReason === reason}
-                          onChange={(e) => setReportReason(e.target.value)}
-                        />
-                        <span>{reason}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="report-field-group">
-                  <label className="schedule-label" htmlFor="report-profile-desc">Mô tả chi tiết vi phạm:</label>
-                  <textarea
-                    id="report-profile-desc"
-                    className="report-desc-input"
-                    rows={3}
-                    value={reportDescription}
-                    onChange={(e) => setReportDescription(e.target.value)}
-                    placeholder="Mô tả cụ thể để BQT kiểm tra và xử lý..."
-                  />
-                </div>
-              </div>
-
-              <div className="dialog-actions-row">
-                <button type="button" className="btn-cancel" onClick={() => setReportModalOpen(false)}>Hủy</button>
-                <button
-                  type="button"
-                  className="btn-confirm-report"
-                  disabled={isSubmittingReport}
-                  onClick={async () => {
-                    if (!user) {
-                      navigate("/dang-nhap", { state: { from: `/nguoi-dung/${targetId}` } })
-                      return
-                    }
-                    setIsSubmittingReport(true)
-                    try {
-                      await addReport({
-                        reporterId: user.id,
-                        reporter: user.name,
-                        targetType: "Tin phòng",
-                        targetId: publicListings[0]?.id ?? profile.id,
-                        targetTitle: `Hồ sơ tài khoản ${profile.name}`,
-                        reason: reportReason,
-                        description: reportDescription || `Báo cáo tài khoản ${profile.name}: ${reportReason}`,
-                      })
-                      setReportModalOpen(false)
-                      setReportDescription("")
-                      toast("Cảm ơn bạn! BQT Trọ Ơi đã tiếp nhận báo cáo và sẽ xác minh xử lý.", "success")
-                    } catch {
-                      toast("Có lỗi xảy ra khi gửi báo cáo.", "error")
-                    } finally {
-                      setIsSubmittingReport(false)
-                    }
-                  }}
-                >
-                  {isSubmittingReport ? "Đang gửi..." : "Gửi báo cáo"}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
+        {reportModalOpen && publicListings[0] && <ReportDialog targetType="Tin phòng" targetId={publicListings[0].id} targetTitle={publicListings[0].title} onClose={() => setReportModalOpen(false)} />}
 
         {/* Lightbox Image Preview Modal */}
         {previewImage && (
           <div
             className="nhatot-image-lightbox"
+            ref={previewDialogRef}
             role="dialog"
             aria-modal="true"
             aria-label="Xem ảnh phóng to"

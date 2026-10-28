@@ -1,11 +1,13 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react"
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router"
 import { Button, Icon, RoomCard } from "@/components/common/legacy"
 import { usePlatform, type RentalListing } from "@/contexts/PlatformContext"
 import type { ChangeEvent } from "react"
 import { useNavigate } from "react-router"
 import { apiRequest, isApiMode } from "@/services/apiClient"
+import useDialogFocus from "@/hooks/useDialogFocus"
 import LocationPicker from "@/components/common/LocationPicker"
+import { isValidMapPosition } from "@/utils/mapCoordinates"
 import { RoomCardSkeletonGrid } from "@/components/common/Skeletons"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
@@ -30,7 +32,7 @@ const defaultFilters: SearchFilters = {
 
 function readFilters(params: URLSearchParams): SearchFilters {
   return {
-    location: params.get("location") ?? (params.has("type") ? "" : defaultFilters.location),
+    location: params.get("location") ?? ((params.has("type") || params.has("q")) ? "" : defaultFilters.location),
     minPrice: params.get("minPrice") ?? "",
     maxPrice: params.get("maxPrice") ?? "",
     areaRange: params.get("areaRange") ?? "all",
@@ -43,6 +45,7 @@ function normalize(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d").replace(/Đ/g, "D")
     .toLocaleLowerCase("vi")
     .trim()
 }
@@ -78,6 +81,7 @@ function Filters({
   roomTypes,
   amenities,
   hideApplyButton = false,
+  idPrefix = "desktop",
 }: {
   filters: SearchFilters
   onChange: (next: Partial<SearchFilters>) => void
@@ -86,6 +90,7 @@ function Filters({
   roomTypes: string[]
   amenities: string[]
   hideApplyButton?: boolean
+  idPrefix?: string
 }) {
   const updatePrice =
     (key: "minPrice" | "maxPrice") =>
@@ -139,9 +144,9 @@ function Filters({
         </div>
       </div>
       <div className="filter-group">
-        <label htmlFor="filter-area">Diện tích</label>
+        <label htmlFor={`${idPrefix}-filter-area`}>Diện tích</label>
         <select
-          id="filter-area"
+          id={`${idPrefix}-filter-area`}
           className="filter-select"
           value={filters.areaRange}
           onChange={(event) => onChange({ areaRange: event.target.value })}
@@ -154,9 +159,9 @@ function Filters({
         </select>
       </div>
       <div className="filter-group">
-        <label htmlFor="filter-type">Loại phòng</label>
+        <label htmlFor={`${idPrefix}-filter-type`}>Loại phòng</label>
         <select
-          id="filter-type"
+          id={`${idPrefix}-filter-type`}
           className="filter-select"
           value={filters.roomType}
           onChange={(event) => onChange({ roomType: event.target.value })}
@@ -198,10 +203,16 @@ export default function SearchPage() {
   const [sort, setSort] = useState(searchParams.get("sort") ?? "newest")
   const [map, setMap] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
+  const filterDialogRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(filterDialogRef, () => setFilterOpen(false), filterOpen)
   const [remoteRooms, setRemoteRooms] = useState<RentalListing[]>([])
   const [remoteTotal, setRemoteTotal] = useState(0)
   const [remotePage, setRemotePage] = useState(1)
-  const [loadingRooms, setLoadingRooms] = useState(false)
+  const [loadingRooms, setLoadingRooms] = useState(isApiMode)
+  const [requestError, setRequestError] = useState("")
+  const [filterError, setFilterError] = useState("")
+  const [requestVersion, setRequestVersion] = useState(0)
+  const keyword = searchParams.get("q")?.trim() ?? ""
   const latitude = Number(searchParams.get("lat"))
   const longitude = Number(searchParams.get("lng"))
   const requestedRadiusKm = Number(searchParams.get("radiusKm"))
@@ -209,16 +220,14 @@ export default function SearchPage() {
   const isNearSearch =
     searchParams.has("lat") &&
     searchParams.has("lng") &&
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude)
+    isValidMapPosition(latitude, longitude)
 
   useEffect(() => {
     if (!isApiMode) return
     let current = true
     const params = new URLSearchParams({ page: String(remotePage), limit: "24" })
-    const normalizedLocation = normalize(appliedFilters.location)
-    const citySearch = /ho chi minh|hcm|sai gon/.test(normalizedLocation)
-    if (appliedFilters.location && !citySearch) params.set("location", appliedFilters.location)
+    if (appliedFilters.location) params.set("location", appliedFilters.location.replace(/^TP\.\s*/i, ""))
+    if (keyword) params.set("q", keyword)
     if (appliedFilters.minPrice) params.set("minPrice", appliedFilters.minPrice)
     if (appliedFilters.maxPrice) params.set("maxPrice", appliedFilters.maxPrice)
     if (appliedFilters.roomType !== "all") params.set("type", appliedFilters.roomType)
@@ -230,6 +239,7 @@ export default function SearchPage() {
     if (isNearSearch) { params.set("lat", String(latitude)); params.set("lng", String(longitude)); params.set("radiusKm", String(radiusKm)) }
     params.set("sort", isNearSearch ? "nearby" : sort === "price-low" ? "price_asc" : sort === "price-high" ? "price_desc" : "newest")
     setLoadingRooms(true)
+    setRequestError("")
     if (remotePage === 1) { setRemoteRooms([]); setRemoteTotal(0) }
     apiRequest<{ items: RentalListing[]; total: number }>(`listings?${params.toString()}`)
       .then((result) => {
@@ -237,10 +247,10 @@ export default function SearchPage() {
         setRemoteRooms((items) => remotePage === 1 ? result.items : [...items, ...result.items])
         setRemoteTotal(result.total)
       })
-      .catch(() => undefined)
+      .catch((error) => { if (current) setRequestError(error instanceof Error ? error.message : "Không thể tải danh sách phòng.") })
       .finally(() => { if (current) setLoadingRooms(false) })
     return () => { current = false }
-  }, [appliedFilters, sort, isNearSearch, latitude, longitude, radiusKm, remotePage])
+  }, [appliedFilters, sort, isNearSearch, latitude, longitude, radiusKm, remotePage, keyword, requestVersion])
 
   useEffect(() => {
     const params = new URLSearchParams(queryString)
@@ -253,7 +263,7 @@ export default function SearchPage() {
 
   const matchingRooms = useMemo(() => {
     const location = normalize(appliedFilters.location)
-    const isCitySearch = /ho chi minh|hcm|sai gon/.test(location)
+    const cityLocation = location.replace(/^tp\.\s*/i, "")
     const minPrice = Number(appliedFilters.minPrice)
     const maxPrice = Number(appliedFilters.maxPrice)
     return (isApiMode ? remoteRooms : listings)
@@ -263,8 +273,8 @@ export default function SearchPage() {
       .filter((room) => {
         const matchesLocation =
           !location ||
-          isCitySearch ||
-          normalize(room.location).includes(location)
+          isApiMode ||
+          normalize(room.location).includes(cityLocation)
         const matchesMinPrice =
           !appliedFilters.minPrice || room.priceValue >= minPrice
         const matchesMaxPrice =
@@ -277,6 +287,7 @@ export default function SearchPage() {
           room.type === appliedFilters.roomType
         return (
           matchesLocation &&
+          (!keyword || isApiMode || normalize(`${room.title} ${room.location} ${room.amenities.join(" ")}`).includes(normalize(keyword))) &&
           matchesMinPrice &&
           matchesMaxPrice &&
           matchesArea(room.areaValue, appliedFilters.areaRange) &&
@@ -295,16 +306,24 @@ export default function SearchPage() {
         if (sort === "price-high") return b.priceValue - a.priceValue
         return 0
       })
-  }, [appliedFilters, isNearSearch, latitude, longitude, radiusKm, sort, listings, remoteRooms])
-  const locatedRooms = matchingRooms.filter((room): room is RentalListing & { latitude: number; longitude: number } => typeof room.latitude === "number" && typeof room.longitude === "number")
+  }, [appliedFilters, isNearSearch, latitude, longitude, radiusKm, sort, listings, remoteRooms, keyword])
+  const locatedRooms = matchingRooms.filter((room): room is RentalListing & { latitude: number; longitude: number } => isValidMapPosition(room.latitude, room.longitude))
 
   const updateDraft = (next: Partial<SearchFilters>) => {
     setDraftFilters((current) => ({ ...current, ...next }))
   }
 
   const applyFilters = () => {
+    const minimum = Number(draftFilters.minPrice)
+    const maximum = Number(draftFilters.maxPrice)
+    if (minimum < 0 || maximum < 0 || (draftFilters.minPrice && !Number.isFinite(minimum)) || (draftFilters.maxPrice && !Number.isFinite(maximum)) || (draftFilters.minPrice && draftFilters.maxPrice && minimum > maximum)) {
+      setFilterError("Giá thấp nhất phải nhỏ hơn hoặc bằng giá cao nhất và không được âm.")
+      return
+    }
+    setFilterError("")
     setRemotePage(1)
     const params = new URLSearchParams()
+    if (keyword) params.set("q", keyword)
     if (draftFilters.location) params.set("location", draftFilters.location)
     if (draftFilters.minPrice) params.set("minPrice", draftFilters.minPrice)
     if (draftFilters.maxPrice) params.set("maxPrice", draftFilters.maxPrice)
@@ -326,6 +345,7 @@ export default function SearchPage() {
   }
 
   const resetFilters = () => {
+    setFilterError("")
     setRemotePage(1)
     setDraftFilters(defaultFilters)
     setAppliedFilters(defaultFilters)
@@ -336,7 +356,7 @@ export default function SearchPage() {
   const locationLabel = appliedFilters.location || "toàn quốc"
 
   return (
-    <main className="page-bg">
+    <main className="page-bg public-search">
       <div className="container search-page">
         <div className="breadcrumbs">
           <Link to="/">Trang chủ</Link> <span>/</span> Tìm phòng tại {locationLabel}
@@ -354,7 +374,7 @@ export default function SearchPage() {
         <div className="search-layout">
           {filterOpen && (
           <div className="filter-sheet-backdrop" onClick={() => setFilterOpen(false)}>
-            <div className="filter-sheet" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bộ lọc tìm kiếm">
+            <div ref={filterDialogRef} className="filter-sheet" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bộ lọc tìm kiếm">
               <div className="filter-sheet-header">
                 <h3>Bộ lọc tìm kiếm</h3>
                 <button
@@ -370,18 +390,20 @@ export default function SearchPage() {
                 <Filters
                   filters={draftFilters}
                   onChange={updateDraft}
-                  onApply={() => { applyFilters(); setFilterOpen(false); }}
+                  onApply={applyFilters}
                   onReset={resetFilters}
                   roomTypes={roomTypes}
                   amenities={amenities}
+                  idPrefix="mobile"
                   hideApplyButton
                 />
               </div>
+              {filterError && <p className="public-filter-error" role="alert">{filterError}</p>}
               <div className="filter-sheet-footer">
                 <Button variant="outline" onClick={resetFilters}>
                   Đặt lại
                 </Button>
-                <Button onClick={() => { applyFilters(); setFilterOpen(false); }}>
+                <Button onClick={applyFilters}>
                   Áp dụng bộ lọc
                 </Button>
               </div>
@@ -398,7 +420,9 @@ export default function SearchPage() {
               amenities={amenities}
             />
           </div>
-          <section className="results">
+          <section className="results" aria-busy={loadingRooms}>
+            {filterError && !filterOpen && <p className="public-filter-error" role="alert">{filterError}</p>}
+            {keyword && <div className="public-search-term">Kết quả cho <strong>“{keyword}”</strong><button type="button" aria-label="Xóa từ khóa tìm kiếm" onClick={() => { const next = new URLSearchParams(searchParams); next.delete("q"); setSearchParams(next) }}><Icon name="close" size={16}/></button></div>}
             <div className="results-head">
               <div>
                 <h1>Phòng trọ tại {locationLabel}</h1>
@@ -411,7 +435,7 @@ export default function SearchPage() {
                 <select
                   aria-label="Sắp xếp kết quả"
                   value={sort}
-                  onChange={(event) => { setRemotePage(1); setSort(event.target.value) }}
+                  onChange={(event) => { setRemotePage(1); setSort(event.target.value); const next = new URLSearchParams(searchParams); next.set("sort", event.target.value); setSearchParams(next) }}
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="price-low">Giá thấp nhất</option>
@@ -435,9 +459,9 @@ export default function SearchPage() {
                 </button>
               </div>
             </div>
-            {matchingRooms.length ? (
+            {requestError ? <section className="public-empty-state" role="alert"><Icon name="shield" size={26}/><h2>Chưa tải được danh sách phòng</h2><p>{requestError}</p><Button variant="outline" onClick={() => setRequestVersion((version) => version + 1)}>Thử lại</Button></section> : matchingRooms.length ? (
               map ? (
-                <Suspense fallback={<div className="map-view map-loading">Đang tải bản đồ…</div>}><RoomMap listings={locatedRooms} center={isNearSearch ? [latitude, longitude] : [10.7769, 106.7009]} zoom={isNearSearch ? 13 : 11} note="Vị trí do người đăng cung cấp; hãy xác nhận địa chỉ trước khi đi xem." /></Suspense>
+                locatedRooms.length ? <Suspense fallback={<div className="map-view map-loading">Đang tải bản đồ…</div>}><RoomMap listings={locatedRooms} center={isNearSearch ? [latitude, longitude] : [locatedRooms[0].latitude, locatedRooms[0].longitude]} zoom={isNearSearch ? 13 : 11} note="Vị trí do người đăng cung cấp; hãy xác nhận địa chỉ trước khi đi xem." /></Suspense> : <div className="public-empty-state"><Icon name="map" size={28}/><h2>Chưa có vị trí bản đồ cho các phòng này</h2><p>Bạn vẫn có thể xem ảnh và liên hệ người đăng từ danh sách.</p><Button variant="outline" onClick={() => setMap(false)}>Xem danh sách phòng</Button></div>
               ) : (
                 <div className={matchingRooms.length === 4 ? "result-grid result-grid--balanced" : "result-grid"}>
                   {matchingRooms.map((room) => (
@@ -463,7 +487,7 @@ export default function SearchPage() {
                   <Button onClick={() => {
                     setDraftFilters(defaultFilters);
                     setAppliedFilters(defaultFilters);
-                    navigate("/tim-phong");
+                    navigate("/tim-phong?location=");
                   }}>
                     Xem tất cả phòng trọ
                   </Button>

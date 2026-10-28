@@ -8,7 +8,7 @@ router.get("/", requireAuth, async (req, res) => {
   const q = String(req.query.q || "").trim()
   const role = String(req.query.role || "").trim()
 
-  // Bảo vệ quyền riêng tư giống Zalo: Không hiển thị danh sách nếu không nhập thông tin tìm kiếm
+  // Bảo vệ quyền riêng tư: Không hiển thị danh sách nếu không nhập thông tin tìm kiếm
   if (!q) {
     return res.json({ items: [] })
   }

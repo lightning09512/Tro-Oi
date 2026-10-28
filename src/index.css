@@ -5,10 +5,10 @@
   --color-brand: #2f7a4b;
   --color-brand-dark: #245f3b;
   --color-brand-soft: #eaf4ec;
-  --color-ink: #27362c;
-  --color-muted: #657168;
-  --color-line: #dfe7e1;
-  --color-page: #f5f8f5;
+  --color-ink: #1e293b;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-page: #f8fafc;
   --font-heading: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-body: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -17,16 +17,24 @@
   --teal: var(--color-brand);
   --teal-dark: var(--color-brand-dark);
   --teal-pale: var(--color-brand-soft);
-  --orange: var(--color-brand);
-  --orange-pale: #eef6ef;
-  --ink: var(--color-ink);
-  --muted: var(--color-muted);
-  --line: var(--color-line);
-  --bg: var(--color-page);
+  --orange: #ea580c;
+  --orange-pale: #fff7ed;
+  --blue: #2563eb;
+  --blue-pale: #eff6ff;
+  --rose: #e11d48;
+  --rose-pale: #fff1f2;
+  --amber: #d97706;
+  --amber-pale: #fef3c7;
+  --purple: #7c3aed;
+  --purple-pale: #faf5ff;
+  --ink: #1e293b;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --bg: #f8fafc;
   --white: #fff;
-  --shadow: 0 8px 24px rgba(30, 72, 43, 0.08);
-  --shadow-sm: 0 2px 8px rgba(30, 72, 43, 0.05);
-  --radius: 8px;
+  --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+  --radius: 12px;
   --font-display: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -14191,7 +14199,7 @@ input[type="file"]::file-selector-button:hover {
 
 
 /* ==========================================================================
-   ZALO-STYLE PHONE SEARCH & CHAT CONNECT
+   PHONE NUMBER SEARCH & CONTACT CONNECT
    ========================================================================== */
 .find-contact-quick-btn {
   display: flex;
@@ -14219,19 +14227,19 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 4px 12px rgba(36, 95, 59, 0.15);
 }
 
-.zalo-contact-dialog {
+.phone-contact-dialog {
   max-width: 500px !important;
   padding: 26px !important;
   border-radius: 18px !important;
 }
 
-.zalo-search-box {
+.phone-search-box {
   display: flex;
   gap: 8px;
   margin: 16px 0 14px;
 }
 
-.zalo-input-wrapper {
+.phone-input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
@@ -14245,14 +14253,14 @@ input[type="file"]::file-selector-button:hover {
   color: #556b5e;
 }
 
-.zalo-input-wrapper:focus-within {
+.phone-input-wrapper:focus-within:focus-within {
   border-color: #245f3b;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(36, 95, 59, 0.12);
   color: #245f3b;
 }
 
-.zalo-input-wrapper input {
+.phone-input-wrapper input input {
   flex: 1;
   border: none !important;
   background: transparent !important;
@@ -14263,7 +14271,7 @@ input[type="file"]::file-selector-button:hover {
   padding: 0;
 }
 
-.zalo-clear-icon {
+.phone-clear-icon {
   background: none;
   border: none;
   padding: 4px;
@@ -14273,11 +14281,11 @@ input[type="file"]::file-selector-button:hover {
   align-items: center;
 }
 
-.zalo-clear-icon:hover {
+.phone-clear-icon:hover:hover {
   color: #dc2626;
 }
 
-.zalo-search-btn {
+.phone-search-btn {
   padding: 0 18px;
   border-radius: 10px;
   background: #245f3b;
@@ -14290,17 +14298,17 @@ input[type="file"]::file-selector-button:hover {
   transition: all 0.15s ease;
 }
 
-.zalo-search-btn:hover:not(:disabled) {
+.phone-search-btn:hover:not(:disabled):hover:not(:disabled) {
   background: #1b472c;
 }
 
-.zalo-search-btn:disabled {
+.phone-search-btn:disabled:disabled {
   background: #dbe4de;
   color: #8fa094;
   cursor: not-allowed;
 }
 
-.zalo-results-container {
+.phone-results-container {
   max-height: 380px;
   overflow-y: auto;
   margin-top: 6px;
@@ -14309,7 +14317,7 @@ input[type="file"]::file-selector-button:hover {
   gap: 12px;
 }
 
-.zalo-empty-state {
+.phone-empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14318,7 +14326,7 @@ input[type="file"]::file-selector-button:hover {
   color: #5a6b61;
 }
 
-.zalo-state-icon {
+.phone-state-icon {
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -14329,18 +14337,18 @@ input[type="file"]::file-selector-button:hover {
   margin-bottom: 12px;
 }
 
-.zalo-state-icon.is-danger {
+.phone-state-icon.is-danger.is-danger {
   background: #fef2f2;
   color: #dc2626;
 }
 
-.zalo-empty-state strong {
+.phone-empty-state strong strong {
   font-size: 15px;
   color: #24352b;
   margin-bottom: 6px;
 }
 
-.zalo-empty-state p {
+.phone-empty-state p p {
   font-size: 13px;
   line-height: 1.5;
   color: #617367;
@@ -14348,13 +14356,13 @@ input[type="file"]::file-selector-button:hover {
   margin: 0;
 }
 
-.zalo-empty-state small {
+.phone-empty-state small small {
   margin-top: 6px;
   font-size: 12px;
   color: #8c9e93;
 }
 
-.zalo-contact-card {
+.phone-contact-card {
   background: #ffffff;
   border: 1px solid #dce8df;
   border-radius: 14px;
@@ -14365,20 +14373,20 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.zalo-contact-header {
+.phone-contact-header {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.zalo-contact-header .avatar {
+.phone-contact-header .avatar .avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.zalo-contact-meta {
+.phone-contact-meta {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -14386,29 +14394,29 @@ input[type="file"]::file-selector-button:hover {
   gap: 2px;
 }
 
-.zalo-name-row {
+.phone-name-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.zalo-name-row strong {
+.phone-name-row strong strong {
   font-size: 14.5px;
   color: #1e382b;
 }
 
-.zalo-contact-phone {
+.phone-contact-phone {
   font-size: 13px;
   font-weight: 600;
   color: #245f3b;
 }
 
-.zalo-contact-actions {
+.phone-contact-actions {
   display: flex;
   gap: 8px;
 }
 
-.zalo-btn-chat {
+.phone-btn-chat {
   flex: 1;
   display: flex;
   align-items: center;
@@ -14425,11 +14433,11 @@ input[type="file"]::file-selector-button:hover {
   transition: all 0.15s ease;
 }
 
-.zalo-btn-chat:hover:not(:disabled) {
+.phone-btn-chat:hover:not(:disabled):hover:not(:disabled) {
   background: #1b472c;
 }
 
-.zalo-btn-profile {
+.phone-btn-profile {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14445,13 +14453,13 @@ input[type="file"]::file-selector-button:hover {
   transition: all 0.15s ease;
 }
 
-.zalo-btn-profile:hover {
+.phone-btn-profile:hover:hover {
   background: #eef5f0;
   border-color: #245f3b;
   color: #245f3b;
 }
 
-.zalo-privacy-box {
+.phone-privacy-box {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -14467,7 +14475,7 @@ input[type="file"]::file-selector-button:hover {
   line-height: 1.5;
 }
 
-.zalo-page-empty {
+.phone-page-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14478,7 +14486,7 @@ input[type="file"]::file-selector-button:hover {
   border: 1px solid #e5ede7;
 }
 
-.zalo-empty-circle {
+.phone-empty-circle {
   width: 72px;
   height: 72px;
   border-radius: 50%;
@@ -15978,7 +15986,7 @@ input[type="file"]::file-selector-button:hover {
   line-height: 1.5;
 }
 
-/* Search Panel (Zalo Style) */
+/* Search Panel (Phone Search) */
 .fb-search-panel {
   background: #ffffff;
   border-radius: 20px;
@@ -16014,4 +16022,367 @@ input[type="file"]::file-selector-button:hover {
   color: #65676b;
   font-size: 14px;
   margin: 0;
+}
+
+
+/* ==========================================================================
+   VIBRANT ACCENT ENHANCEMENTS (60-30-10 COLOR HARMONY)
+   ========================================================================== */
+
+/* Heart / Favorite Buttons: Rose Red Accent */
+.heart-btn {
+  color: #64748b !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s, background 0.2s !important;
+}
+.heart-btn:hover {
+  transform: scale(1.12) !important;
+  color: #e11d48 !important;
+  background: #ffffff !important;
+}
+.heart-btn.saved,
+.heart-btn.is-active,
+.heart-btn[aria-pressed="true"] {
+  color: #e11d48 !important;
+  background: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.28) !important;
+}
+.heart-btn.saved .icon,
+.heart-btn.is-active .icon,
+.heart-btn[aria-pressed="true"] .icon {
+  fill: #e11d48 !important;
+  color: #e11d48 !important;
+}
+
+/* Room Prices: Warm Terracotta Orange Accent */
+.room-price,
+.hero-room-price {
+  color: #ea580c !important;
+  font-weight: 800 !important;
+}
+.room-price small,
+.hero-room-price small {
+  color: #64748b !important;
+  font-weight: 600 !important;
+}
+
+/* Category Chips on Home: Crisp Cards with Elevation */
+.chip {
+  border: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.chip:hover {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+.chip.active {
+  border-color: #245f3b !important;
+  background: #245f3b !important;
+  color: #ffffff !important;
+}
+.chip-count {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  padding: 2px 7px !important;
+  border-radius: 99px !important;
+}
+.chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* Photo Badges: Contextual Semantic Colors */
+.photo-badge.badge-new {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+.photo-badge.badge-verified {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #bfdbfe !important;
+}
+.photo-badge.badge-hot {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  border: 1px solid #fed7aa !important;
+}
+.photo-badge.badge-transfer {
+  background: linear-gradient(135deg, #d97706, #ea580c) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Forum Like & Heart Reactions */
+.reaction-bar button.liked {
+  color: #1877f2 !important;
+  background: #eff6ff !important;
+  font-weight: 700 !important;
+}
+.reaction-bar button.liked .icon {
+  fill: #1877f2 !important;
+  color: #1877f2 !important;
+}
+.reaction-count .post-like-count {
+  color: #e11d48 !important;
+  font-weight: 700 !important;
+}
+.reaction-count .post-like-count .icon {
+  fill: #e11d48 !important;
+  color: #e11d48 !important;
+}
+
+/* Role Badges */
+.role-badge.is-landlord,
+.role-badge:has(+ .is-landlord) {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1px solid #dbeafe !important;
+}
+.role-badge.is-renter {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border: 1px solid #dcfce7 !important;
+}
+.fb-author-badge {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border: 1px solid #fde68a !important;
+  font-weight: 700 !important;
+}
+
+/* Room Amenities in Detail: Subtle Modern Pills */
+.room-amenities-list span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 7px 13px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.15s ease !important;
+}
+.room-amenities-list span:hover {
+  transform: translateY(-1px) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05) !important;
+}
+.room-amenities-list i {
+  color: #059669 !important;
+}
+
+/* ==========================================================================
+   HERO SECTION MODERN ATMOSPHERIC REDESIGN
+   ========================================================================== */
+.hero {
+  position: relative !important;
+  background:
+    radial-gradient(1200px circle at 15% 10%, rgba(36, 95, 59, 0.12) 0%, transparent 60%),
+    radial-gradient(1000px circle at 85% 20%, rgba(234, 88, 12, 0.10) 0%, transparent 55%),
+    radial-gradient(800px circle at 50% 100%, rgba(37, 99, 235, 0.05) 0%, transparent 60%),
+    linear-gradient(180deg, #f4f8f5 0%, #ffffff 65%, #f8fafc 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+}
+
+/* Subtle architectural dot grid pattern overlay */
+.hero::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-image: radial-gradient(rgba(36, 95, 59, 0.14) 1px, transparent 1px) !important;
+  background-size: 28px 28px !important;
+  background-position: 0 0 !important;
+  mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, black 35%, transparent 80%) !important;
+  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, black 35%, transparent 80%) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+/* Ambient glow orb behind right column */
+.hero::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 520px !important;
+  height: 520px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.12) 0%, rgba(47, 122, 75, 0.06) 50%, transparent 70%) !important;
+  right: -80px !important;
+  top: -100px !important;
+  filter: blur(50px) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.hero-inner {
+  position: relative !important;
+  z-index: 1 !important;
+  padding: 48px 0 44px !important;
+}
+
+/* Eyebrow Trust Pill */
+.hero-eyebrow-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  border: 1px solid #d4e7da !important;
+  color: #1b472c !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(36, 95, 59, 0.08) !important;
+  margin-bottom: 18px !important;
+  width: fit-content !important;
+}
+.hero-eyebrow-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
+  animation: heroPulse 2s infinite !important;
+}
+@keyframes heroPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.75; }
+}
+
+.hero h1 {
+  font-size: clamp(38px, 4.2vw, 56px) !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.03em !important;
+  color: #172a20 !important;
+  margin: 0 0 16px !important;
+}
+
+.hero-copy p {
+  color: #4b6354 !important;
+  font-size: 16px !important;
+  line-height: 1.65 !important;
+  max-width: 580px !important;
+  margin: 0 0 22px !important;
+}
+
+/* Trust Proof Badges under hero text */
+.hero-trust-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
+}
+.hero-trust-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #2e4d3a !important;
+  background: rgba(255, 255, 255, 0.85) !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid #dce8df !important;
+  backdrop-filter: blur(4px) !important;
+}
+.hero-trust-item .icon {
+  color: #245f3b !important;
+}
+
+/* Hero Featured Card */
+.hero-room-card {
+  position: relative !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.09), 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s !important;
+}
+.hero-room-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.13), 0 8px 16px rgba(15, 23, 42, 0.06) !important;
+  border-color: #cbd5e1 !important;
+}
+.hero-featured-badge {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #b45309 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(4px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Floating Search Command Panel */
+.hero .search-panel {
+  margin-top: 28px !important;
+  padding: 16px 20px 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.03) !important;
+}
+.search-panel-tabs {
+  margin-bottom: 12px !important;
+}
+.search-panel-tab-active {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #1b472c !important;
+  padding: 4px 10px !important;
+  background: #edf5ee !important;
+  border-radius: 8px !important;
+}
+.search-panel-tab-active .icon {
+  color: #245f3b !important;
+}
+
+.hero-search-btn {
+  background: #245f3b !important;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  padding: 0 26px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(36, 95, 59, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+.hero-search-btn:hover {
+  background: #1b472c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(36, 95, 59, 0.35) !important;
+}
+
+/* Logo "Ơi" branding: Emerald Green */
+.logo span,
+.site-header .logo span,
+.site-footer .logo span {
+  color: #245f3b !important;
 }

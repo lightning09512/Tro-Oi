@@ -18,6 +18,8 @@ export default function AdminStatsPage() {
   const [apiStats, setApiStats] = useState<ApiStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(isApiMode)
   const [statsError, setStatsError] = useState("")
+  const [retry, setRetry] = useState(0)
+  const [exporting, setExporting] = useState("")
   useEffect(() => {
     if (!isApiMode) return
     let alive = true
@@ -30,7 +32,8 @@ export default function AdminStatsPage() {
       if (alive) setStatsError(error instanceof Error ? error.message : "Không tải được thống kê.")
     }).finally(() => { if (alive) setStatsLoading(false) })
     return () => { alive = false }
-  }, [period])
+  }, [period, retry])
+  const displayMetric = (value: number) => isApiMode && !apiStats ? "—" : value.toLocaleString("vi-VN")
   const cutoff = Date.now() - Number(period) * 24 * 60 * 60 * 1000
   const withinPeriod = <T extends { createdAt: string }>(items: T[]) => items.filter((item) => new Date(item.createdAt).getTime() >= cutoff)
   const periodUsers = withinPeriod(users)
@@ -52,15 +55,17 @@ export default function AdminStatsPage() {
     { name: "Báo cáo cần xử lý", value: isApiMode ? apiStats?.pendingReports ?? 0 : pendingReports, hint: isApiMode ? "Báo cáo mới trong kỳ" : `${periodReports.length} báo cáo trong kỳ`, icon: "shield" },
   ]
   const topRooms = useMemo(() => [...periodListings].sort((a, b) => b.views - a.views).slice(0, 5), [periodListings])
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    if (exporting || (isApiMode && (!apiStats || statsLoading))) return
     if (isApiMode) {
-      void apiRequest<Blob>(`admin/stats/export?format=xlsx&days=${period}`).then((blob) => {
+      setExporting("xlsx")
+      await apiRequest<Blob>(`admin/stats/export?format=xlsx&days=${period}`).then((blob) => {
         const link = document.createElement("a")
         link.href = URL.createObjectURL(blob)
         link.download = "tro-oi-thong-ke.xlsx"
         link.click()
         URL.revokeObjectURL(link.href)
-      }).catch((error: unknown) => setStatsError(error instanceof Error ? error.message : "Không xuất được Excel."))
+      }).catch((error: unknown) => setStatsError(error instanceof Error ? error.message : "Không xuất được Excel.")).finally(() => setExporting(""))
       return
     }
     const rows = [
@@ -86,22 +91,24 @@ export default function AdminStatsPage() {
     link.click()
     URL.revokeObjectURL(link.href)
   }
-  const exportPdf = () => {
+  const exportPdf = async () => {
+    if (exporting || (isApiMode && (!apiStats || statsLoading))) return
     if (!isApiMode) { window.print(); return }
-    void apiRequest<Blob>(`admin/stats/export?format=pdf&days=${period}`).then((blob) => {
+    setExporting("pdf")
+    await apiRequest<Blob>(`admin/stats/export?format=pdf&days=${period}`).then((blob) => {
       const link = document.createElement("a")
       link.href = URL.createObjectURL(blob)
       link.download = "tro-oi-thong-ke.pdf"
       link.click()
       URL.revokeObjectURL(link.href)
-    }).catch((error: unknown) => setStatsError(error instanceof Error ? error.message : "Không xuất được PDF."))
+    }).catch((error: unknown) => setStatsError(error instanceof Error ? error.message : "Không xuất được PDF.")).finally(() => setExporting(""))
   }
 
-  return <main className="admin-resource-page"><div className="resource-page-heading"><div><span className="eyebrow">Báo cáo hệ thống</span><h2>Thống kê & hiệu quả</h2><p>Chọn khoảng thời gian để xem quy mô tin đăng và hoạt động cộng đồng.</p></div><div className="stats-export"><select value={period} onChange={(event) => setPeriod(event.target.value)} aria-label="Khoảng thời gian"><option value="7">7 ngày qua</option><option value="30">30 ngày qua</option><option value="90">90 ngày qua</option><option value="365">12 tháng qua</option></select><Button variant="outline" icon="download" onClick={exportExcel}>Xuất Excel</Button><Button variant="outline" onClick={exportPdf}>Lưu PDF</Button></div></div>
+  return <main className="admin-resource-page management-page management-admin management-stats"><div className="resource-page-heading"><div><h1>Thống kê & hiệu quả</h1><p>Chọn khoảng thời gian để xem quy mô tin đăng và hoạt động cộng đồng.</p></div><div className="stats-export"><select value={period} onChange={(event) => setPeriod(event.target.value)} aria-label="Khoảng thời gian"><option value="7">7 ngày qua</option><option value="30">30 ngày qua</option><option value="90">90 ngày qua</option><option value="365">12 tháng qua</option></select><Button variant="outline" icon="download" disabled={Boolean(exporting) || (isApiMode && !apiStats)} onClick={() => void exportExcel()}>{exporting === "xlsx" ? "Đang xuất…" : "Xuất Excel"}</Button><Button variant="outline" disabled={Boolean(exporting) || (isApiMode && !apiStats)} onClick={() => void exportPdf()}>{exporting === "pdf" ? "Đang xuất…" : "Lưu PDF"}</Button></div></div>
     {isApiMode && statsLoading && <p className="text-sm text-muted" aria-live="polite">Đang tải thống kê từ máy chủ…</p>}
-    {isApiMode && statsError && <p className="form-message error" role="alert">{statsError}</p>}
-    <section className="metric-grid admin-metric-grid">{metrics.map((item) => <article className="metric-card" key={item.name}><span><Icon name={item.icon}/></span><div><small>{item.name}</small><strong>{item.value.toLocaleString("vi-VN")}</strong><p>{item.hint}</p></div></article>)}</section>
-    <div className="admin-report-grid"><section className="resource-panel analytics-panel"><div className="editor-section-title"><span>01</span><div><h3>Hoạt động tin đăng</h3><p>{isApiMode ? "Lượt xem được ghi nhận từ API." : "Lượt xem được ghi nhận trong trình duyệt này."}</p></div></div><div className="analytic-bars">{topRooms.map((item) => <div className="analytic-bar-row" key={item.id}><span>{item.title}</span><div><i style={{ width: `${Math.max(5, item.views / Math.max(1, ...topRooms.map((room) => room.views)) * 100)}%` }}/></div><b>{item.views}</b></div>)}</div></section><section className="resource-panel engagement-panel"><div className="editor-section-title"><span>02</span><div><h3>Tương tác cộng đồng</h3><p>{isApiMode ? "Hoạt động được lưu trên máy chủ." : "Hoạt động ghi nhận trong trình duyệt này."}</p></div></div><div className="engagement-stats"><div><strong>{displayViews.toLocaleString("vi-VN")}</strong><span>Lượt xem tin</span></div><div><strong>{displayContacts.toLocaleString("vi-VN")}</strong><span>Lượt liên hệ</span></div><div><strong>{displayLikes.toLocaleString("vi-VN")}</strong><span>Lượt thích bài viết</span></div></div></section></div>
+    {isApiMode && statsError && <div className="form-message error" role="alert"><p>{statsError}</p><Button type="button" variant="outline" onClick={() => setRetry((value) => value + 1)}>Thử tải lại</Button></div>}
+    <section className="metric-grid admin-metric-grid">{metrics.map((item) => <article className="metric-card" key={item.name}><span><Icon name={item.icon}/></span><div><small>{item.name}</small><strong>{displayMetric(item.value)}</strong><p>{isApiMode && !apiStats ? "Chưa có dữ liệu để hiển thị" : item.hint}</p></div></article>)}</section>
+    <div className="admin-report-grid"><section className="resource-panel analytics-panel"><div className="editor-section-title"><div><h3>Hoạt động tin đăng</h3><p>{isApiMode ? "Lượt xem được ghi nhận từ API." : "Lượt xem được ghi nhận trong trình duyệt này."}</p></div></div><div className="analytic-bars">{!topRooms.length && <p className="management-feedback">Chưa có tin cho thuê trong khoảng thời gian này.</p>}{topRooms.map((item) => <div className="analytic-bar-row" key={item.id}><span>{item.title}</span><div><i style={{ width: `${Math.max(0, item.views / Math.max(1, ...topRooms.map((room) => room.views)) * 100)}%` }}/></div><b>{item.views}</b></div>)}</div></section><section className="resource-panel engagement-panel"><div className="editor-section-title"><div><h3>Tương tác cộng đồng</h3><p>{isApiMode ? "Hoạt động được lưu trên máy chủ." : "Hoạt động ghi nhận trong trình duyệt này."}</p></div></div><div className="engagement-stats"><div><strong>{displayMetric(displayViews)}</strong><span>Lượt xem tin</span></div><div><strong>{displayMetric(displayContacts)}</strong><span>Lượt liên hệ</span></div><div><strong>{displayMetric(displayLikes)}</strong><span>Lượt thích bài viết</span></div></div></section></div>
     <p className="demo-note">Khoảng thời gian: {period === "365" ? "12 tháng" : `${period} ngày`} gần nhất. {isApiMode ? "Số liệu được tải từ dịch vụ Trọ Ơi." : "Dữ liệu được lưu trong trình duyệt này."}</p>
   </main>
 }

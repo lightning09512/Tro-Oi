@@ -1,3 +1,4 @@
+import useDialogFocus from "@/hooks/useDialogFocus"
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
@@ -5,10 +6,8 @@ import ReportDialog from "@/components/common/ReportDialog"
 import { usePlatform, type ForumPost, type PostComment } from "@/contexts/PlatformContext"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
-import { photos } from "@/mocks/content"
-import { isApiMode } from "@/services/apiClient"
+import { apiRequest, isApiMode } from "@/services/apiClient"
 import { formatRelativeTime } from "@/utils/formatTime"
-import StoriesBar from "@/components/community/StoriesBar"
 
 function ProfileAvatar({ initials, avatarUrl, className = "" }: { initials: string; avatarUrl?: string; className?: string }) {
   return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" loading="lazy" decoding="async" /> : initials}</span>
@@ -23,7 +22,8 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [comment, setComment] = useState("")
   const [replyingTo, setReplyingTo] = useState<{ id: string; author: string } | null>(null)
-  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({})
+  const [busyAction, setBusyAction] = useState("")
+  const [actionError, setActionError] = useState("")
   const commentInputRef = useRef<HTMLInputElement | null>(null)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(post.content)
@@ -32,6 +32,8 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
   const [editingComment, setEditingComment] = useState("")
   const [commentDraft, setCommentDraft] = useState("")
   const [copied, setCopied] = useState(false)
+  const editDialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(editDialogRef, () => setEditing(false), editing)
   const isOwner = user?.id === post.authorId
   const liked = user ? post.likedBy.includes(user.id) : false
   const author = users.find((item) => item.id === post.authorId)
@@ -59,10 +61,6 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
     return { rootComments: roots, replyMap: replies }
   }, [post.comments])
 
-  const toggleCommentLike = (commentId: string) => {
-    if (!user) return onLogin()
-    setLikedComments((prev) => ({ ...prev, [commentId]: !prev[commentId] }))
-  }
 
   const startReply = (parentId: string, authorName: string) => {
     if (!user) return onLogin()
@@ -82,39 +80,41 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
   const submitComment = async (event: FormEvent) => {
     event.preventDefault()
     if (!user) return onLogin()
-    if (!comment.trim()) return
+    if (!comment.trim() || busyAction) return
+    setBusyAction("comment"); setActionError("")
     try {
       await addComment(post.id, user, comment.trim(), replyingTo?.id)
       setComment("")
       setReplyingTo(null)
       setCommentsOpen(true)
-    } catch {
-      // Shared API status banner explains remote failures.
-    }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Không thể gửi bình luận. Hãy thử lại.")
+    } finally { setBusyAction("") }
   }
 
   const submitEdit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!draft.trim()) return
+    if (!draft.trim() || busyAction) return
+    setBusyAction("edit"); setActionError("")
     try {
       await savePost({ ...post, content: draft.trim() })
       setEditing(false)
-    } catch {
-      // Keep the editor open if saving fails.
-    }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Không thể lưu bài viết. Hãy thử lại.")
+    } finally { setBusyAction("") }
   }
 
   const messageAuthor = async () => {
     if (!user) return onLogin()
-    const conversation = await startConversation({ accountId: user.id, name: post.name, avatar: post.initials, avatarUrl: authorAvatarUrl, userId: post.authorId, roomId: "" })
-    if (!conversation) return
-    navigate(`/tin-nhan?conversation=${conversation}`)
+    try {
+      const conversation = await startConversation({ accountId: user.id, name: post.name, avatar: post.initials, avatarUrl: authorAvatarUrl, userId: post.authorId, roomId: "" })
+      if (conversation) navigate(`/tin-nhan?conversation=${conversation}`)
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Không thể mở cuộc trò chuyện.") }
   }
 
   const renderComment = (item: PostComment, isReply = false, rootId?: string) => {
     const isPostAuthor = item.authorId === post.authorId
     const isOwnComment = item.authorId === user?.id
-    const isCommentLiked = Boolean(likedComments[item.id])
     const commentUser = users.find((member) => member.id === item.authorId)
     const commentAvatar = item.avatarUrl ?? commentUser?.avatarUrl
 
@@ -135,10 +135,13 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
             {editingComment === item.id ? (
               <form
                 className="fb-comment-edit-form"
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                   event.preventDefault()
-                  if (commentDraft.trim()) editComment(post.id, item.id, commentDraft.trim())
-                  setEditingComment("")
+                  if (!commentDraft.trim() || busyAction) return
+                  setBusyAction("edit-comment"); setActionError("")
+                  try { await editComment(post.id, item.id, commentDraft.trim()); setEditingComment("") }
+                  catch (error) { setActionError(error instanceof Error ? error.message : "Không thể lưu bình luận.") }
+                  finally { setBusyAction("") }
                 }}
               >
                 <input
@@ -152,7 +155,7 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
                   <button type="button" className="fb-edit-cancel" onClick={() => setEditingComment("")}>
                     Hủy
                   </button>
-                  <button type="submit" className="fb-edit-save" disabled={!commentDraft.trim()}>
+                  <button type="submit" className="fb-edit-save" disabled={!commentDraft.trim() || Boolean(busyAction)}>
                     Lưu
                   </button>
                 </div>
@@ -161,26 +164,12 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
               <p className="fb-comment-text">{item.text}</p>
             )}
 
-            {isCommentLiked && (
-              <span className="fb-reaction-badge" title="Đã thích">
-                <span className="fb-reaction-icon fb-like-badge" title="Thích">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true">
-                    <path d="M7 10v11H3V10h4Zm7-8c-.8 0-1.5.7-1.6 1.6L12 7.8 9.4 10H8v11h11.2c.9 0 1.7-.6 1.9-1.5l1.8-8.1c.2-1.1-.6-2.4-1.8-2.4h-5.2l.8-3.6c.1-.6-.1-1.3-.6-1.7-.4-.5-1-.7-1.7-.7Z" />
-                  </svg>
-                </span> 1
-              </span>
-            )}
+
           </div>
 
           <div className="fb-comment-actions">
             <span className="fb-comment-time">{formatRelativeTime(item.createdAt)}</span>
-            <button
-              type="button"
-              className={`fb-action-btn ${isCommentLiked ? "is-liked" : ""}`}
-              onClick={() => toggleCommentLike(item.id)}
-            >
-              {isCommentLiked ? "Đã thích" : "Thích"}
-            </button>
+
             <button
               type="button"
               className="fb-action-btn"
@@ -204,11 +193,10 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
                 <button
                   type="button"
                   className="fb-action-btn fb-action-danger"
-                  onClick={() => {
-                    if (window.confirm("Xóa bình luận này?")) {
-                      deleteComment(post.id, item.id)
-                      toast("Đã xóa bình luận.", "info")
-                    }
+                  onClick={async () => {
+                    if (!window.confirm("Xóa bình luận này?")) return
+                    try { await deleteComment(post.id, item.id); toast("Đã xóa bình luận.", "info") }
+                    catch (error) { setActionError(error instanceof Error ? error.message : "Không thể xóa bình luận.") }
                   }}
                 >
                   Xóa
@@ -232,12 +220,13 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
 
   return (
     <article className="post-card">
+      {actionError && <p className="form-message error" role="alert">{actionError}</p>}
       <div className="post-head">
         <div className="fb-post-avatar-wrapper">
           <Link className="profile-avatar-link" to={`/nguoi-dung/${post.authorId}`} aria-label={`Xem hồ sơ ${post.name}`}>
             <ProfileAvatar className="peach" initials={post.initials} avatarUrl={authorAvatarUrl} />
           </Link>
-          <span className="fb-online-dot" />
+          
         </div>
         <div className="post-author-wrap">
           <div className="post-author">
@@ -259,7 +248,7 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
           </div>
         </div>
         {!isOwner && <button className="post-message-action" onClick={messageAuthor}><Icon name="chat" size={16}/><span>Nhắn tin</span></button>}
-        <div className="post-menu-wrap"><button aria-label="Tùy chọn bài viết" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Icon name="more"/></button>{menuOpen && <div className="post-menu">{isOwner ? <><button onClick={() => { setDraft(post.content); setEditing(true); setMenuOpen(false) }}><Icon name="edit" size={16}/>Sửa bài viết</button><button onClick={() => { if (window.confirm("Xóa bài viết này?")) { deletePost(post.id); toast("Đã xóa bài viết.", "info"); } }}><Icon name="trash" size={16}/>Xóa bài viết</button></> : <button onClick={() => { setReportOpen(true); setMenuOpen(false) }}><Icon name="shield" size={16}/>Báo cáo bài viết</button>}</div>}</div>
+        <div className="post-menu-wrap"><button aria-label="Tùy chọn bài viết" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Icon name="more"/></button>{menuOpen && <div className="post-menu">{isOwner ? <><button onClick={() => { setDraft(post.content); setEditing(true); setMenuOpen(false) }}><Icon name="edit" size={16}/>Sửa bài viết</button><button onClick={async () => { if (!window.confirm("Xóa bài viết này?")) return; try { await deletePost(post.id); toast("Đã xóa bài viết.", "info") } catch (error) { setActionError(error instanceof Error ? error.message : "Không thể xóa bài viết.") } }}><Icon name="trash" size={16}/>Xóa bài viết</button></> : <button onClick={() => { setReportOpen(true); setMenuOpen(false) }}><Icon name="shield" size={16}/>Báo cáo bài viết</button>}</div>}</div>
       </div>
       <div className="post-copy-wrapper">
         <p className={`post-copy${!expanded && isLong ? " is-collapsed" : ""}`}>{post.content}</p>
@@ -276,7 +265,7 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
       </div>
       {post.image && <img className="post-image" src={post.image} alt={`Ảnh bài viết của ${post.name}`} loading="lazy" decoding="async"/>}
       <div className="reaction-count"><span className="post-like-count" aria-label={`${post.likes} lượt thích`}><Icon name="heart" size={14}/><b>{post.likes}</b></span><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}>{post.commentsCount} bình luận</button></div>
-      <div className="reaction-bar"><button className={liked ? "liked" : ""} onClick={() => user ? togglePostLike(post.id, user) : onLogin()}><Icon name="thumbs"/>{liked ? "Đã thích" : "Thích"}</button><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}><Icon name="chat"/>Bình luận</button><button onClick={async () => { await navigator.clipboard?.writeText(`${window.location.origin}/bai-viet/${post.id}`); setCopied(true); toast("Đã sao chép liên kết bài viết vào bộ nhớ tạm!", "success"); window.setTimeout(() => setCopied(false), 1600) }}><Icon name="share"/>{copied ? "Đã sao chép" : "Chia sẻ"}</button></div>
+      <div className="reaction-bar"><button className={liked ? "liked" : ""} onClick={async () => { if (!user) return onLogin(); try { await togglePostLike(post.id, user) } catch (error) { setActionError(error instanceof Error ? error.message : "Không thể cập nhật lượt thích.") } }}><Icon name="thumbs"/>{liked ? "Đã thích" : "Thích"}</button><button aria-expanded={commentsOpen} onClick={() => setCommentsOpen((value) => !value)}><Icon name="chat"/>Bình luận</button><button onClick={async () => { try { if (!navigator.clipboard) throw new Error("Trình duyệt chưa cho phép sao chép. Hãy sao chép địa chỉ bài viết trên thanh địa chỉ."); await navigator.clipboard.writeText(`${window.location.origin}/bai-viet/${post.id}`); setCopied(true); toast("Đã sao chép liên kết bài viết.", "success"); window.setTimeout(() => setCopied(false), 1600) } catch (error) { setActionError(error instanceof Error ? error.message : "Không thể sao chép liên kết.") } }}><Icon name="share"/>{copied ? "Đã sao chép" : "Chia sẻ"}</button></div>
       {commentsOpen && (
         <div className="post-comments fb-comments-section">
           {/* Facebook-style Compose Input */}
@@ -323,7 +312,7 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
                   type="submit"
                   className="fb-send-btn"
                   aria-label="Gửi bình luận"
-                  disabled={!comment.trim()}
+                  disabled={!comment.trim() || Boolean(busyAction)}
                   title="Gửi bình luận"
                 >
                   <Icon name="send" size={15} />
@@ -352,7 +341,7 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
         </div>
       )}
 
-      {editing && <div className="dialog-backdrop"><section className="action-dialog"><button className="dialog-close" aria-label="Đóng" onClick={() => setEditing(false)}><Icon name="close"/></button><span className="eyebrow">Bài viết của bạn</span><h2>Chỉnh sửa nội dung</h2><form className="dialog-form" onSubmit={submitEdit}><label className="form-field"><span>Nội dung</span><textarea rows={6} value={draft} onChange={(event) => setDraft(event.target.value)}/></label><div className="dialog-actions"><Button type="button" variant="outline" onClick={() => setEditing(false)}>Hủy</Button><Button>Lưu thay đổi</Button></div></form></section></div>}
+      {editing && <div className="dialog-backdrop"><section className="action-dialog" ref={editDialogRef} role="dialog" aria-modal="true" aria-label="Chỉnh sửa bài viết"><button className="dialog-close" aria-label="Đóng" onClick={() => setEditing(false)}><Icon name="close"/></button><h2>Chỉnh sửa nội dung</h2><form className="dialog-form" onSubmit={submitEdit}><label className="form-field"><span>Nội dung</span><textarea rows={6} value={draft} onChange={(event) => setDraft(event.target.value)}/></label><div className="dialog-actions"><Button type="button" variant="outline" onClick={() => setEditing(false)}>Hủy</Button><Button disabled={Boolean(busyAction)}>{busyAction === "edit" ? "Đang lưu…" : "Lưu thay đổi"}</Button></div></form></section></div>}
       {reportOpen && <ReportDialog targetType="Bài viết" targetId={post.id} targetTitle={post.content.slice(0, 100)} onClose={() => setReportOpen(false)}/>}
       {reportedComment && <ReportDialog targetType="Bình luận" targetId={reportedComment.id} targetTitle={reportedComment.text.slice(0, 100)} onClose={() => setReportedComment(null)}/>}
     </article>
@@ -361,13 +350,18 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
 
 export default function ForumPage() {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const { id } = useParams()
   const { user } = useAuth()
   const { posts, users, savePost, startConversation } = usePlatform()
   const [query, setQuery] = useState("")
   const [composerOpen, setComposerOpen] = useState(false)
+  const [publishing, setPublishing] = useState(false)
   const [draft, setDraft] = useState("")
-  const [image, setImage] = useState(isApiMode ? "" : photos[5])
+  const [image, setImage] = useState("")
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const composerRef = useRef<HTMLElement>(null)
+  useDialogFocus(composerRef, () => setComposerOpen(false), composerOpen)
   const [error, setError] = useState("")
   const publicPosts = useMemo(
     () =>
@@ -423,6 +417,8 @@ export default function ForumPage() {
     event.preventDefault()
     if (!user) return login()
     if (!draft.trim()) { setError("Hãy viết nội dung trước khi đăng."); return }
+    if (publishing || uploadingImage) return
+    setPublishing(true)
     try {
       await savePost({ id: `post-${Date.now()}`, authorId: user.id, name: user.name, initials: user.initials, avatarUrl: currentUserAvatarUrl, time: "Vừa xong", content: draft.trim(), image, likes: 0, likedBy: [], commentsCount: 0, comments: [], status: "active", createdAt: new Date().toISOString() })
       setDraft("")
@@ -430,7 +426,7 @@ export default function ForumPage() {
       setError("")
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể đăng bài viết.")
-    }
+    } finally { setPublishing(false) }
   }
 
   return (
@@ -438,6 +434,7 @@ export default function ForumPage() {
       <div className="container forum-layout">
         <aside className="forum-left"><h3>Diễn đàn</h3><button className="active" onClick={() => navigate("/dien-dan")}><Icon name="home"/>Bảng tin</button><button onClick={() => user ? navigate("/trang-ca-nhan") : login()}><Icon name="users"/>Trang cá nhân</button><button onClick={() => user ? navigate("/tin-nhan") : login()}><Icon name="chat"/>Tin nhắn</button><div className="forum-banner"><Icon name="shield"/><strong>Giữ thông tin riêng tư</strong><p>Chia sẻ khu vực và tầm giá là đủ. Nếu gặp nội dung vi phạm, bạn có thể gửi báo cáo để quản trị viên xem xét.</p><button onClick={() => user ? navigate("/bao-cao-cua-toi") : login()}>Báo cáo của tôi</button></div></aside>
         <section className="feed">
+          <header className="forum-feed-heading"><h1>{id ? "Bài viết cộng đồng" : "Chuyện trọ của mình"}</h1><p>Chia sẻ kinh nghiệm, tìm bạn ở ghép và trao đổi cùng cộng đồng.</p></header>
 
           {/* Facebook Feed Composer */}
           <div className="fb-feed-composer">
@@ -458,54 +455,16 @@ export default function ForumPage() {
             <div className="fb-composer-divider" />
 
             <div className="fb-composer-action-bar">
-              <button
-                type="button"
-                className="fb-composer-action-btn action-video"
-                onClick={() => (user ? setComposerOpen(true) : login())}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e41e3f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polygon points="23 7 16 12 23 17 23 7" fill="#e41e3f" />
-                  <rect x="1" y="5" width="15" height="14" rx="3" fill="#e41e3f" />
-                </svg>
-                <span>Video phòng</span>
-              </button>
-
-              <button
-                type="button"
-                className="fb-composer-action-btn action-photo"
-                onClick={() => (user ? setComposerOpen(true) : login())}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#45bd62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect width="18" height="18" x="3" y="3" rx="3" fill="#eaf8ed" />
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="#45bd62" />
-                  <path d="m21 15-5-5L5 21" stroke="#45bd62" strokeWidth="2" />
-                </svg>
-                <span>Ảnh/video</span>
-              </button>
-
-              <button
-                type="button"
-                className="fb-composer-action-btn action-feeling"
-                onClick={() => (user ? setComposerOpen(true) : login())}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f7b125" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" fill="#fef8ec" />
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#f7b125" strokeWidth="2" />
-                  <line x1="9" x2="9.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
-                  <line x1="15" x2="15.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
-                </svg>
-                <span>Cảm xúc</span>
-              </button>
+              <button type="button" className="fb-composer-action-btn" onClick={() => user ? setComposerOpen(true) : login()}><Icon name="edit" size={18}/><span>Viết bài chia sẻ</span></button>
+              <button type="button" className="fb-composer-action-btn" onClick={() => user ? setComposerOpen(true) : login()}><Icon name="image" size={18}/><span>Đính kèm ảnh</span></button>
             </div>
           </div>
 
-          {/* Facebook Stories & Reels Carousel */}
-          <StoriesBar onLogin={login} />
-
+          
           {/* Facebook Create Post Modal */}
           {composerOpen && (
             <div className="dialog-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setComposerOpen(false) }}>
-              <section className="action-dialog fb-post-create-dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+              <section className="action-dialog fb-post-create-dialog" ref={composerRef} aria-label="Tạo bài viết" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
                 <div className="fb-post-create-head">
                   <h2>Tạo bài viết</h2>
                   <button type="button" className="dialog-close" onClick={() => setComposerOpen(false)} aria-label="Đóng">
@@ -547,57 +506,30 @@ export default function ForumPage() {
                     </div>
                   )}
 
-                  <div className="fb-create-attachment-bar">
-                    <span>Thêm vào bài viết của bạn</span>
-                    <div className="fb-attachment-icons">
-                      <button
-                        type="button"
-                        className="fb-attach-btn"
-                        title="Thêm ảnh"
-                        onClick={() => {
-                          const url = prompt("Nhập đường dẫn ảnh (URL):", image || photos[2])
-                          if (url) setImage(url)
-                        }}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#45bd62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect width="18" height="18" x="3" y="3" rx="3" fill="#eaf8ed" />
-                          <circle cx="8.5" cy="8.5" r="1.5" fill="#45bd62" />
-                          <path d="m21 15-5-5L5 21" stroke="#45bd62" strokeWidth="2" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className="fb-attach-btn"
-                        title="Chọn ảnh mẫu"
-                        onClick={() => {
-                          const nextIdx = Math.floor(Math.random() * photos.length)
-                          setImage(photos[nextIdx])
-                        }}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#245f3b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" fill="#edf5ee" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className="fb-attach-btn"
-                        title="Thêm cảm xúc"
-                        onClick={() => setDraft((prev) => prev ? `${prev} (rất hài lòng)` : "Hôm nay tìm được phòng ưng ý ghê!")}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f7b125" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10" fill="#fef8ec" />
-                          <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#f7b125" strokeWidth="2" />
-                          <line x1="9" x2="9.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
-                          <line x1="15" x2="15.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                  <label className="form-field community-image-upload">
+                    <span>Ảnh đính kèm <small>(không bắt buộc)</small></span>
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploadingImage || publishing} onChange={async (event) => {
+                      const file = event.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 3_000_000 || !file.type.startsWith("image/")) { setError("Chọn một ảnh JPG, PNG hoặc WebP nhỏ hơn 3 MB."); return }
+                      setUploadingImage(true); setError("")
+                      try {
+                        if (isApiMode) {
+                          const body = new FormData(); body.append("file", file)
+                          const result = await apiRequest<{ url: string }>("uploads/image", { method: "POST", body }); setImage(result.url)
+                        } else {
+                          const url = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Không thể đọc ảnh.")); reader.readAsDataURL(file) }); setImage(url)
+                        }
+                      } catch (error) { setError(error instanceof Error ? error.message : "Không thể tải ảnh. Hãy thử lại.") }
+                      finally { setUploadingImage(false) }
+                    }} />
+                    <small>{uploadingImage ? "Đang tải ảnh…" : "Chia sẻ ảnh bạn có quyền sử dụng, tối đa 3 MB."}</small>
+                  </label>
 
                   {error && <p className="form-message error">{error}</p>}
 
-                  <button type="submit" className="fb-post-submit-btn" disabled={!draft.trim()}>
-                    Đăng bài viết
+                  <button type="submit" className="fb-post-submit-btn" disabled={!draft.trim() || publishing || uploadingImage}>
+                    {publishing ? "Đang đăng…" : "Đăng bài viết"}
                   </button>
                 </form>
               </section>
@@ -693,6 +625,7 @@ export default function ForumPage() {
                   <button
                     onClick={async () => {
                       if (!user) return login()
+                      try {
                       const conversation = await startConversation({
                         accountId: user.id,
                         name: item.name,
@@ -702,6 +635,7 @@ export default function ForumPage() {
                         roomId: "",
                       })
                       if (conversation) navigate(`/tin-nhan?conversation=${conversation}`)
+                      } catch (caught) { toast(caught instanceof Error ? caught.message : "Không thể mở cuộc trò chuyện.", "error") }
                     }}
                   >
                     Nhắn tin

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { useNavigate } from "react-router"
 import { rooms } from "@/mocks/content"
 import { useFavorites } from "@/contexts/FavoritesContext"
@@ -276,6 +276,7 @@ export function RoomCard({
   const { isFavorite, toggleFavorite } = useFavorites()
   const { toast } = useToast()
   const saved = isFavorite(room.id)
+  const [saving, setSaving] = useState(false)
   const isTransfer = room.type === "Chuyển nhượng"
   const sellerName = room.ownerName || "Chủ phòng"
   const initials = sellerName.split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase()
@@ -294,9 +295,19 @@ export function RoomCard({
       aria-label={`Xem chi tiết ${room.title}`}
     >
       <div className="room-photo">
-        <img src={room.image} alt={room.title} />
+        <img src={room.image || "/images/room-placeholder.svg"} alt={room.title} loading="lazy" decoding="async" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/images/room-placeholder.svg" }} />
         <span
-          className={`photo-badge ${isTransfer ? "badge-transfer" : ""}`}
+          className={`photo-badge ${
+            isTransfer
+              ? "badge-transfer"
+              : room.badge === "Mới đăng"
+                ? "badge-new"
+                : room.badge === "Chính chủ" || room.badge === "Xác thực"
+                  ? "badge-verified"
+                  : room.badge === "Giá tốt" || room.badge === "Nổi bật"
+                    ? "badge-hot"
+                    : "badge-default"
+          }`}
           aria-label={isTransfer ? "Tin chuyển nhượng phòng" : `Trạng thái tin: ${room.badge}`}
         >
           {isTransfer ? "🔄 Chuyển nhượng" : room.badge}
@@ -305,14 +316,21 @@ export function RoomCard({
           className={saved ? "heart-btn saved" : "heart-btn"}
           aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}
           aria-pressed={saved}
-          onClick={(event) => {
+          disabled={saving}
+          onClick={async (event) => {
             event.stopPropagation()
+            if (saving) return
             if (!user) {
               navigate("/dang-nhap", { state: { from: window.location.pathname } })
               return
             }
-            toggleFavorite(room.id)
-            toast(saved ? "Đã bỏ lưu phòng khỏi danh sách yêu thích" : "Đã lưu phòng vào danh sách yêu thích", "success")
+            setSaving(true)
+            try {
+              await toggleFavorite(room.id)
+              toast(saved ? "Đã bỏ lưu phòng khỏi danh sách yêu thích" : "Đã lưu phòng vào danh sách yêu thích", "success")
+            } catch (error) {
+              toast(error instanceof Error ? error.message : "Chưa lưu được phòng. Hãy thử lại.", "error")
+            } finally { setSaving(false) }
           }}
         >
           <Icon name="heart" size={19} />
@@ -355,7 +373,6 @@ export function RoomCard({
 }
 
 export function SectionTitle({
-  eyebrow,
   title,
   action,
   onAction,
@@ -368,7 +385,6 @@ export function SectionTitle({
   return (
     <div className="section-title">
       <div>
-        {eyebrow && <span>{eyebrow}</span>}
         <h2>{title}</h2>
       </div>
       {action && (

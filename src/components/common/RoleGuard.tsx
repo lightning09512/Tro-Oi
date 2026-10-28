@@ -16,7 +16,7 @@ export default function RoleGuard({
     return (
       <Navigate
         to={roles.includes("admin") ? "/admin/dang-nhap" : "/dang-nhap"}
-        state={{ from: location.pathname }}
+        state={{ from: `${location.pathname}${location.search}` }}
         replace
       />
     )

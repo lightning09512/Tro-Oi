@@ -460,8 +460,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     },
     incrementListingContacts: async (id) => {
       if (isApiMode) {
-        const result = await platformRequest<{ phone: string }>(`listings/${encodeURIComponent(id)}/contact`, { method: "POST" })
-        if (!result) return undefined
+        const result = await apiRequest<{ phone: string }>(`listings/${encodeURIComponent(id)}/contact`, { method: "POST" })
         setListings((current) => current.map((item) => item.id === id ? { ...item, contacts: item.contacts + 1 } : item))
         return result.phone
       }
@@ -478,13 +477,12 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       setFeedPosts((current) => current.some((value) => value.id === item.id) ? current.map((value) => value.id === item.id ? item : value) : [item, ...current])
     },
     deletePost: async (id) => {
-      if (isApiMode && !await platformRequest(`forum/${encodeURIComponent(id)}`, { method: "DELETE" })) return
+      if (isApiMode) await apiRequest(`forum/${encodeURIComponent(id)}`, { method: "DELETE" })
       setFeedPosts((current) => current.filter((item) => item.id !== id))
     },
     setPostStatus: async (id, status) => {
       if (isApiMode) {
-        const result = await platformRequest<{ item: ForumPost }>(`forum/${encodeURIComponent(id)}/status`, { method: "PATCH", body: JSON.stringify({ status }) })
-        if (!result) return
+        const result = await apiRequest<{ item: ForumPost }>(`forum/${encodeURIComponent(id)}/status`, { method: "PATCH", body: JSON.stringify({ status }) })
         setFeedPosts((current) => current.map((item) => item.id === id ? result.item : item))
         return
       }
@@ -492,8 +490,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     },
     togglePostLike: async (id, actingUser) => {
       if (isApiMode) {
-        const result = await platformRequest<{ liked: boolean; likes: number }>(`forum/${encodeURIComponent(id)}/like`, { method: "POST" })
-        if (!result) return
+        const result = await apiRequest<{ liked: boolean; likes: number }>(`forum/${encodeURIComponent(id)}/like`, { method: "POST" })
         setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, likedBy: result.liked ? [...post.likedBy, actingUser.id] : post.likedBy.filter((userId) => userId !== actingUser.id), likes: result.likes }))
         return
       }
@@ -528,13 +525,12 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       }))
     },
     deleteComment: async (postId, commentId) => {
-      if (isApiMode && !await platformRequest(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "DELETE" })) return
+      if (isApiMode) await apiRequest(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "DELETE" })
       setFeedPosts((current) => current.map((post) => post.id !== postId ? post : { ...post, commentsCount: Math.max(0, post.commentsCount - 1), comments: post.comments.filter((comment) => comment.id !== commentId) }))
     },
     editComment: async (postId, commentId, text) => {
       if (isApiMode) {
-        const result = await platformRequest<{ item: PostComment }>(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "PATCH", body: JSON.stringify({ text }) })
-        if (!result) return
+        const result = await apiRequest<{ item: PostComment }>(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "PATCH", body: JSON.stringify({ text }) })
         setFeedPosts((current) => current.map((post) => post.id !== postId ? post : { ...post, comments: post.comments.map((comment) => comment.id === commentId ? result.item : comment) }))
         return
       }
@@ -573,15 +569,14 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     saveCategory: async (category) => {
       if (isApiMode) {
         const existing = categories.some((item) => item.id === category.id)
-        const result = await platformRequest<{ item: CategoryRecord }>(existing ? `admin/categories/${encodeURIComponent(category.id)}` : "admin/categories", { method: existing ? "PATCH" : "POST", body: JSON.stringify(category) })
-        if (!result) return
+        const result = await apiRequest<{ item: CategoryRecord }>(existing ? `admin/categories/${encodeURIComponent(category.id)}` : "admin/categories", { method: existing ? "PATCH" : "POST", body: JSON.stringify(category) })
         setCategories((current) => current.some((item) => item.id === result.item.id) ? current.map((item) => item.id === result.item.id ? result.item : item) : [result.item, ...current])
         return
       }
       setCategories((current) => current.some((item) => item.id === category.id) ? current.map((item) => item.id === category.id ? category : item) : [category, ...current])
     },
     deleteCategory: async (id) => {
-      if (isApiMode && !await platformRequest(`admin/categories/${encodeURIComponent(id)}`, { method: "DELETE" })) return
+      if (isApiMode) await apiRequest(`admin/categories/${encodeURIComponent(id)}`, { method: "DELETE" })
       setCategories((current) => current.filter((item) => item.id !== id))
     },
     addNotification: async (item) => {
@@ -595,27 +590,26 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     markNotificationsRead: async (userId) => {
       if (isApiMode) {
         if (userId !== user?.id) return
-        const result = await platformRequest("notifications/read", { method: "PATCH", body: JSON.stringify({}) })
-        if (!result) return
+        await apiRequest("notifications/read", { method: "PATCH", body: JSON.stringify({}) })
       }
       setNotifications((current) => current.map((item) => item.userId === userId ? { ...item, read: true } : item))
     },
     markSingleNotificationRead: async (id: string, read = true) => {
       if (isApiMode) {
-        await platformRequest(`notifications/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ read }) }).catch(() => undefined)
+        await apiRequest(`notifications/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ read }) })
       }
       setNotifications((current) => current.map((item) => item.id === id ? { ...item, read } : item))
     },
     deleteNotification: async (id: string) => {
       if (isApiMode) {
-        await platformRequest(`notifications/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => undefined)
+        await apiRequest(`notifications/${encodeURIComponent(id)}`, { method: "DELETE" })
       }
       setNotifications((current) => current.filter((item) => item.id !== id))
     },
     clearAllNotifications: async (userId: string) => {
       if (isApiMode) {
         if (userId === user?.id) {
-          await platformRequest("notifications", { method: "DELETE" }).catch(() => undefined)
+          await apiRequest("notifications", { method: "DELETE" })
         }
       }
       setNotifications((current) => current.filter((item) => item.userId !== userId))
@@ -638,16 +632,14 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     },
     markConversationRead: async (conversationId, accountId) => {
       if (isApiMode) {
-        const result = await platformRequest(`messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: "PATCH", body: JSON.stringify({}) })
-        if (!result) return
+        await apiRequest(`messages/conversations/${encodeURIComponent(conversationId)}/read`, { method: "PATCH", body: JSON.stringify({}) })
       }
       setMessages((current) => current.some((item) => item.id === conversationId && item.accountId === accountId && item.unread) ? current.map((item) => item.id === conversationId && item.accountId === accountId ? { ...item, unread: false } : item) : current)
     },
     toggleConversationMute: async (conversationId, accountId) => {
       const conversation = messages.find((item) => item.id === conversationId && item.accountId === accountId)
       if (isApiMode) {
-        const result = await platformRequest(`messages/conversations/${encodeURIComponent(conversationId)}/mute`, { method: "PATCH", body: JSON.stringify({ muted: !conversation?.muted }) })
-        if (!result) return
+        await apiRequest(`messages/conversations/${encodeURIComponent(conversationId)}/mute`, { method: "PATCH", body: JSON.stringify({ muted: !conversation?.muted }) })
       }
       setMessages((current) => current.map((item) => item.id === conversationId && item.accountId === accountId ? { ...item, muted: !item.muted } : item))
     },
@@ -704,7 +696,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     deleteReview: async (id) => {
       if (isApiMode) {
         const review = reviews.find((item) => item.id === id)
-        if (!review || !await platformRequest(`listings/${encodeURIComponent(review.listingId)}/reviews/${encodeURIComponent(id)}`, { method: "DELETE" })) return
+        if (!review) throw new Error("Đánh giá không còn tồn tại. Hãy tải lại trang.")
+        await apiRequest(`listings/${encodeURIComponent(review.listingId)}/reviews/${encodeURIComponent(id)}`, { method: "DELETE" })
       }
       setReviews((current) => current.filter((item) => item.id !== id))
     },

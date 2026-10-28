@@ -47,6 +47,7 @@ function getActionLink(item: NotificationRecord, role?: string): { to: string; l
 function formatRelativeTime(dateString: string): string {
   try {
     const date = new Date(dateString)
+    if (!Number.isFinite(date.getTime())) return "Chưa có thời gian"
     const diffMs = Date.now() - date.getTime()
     const diffMins = Math.floor(diffMs / (1000 * 60))
     const diffHours = Math.floor(diffMins / 60)
@@ -75,6 +76,16 @@ export default function NotificationsPage() {
   } = usePlatform()
 
   const [activeTab, setActiveTab] = useState<TabType>("all")
+  const [busy, setBusy] = useState("")
+  const [error, setError] = useState("")
+  const runAction = async (key: string, action: () => Promise<void>) => {
+    if (busy) return
+    setBusy(key)
+    setError("")
+    try { await action() }
+    catch (caught) { setError(caught instanceof Error ? caught.message : "Không thể cập nhật thông báo. Vui lòng thử lại.") }
+    finally { setBusy("") }
+  }
 
   const mine = useMemo(
     () => notifications.filter((item) => item.userId === user?.id),
@@ -117,22 +128,22 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     if (!user || unreadCount === 0) return
-    await markNotificationsRead(user.id)
+    await runAction("all", () => markNotificationsRead(user.id))
   }
 
   const handleClearAll = async () => {
     if (!user || mine.length === 0) return
     if (window.confirm("Bạn có chắc chắn muốn xóa tất cả thông báo không?")) {
-      await clearAllNotifications(user.id)
+      await runAction("clear", () => clearAllNotifications(user.id))
     }
   }
 
   const handleToggleRead = async (item: NotificationRecord) => {
-    await markSingleNotificationRead(item.id, !item.read)
+    await runAction(item.id, () => markSingleNotificationRead(item.id, !item.read))
   }
 
   const handleDelete = async (id: string) => {
-    await deleteNotification(id)
+    await runAction(id, () => deleteNotification(id))
   }
 
   const defaultActionPath =
@@ -165,7 +176,6 @@ export default function NotificationsPage() {
 
         <div className="notif-header-box">
           <div className="notif-title-area">
-            <span className="eyebrow">Trung tâm thông báo</span>
             <h1>Thông báo của bạn</h1>
             <p>
               Cập nhật tức thời về tin đăng, cuộc trò chuyện và các hoạt động trên hệ thống Trọ Ơi.
@@ -177,7 +187,7 @@ export default function NotificationsPage() {
               type="button"
               className="notif-btn-secondary"
               onClick={handleMarkAllRead}
-              disabled={unreadCount === 0}
+              disabled={unreadCount === 0 || Boolean(busy)}
               title="Đánh dấu tất cả là đã đọc"
             >
               <Icon name="check" size={16} />
@@ -189,6 +199,7 @@ export default function NotificationsPage() {
                 type="button"
                 className="notif-btn-secondary notif-btn-danger"
                 onClick={handleClearAll}
+                disabled={Boolean(busy)}
                 title="Xóa tất cả thông báo"
               >
                 <Icon name="trash" size={15} />
@@ -198,10 +209,12 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        <div className="notif-tabs" role="tablist">
+        {error && <p className="form-message error" role="alert">{error}</p>}
+        <div className="notif-tabs" aria-label="Lọc thông báo">
           <button
             type="button"
             className={`notif-tab ${activeTab === "all" ? "active" : ""}`}
+            aria-pressed={activeTab === "all"}
             onClick={() => setActiveTab("all")}
           >
             <span>Tất cả</span>
@@ -210,6 +223,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             className={`notif-tab ${activeTab === "unread" ? "active" : ""}`}
+            aria-pressed={activeTab === "unread"}
             onClick={() => setActiveTab("unread")}
           >
             <span>Chưa đọc</span>
@@ -218,6 +232,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             className={`notif-tab ${activeTab === "listing" ? "active" : ""}`}
+            aria-pressed={activeTab === "listing"}
             onClick={() => setActiveTab("listing")}
           >
             <span>Tin đăng</span>
@@ -226,6 +241,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             className={`notif-tab ${activeTab === "message" ? "active" : ""}`}
+            aria-pressed={activeTab === "message"}
             onClick={() => setActiveTab("message")}
           >
             <span>Tin nhắn</span>
@@ -234,6 +250,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             className={`notif-tab ${activeTab === "system" ? "active" : ""}`}
+            aria-pressed={activeTab === "system"}
             onClick={() => setActiveTab("system")}
           >
             <span>Hệ thống</span>
@@ -252,9 +269,6 @@ export default function NotificationsPage() {
                 <article
                   key={item.id}
                   className={`notif-card ${item.read ? "read" : "unread"}`}
-                  onClick={() => {
-                    if (!item.read) markSingleNotificationRead(item.id, true)
-                  }}
                 >
                   <div
                     className="notif-icon-bubble"
@@ -282,6 +296,8 @@ export default function NotificationsPage() {
                         <button
                           type="button"
                           className="notif-action-icon-btn"
+                          disabled={Boolean(busy)}
+                          aria-label={item.read ? "Đánh dấu là chưa đọc" : "Đánh dấu là đã đọc"}
                           onClick={() => handleToggleRead(item)}
                           title={item.read ? "Đánh dấu là chưa đọc" : "Đánh dấu là đã đọc"}
                         >
@@ -290,6 +306,8 @@ export default function NotificationsPage() {
                         <button
                           type="button"
                           className="notif-action-icon-btn delete"
+                          disabled={Boolean(busy)}
+                          aria-label="Xóa thông báo"
                           onClick={() => handleDelete(item.id)}
                           title="Xóa thông báo này"
                         >

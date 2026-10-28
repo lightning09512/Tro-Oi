@@ -1,9 +1,10 @@
-import { useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { useLocation } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import { usePlatform, type CategoryRecord, type ContentStatus, type ListingStatus, type PlatformUser, type ReportRecord } from "@/contexts/PlatformContext"
 import { authService } from "@/services/authService"
 import { isApiMode } from "@/services/apiClient"
+import useDialogFocus from "@/hooks/useDialogFocus"
 
 type Resource = "users" | "listings" | "forum" | "categories" | "reports"
 type AdminRow = { id: string; title: string; detail: string; status: string; meta: string; image?: string }
@@ -25,7 +26,7 @@ function downloadCsv(filename: string, rows: AdminRow[]) {
 export default function AdminResourcePage() {
   const { pathname } = useLocation()
   const resource = (pathname.split("/")[2] === "tin-cho-thue" ? "listings" : pathname.split("/")[2] === "dien-dan" ? "forum" : pathname.split("/")[2] === "danh-muc" ? "categories" : pathname.split("/")[2] === "bao-cao" ? "reports" : "users") as Resource
-  const { users, saveUser, deleteUser, listings, setListingStatus, deleteListing, posts, setPostStatus, deletePost, categories, saveCategory, deleteCategory, reports, updateReport, addNotification, deleteComment } = usePlatform()
+  const { users, saveUser, deleteUser, listings, setListingStatus, deleteListing, posts, setPostStatus, deletePost, categories, saveCategory, deleteCategory, reports, updateReport, addNotification, deleteComment, connectionState, connectionError } = usePlatform()
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("all")
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
@@ -36,6 +37,12 @@ export default function AdminResourcePage() {
   const [reportDecision, setReportDecision] = useState<ReportRecord["status"]>("accepted")
   const [reportNote, setReportNote] = useState("")
   const [sendWarning, setSendWarning] = useState(false)
+  const [busyId, setBusyId] = useState("")
+  const busyRef = useRef(false)
+  const dialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(dialogRef, () => { if (!busyRef.current) setDialog(null) }, Boolean(dialog))
+  useEffect(() => { setQuery(""); setFilter("all"); setDialog(null); setActionError("") }, [resource])
+  const statusOptions: Record<Resource, string[]> = { users: ["active", "locked"], listings: ["pending", "active", "hidden", "rented", "rejected"], forum: ["active", "pending", "hidden"], categories: ["active", "hidden"], reports: ["pending", "accepted", "rejected"] }
 
   const title: Record<Resource, string> = { users: "Người dùng", listings: "Tin cho thuê", forum: "Kiểm duyệt diễn đàn", categories: "Danh mục", reports: "Báo cáo vi phạm" }
   const kind: Record<Resource, string> = { users: "Tài khoản", listings: "Tin phòng", forum: "Bài viết", categories: "Danh mục", reports: "Nội dung được báo cáo" }
@@ -54,7 +61,7 @@ export default function AdminResourcePage() {
     if (resource === "listings") return listings.map((item) => ({ id: item.id, image: item.image, title: item.title, detail: item.location, status: item.status, meta: `${item.price}/tháng · ${item.area} · ${item.ownerName}` }))
     if (resource === "forum") return posts.map((item) => ({ id: item.id, title: item.name, detail: item.content, status: item.status, meta: `${item.likes} lượt thích · ${item.commentsCount} bình luận` }))
     if (resource === "categories") return categories.map((item) => ({ id: item.id, title: item.name, detail: item.type, status: item.status, meta: `Danh mục ${item.type.toLocaleLowerCase("vi")}` }))
-    return reports.map((item) => ({ id: item.id, title: item.targetTitle, detail: `${item.targetType} · ${item.reason}`, status: item.status === "pending" ? "pending" : "reviewed", meta: `${item.reporter} · ${item.description || "Không có mô tả thêm"}` }))
+    return reports.map((item) => ({ id: item.id, title: item.targetTitle, detail: `${item.targetType} · ${item.reason}`, status: item.status, meta: `${item.reporter} · ${item.description || "Không có mô tả thêm"}` }))
   }, [resource, users, listings, posts, categories, reports])
 
   const filtered = rows.filter((row) =>
@@ -70,7 +77,12 @@ export default function AdminResourcePage() {
 
   const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (busyRef.current) return
+    busyRef.current = true
+    setBusyId("editor")
+    setEditorError("")
     const data = new FormData(event.currentTarget)
+    try {
     if (resource === "users") {
       const email = String(data.get("email") ?? "").trim().toLocaleLowerCase("vi")
       const phone = String(data.get("phone") ?? "").replace(/\D/g, "")
@@ -114,27 +126,37 @@ export default function AdminResourcePage() {
       await saveCategory(category)
     }
     setDialog(null)
+    } catch (caught) {
+      setEditorError(caught instanceof Error ? caught.message : "Không thể lưu thông tin. Hãy thử lại.")
+    } finally {
+      busyRef.current = false
+      setBusyId("")
+    }
   }
 
-  const action = (id: string, status: string) => {
+  const action = async (id: string, status: string) => {
+    if (busyRef.current) return
     setActionError("")
+    busyRef.current = true
+    setBusyId(id)
+    try {
     if (resource === "users") {
       const item = users.find((value) => value.id === id)
       if (item) {
         const updated = { ...item, status: status === "locked" ? "active" as const : "locked" as const }
-        void saveUser(updated).then(() => {
+        await saveUser(updated).then(() => {
           if (!isApiMode) authService.saveManagedAccount(updated)
         }).catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể cập nhật tài khoản."))
       }
     } else if (resource === "listings") {
       const item = listings.find((value) => value.id === id)
-      void setListingStatus(id, status as ListingStatus).then(() => {
+      await setListingStatus(id, status as ListingStatus).then(() => {
         if (!isApiMode && item && (status === "active" || status === "rejected")) addNotification({ userId: item.ownerId, title: status === "active" ? "Tin cho thuê đã được duyệt" : "Tin cho thuê cần chỉnh sửa", detail: status === "active" ? `Tin “${item.title}” hiện đã được hiển thị.` : `Tin “${item.title}” chưa được duyệt. Vui lòng rà soát lại thông tin.` })
       }).catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể cập nhật trạng thái tin."))
-    } else if (resource === "forum") setPostStatus(id, status as ContentStatus)
+    } else if (resource === "forum") await setPostStatus(id, status as ContentStatus)
     else if (resource === "categories") {
       const item = categories.find((value) => value.id === id)
-      if (item) saveCategory({ ...item, status: item.status === "active" ? "hidden" : "active" })
+      if (item) await saveCategory({ ...item, status: item.status === "active" ? "hidden" : "active" })
     } else {
       const report = reports.find((value) => value.id === id)
       if (report) {
@@ -145,25 +167,45 @@ export default function AdminResourcePage() {
         setDialog("report")
       }
     }
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "Không thể cập nhật nội dung. Hãy thử lại.")
+    } finally {
+      busyRef.current = false
+      setBusyId("")
+    }
   }
 
-  const remove = (id: string, name: string) => {
-    if (!window.confirm(`Bạn có chắc muốn xóa “${name}”?`)) return
+  const remove = async (id: string, name: string) => {
+    if (busyRef.current) return
+    if (!window.confirm(resource === "reports" ? `Từ chối báo cáo “${name}”?` : `Bạn có chắc muốn xóa “${name}”?`)) return
+    setActionError("")
+    busyRef.current = true
+    setBusyId(id)
+    try {
     if (resource === "users") {
-      void deleteUser(id).then(() => {
+      await deleteUser(id).then(() => {
         if (!isApiMode) authService.deleteManagedAccount(id)
       }).catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể xóa tài khoản."))
     }
-    if (resource === "listings") deleteListing(id)
-    if (resource === "forum") deletePost(id)
-    if (resource === "categories") deleteCategory(id)
-    if (resource === "reports") void updateReport(id, "rejected", "Đã từ chối báo cáo.").catch((error: unknown) => setActionError(error instanceof Error ? error.message : "Không thể xử lý báo cáo."))
+    if (resource === "listings") await deleteListing(id)
+    if (resource === "forum") await deletePost(id)
+    if (resource === "categories") await deleteCategory(id)
+    if (resource === "reports") await updateReport(id, "rejected", "Đã từ chối báo cáo.")
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "Không thể xóa nội dung. Hãy thử lại.")
+    } finally {
+      busyRef.current = false
+      setBusyId("")
+    }
   }
 
   const saveReportDecision = async (event: FormEvent) => {
     event.preventDefault()
-    if (!reportTarget) return
+    if (!reportTarget || busyRef.current) return
+    if (sendWarning && !reportNote.trim()) { setActionError("Nhập nội dung cảnh báo trước khi gửi cho người dùng."); return }
     setActionError("")
+    busyRef.current = true
+    setBusyId("report")
     try {
       await updateReport(reportTarget.id, reportDecision, reportNote)
       if (sendWarning && reportNote.trim()) {
@@ -177,32 +219,37 @@ export default function AdminResourcePage() {
       setDialog(null)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Không thể xử lý báo cáo.")
+    } finally {
+      busyRef.current = false
+      setBusyId("")
     }
   }
 
   return (
-    <main className={`admin-resource-page admin-resource-page--${resource}`}>
-      <div className="resource-page-heading"><div><span className="eyebrow">Quản trị hệ thống</span><h2>{title[resource]}</h2><p>{description[resource]}</p></div><div>{(resource === "users" || resource === "categories") && <Button icon="plus" onClick={() => openEdit()}>Thêm mới</Button>}{resource !== "reports" && <Button variant="outline" icon="download" onClick={() => downloadCsv(`${resource}-tro-oi.csv`, filtered)}>Tải CSV</Button>}</div></div>
+    <main className={`admin-resource-page management-page management-admin admin-resource-page--${resource}`}>
+      <div className="resource-page-heading"><div><h1>{title[resource]}</h1><p>{description[resource]}</p></div><div>{(resource === "users" || resource === "categories") && <Button icon="plus" onClick={() => openEdit()}>Thêm mới</Button>}{resource !== "reports" && <Button variant="outline" icon="download" onClick={() => downloadCsv(`${resource}-tro-oi.csv`, filtered)}>Tải CSV</Button>}</div></div>
       {actionError && <p className="form-message error" role="alert">{actionError}</p>}
-      <section className={`resource-panel resource-panel--${resource}`}>
-        <div className="workspace-toolbar"><label className="workspace-search"><Icon name="search"/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} autoComplete="off" spellCheck={false}/></label><select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Lọc trạng thái"><option value="all">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="pending">Chờ duyệt</option><option value="hidden">Đang ẩn</option><option value="rejected">Từ chối</option><option value="closed">Đã đóng</option><option value="removed">Đã gỡ</option><option value="reviewed">Đã xử lý</option><option value="locked">Đã khóa</option></select><span>{filtered.length} kết quả</span></div>
-        <div className={`resource-list resource-list--${resource}`}>{filtered.map((row) => <article className={`resource-row resource-row--${resource}`} key={row.id}>{row.image && <img className="resource-row-media" src={row.image} alt={row.title} loading="lazy" />}<div className="resource-row-main"><div className="resource-row-heading"><span className="resource-kind">{kind[resource]}</span><span className={`status-pill status-${row.status}`}>{statusText[row.status] ?? row.status}</span></div><h3>{row.title}</h3><p>{row.detail}</p><small>{row.meta}</small>{resource === "forum" && posts.find((item) => item.id === row.id)?.comments.map((comment) => <div className="admin-comment-row" key={comment.id}><span><b>{comment.author}</b> · {comment.text}</span><button className="danger-action" onClick={() => { if (window.confirm("Xóa bình luận vi phạm này?")) deleteComment(row.id, comment.id) }}>Xóa bình luận</button></div>)}</div><div className="resource-row-actions">
+      <section className={`resource-panel resource-panel--${resource}`} aria-busy={Boolean(busyId) || connectionState === "loading"}>
+        {connectionState === "loading" && <p className="management-feedback" role="status">Đang tải dữ liệu…</p>}
+        {connectionState === "error" && <p className="form-message error" role="alert">{connectionError || "Không tải được dữ liệu. Hãy tải lại trang để thử lại."}</p>}
+        <div className="workspace-toolbar"><label className="workspace-search"><Icon name="search"/><input aria-label={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} autoComplete="off" spellCheck={false}/></label><select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Lọc trạng thái"><option value="all">Tất cả trạng thái</option>{statusOptions[resource].map((value) => <option value={value} key={value}>{statusText[value]}</option>)}</select><span>{filtered.length} kết quả</span></div>
+        <div className={`resource-list resource-list--${resource}`}>{filtered.map((row) => <article className={`resource-row resource-row--${resource}`} key={row.id}>{row.image && <img className="resource-row-media" src={row.image} alt={row.title} loading="lazy" />}<div className="resource-row-main"><div className="resource-row-heading"><span className="resource-kind">{kind[resource]}</span><span className={`status-pill status-${row.status}`}>{statusText[row.status] ?? row.status}</span></div><h3>{row.title}</h3><p>{row.detail}</p><small>{row.meta}</small>{resource === "forum" && posts.find((item) => item.id === row.id)?.comments.map((comment) => <div className="admin-comment-row" key={comment.id}><span><b>{comment.author}</b> · {comment.text}</span><button className="danger-action" onClick={() => { if (window.confirm("Xóa bình luận vi phạm này?")) { void deleteComment(row.id, comment.id).catch((caught: unknown) => setActionError(caught instanceof Error ? caught.message : "Không thể xóa bình luận.")) } }}>Xóa bình luận</button></div>)}</div><fieldset className="resource-row-actions" disabled={Boolean(busyId)} aria-label={`Thao tác với ${row.title}`}>
           {resource === "users" && <><button onClick={() => openEdit(users.find((item) => item.id === row.id))}><Icon name="edit" size={15}/> Sửa</button><button onClick={() => action(row.id, row.status)}>{row.status === "locked" ? "Mở khóa" : "Khóa"}</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Xóa</button></>}
-          {resource === "listings" && <><button onClick={() => action(row.id, "active")}>Duyệt / Hiện</button><button onClick={() => action(row.id, "rejected")}>Từ chối</button><button onClick={() => action(row.id, "hidden")}>Ẩn</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Gỡ</button></>}
-          {resource === "forum" && <><button onClick={() => action(row.id, row.status === "hidden" ? "active" : "hidden")}>{row.status === "hidden" ? "Hiện bài" : "Ẩn bài"}</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Xóa bài</button></>}
+          {resource === "listings" && <>{row.status !== "active" && row.status !== "rented" && <button onClick={() => action(row.id, "active")}>{row.status === "pending" ? "Duyệt tin" : "Hiện tin"}</button>}{row.status === "pending" && <button onClick={() => action(row.id, "rejected")}>Từ chối</button>}{row.status === "active" && <button onClick={() => action(row.id, "hidden")}>Ẩn tin</button>}<button className="danger-action" onClick={() => remove(row.id, row.title)}>Gỡ tin</button></>}
+          {resource === "forum" && <><button onClick={() => action(row.id, row.status === "active" ? "hidden" : "active")}>{row.status === "pending" ? "Duyệt bài" : row.status === "hidden" ? "Hiện bài" : "Ẩn bài"}</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Xóa bài</button></>}
           {resource === "categories" && <><button onClick={() => openEdit(categories.find((item) => item.id === row.id))}><Icon name="edit" size={15}/> Sửa</button><button onClick={() => action(row.id, "hidden")}>{row.status === "hidden" ? "Hiện" : "Ẩn"}</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Xóa</button></>}
           {resource === "reports" && <><button onClick={() => action(row.id, "accepted")}>Xử lý báo cáo</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Từ chối</button></>}
-        </div></article>)}</div>
-        {!filtered.length && <div className={`resource-empty resource-empty--${resource}`}><Icon name={resource === "reports" ? "shield" : resource === "users" ? "users" : resource === "listings" ? "building" : resource === "forum" ? "chat" : "filter"}/><h3>{rows.length ? "Không tìm thấy kết quả phù hợp" : emptyTitle[resource]}</h3><p>{rows.length ? "Thử thay đổi từ khóa hoặc trạng thái đang lọc." : emptyDescription[resource]}</p></div>}
+        {busyId === row.id && <small role="status">Đang cập nhật…</small>}</fieldset></article>)}</div>
+        {!filtered.length && connectionState !== "loading" && connectionState !== "error" && <div className={`resource-empty resource-empty--${resource}`}><Icon name={resource === "reports" ? "shield" : resource === "users" ? "users" : resource === "listings" ? "building" : resource === "forum" ? "chat" : "filter"}/><h3>{rows.length ? "Không tìm thấy kết quả phù hợp" : emptyTitle[resource]}</h3><p>{rows.length ? "Thử thay đổi từ khóa hoặc trạng thái đang lọc." : emptyDescription[resource]}</p></div>}
       </section>
 
-      {dialog === "edit" && <div className="dialog-backdrop"><section className="action-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-editor-title"><button className="dialog-close" onClick={() => setDialog(null)} aria-label="Đóng"><Icon name="close"/></button><span className="eyebrow">{resource === "users" ? "Tài khoản" : "Cấu hình"}</span><h2 id="admin-editor-title">{editing ? "Cập nhật thông tin" : "Tạo mới"}</h2><form className="dialog-form" onSubmit={saveEditor}>
+      {dialog === "edit" && <div className="dialog-backdrop"><section ref={dialogRef} className="action-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-editor-title"><button className="dialog-close" disabled={Boolean(busyId)} onClick={() => setDialog(null)} aria-label="Đóng"><Icon name="close"/></button><h2 id="admin-editor-title">{editing ? "Cập nhật thông tin" : "Tạo mới"}</h2><form className="dialog-form" onSubmit={saveEditor}>
         {editorError && <p className="form-message error" role="alert">{editorError}</p>}{!editing && resource === "users" && <p className="demo-note">{isApiMode ? "Đặt mật khẩu ban đầu an toàn; mật khẩu sẽ được băm trước khi lưu." : `Tài khoản demo mới dùng mật khẩu ${authService.demoPassword}; người dùng có thể đổi mật khẩu sau khi đăng nhập.`}</p>}
         {resource === "users" ? <><label className="form-field"><span>Họ tên</span><input name="name" defaultValue={editing && "name" in editing ? editing.name : ""} required/></label><label className="form-field"><span>Email</span><input name="email" type="email" defaultValue={editing && "email" in editing ? editing.email : ""} required/></label><label className="form-field"><span>Số điện thoại</span><input name="phone" defaultValue={editing && "phone" in editing ? editing.phone : ""} required/></label>{!editing && <label className="form-field"><span>Mật khẩu ban đầu</span><input name="password" type="password" minLength={8} required={isApiMode} autoComplete="new-password" placeholder="Ít nhất 8 ký tự"/></label>}<label className="form-field"><span>Vai trò</span><select name="role" defaultValue={editing && "role" in editing ? editing.role : "renter"}><option value="renter">Người thuê</option><option value="landlord">Chủ trọ</option><option value="admin">Quản trị viên</option></select></label><label className="form-field"><span>Trạng thái</span><select name="status" defaultValue={editing && "status" in editing ? editing.status : "active"}><option value="active">Đang hoạt động</option><option value="locked">Đã khóa</option></select></label></> : <><label className="form-field"><span>Tên danh mục</span><input name="name" defaultValue={editing && "name" in editing ? editing.name : ""} required/></label><label className="form-field"><span>Nhóm</span><select name="type" defaultValue={editing && "type" in editing ? editing.type : "Khu vực"}><option>Khu vực</option><option>Loại phòng</option><option>Tiện ích</option></select></label><label className="form-field"><span>Trạng thái</span><select name="status" defaultValue={editing && "status" in editing ? editing.status : "active"}><option value="active">Đang dùng</option><option value="hidden">Đang ẩn</option></select></label></>}
-        <div className="dialog-actions"><Button type="button" variant="outline" onClick={() => setDialog(null)}>Hủy</Button><Button>Lưu</Button></div>
+        <div className="dialog-actions"><Button type="button" variant="outline" disabled={Boolean(busyId)} onClick={() => setDialog(null)}>Hủy</Button><Button disabled={Boolean(busyId)}>{busyId === "editor" ? "Đang lưu…" : "Lưu thông tin"}</Button></div>
       </form></section></div>}
 
-      {dialog === "report" && reportTarget && <div className="dialog-backdrop"><section className="action-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-report-title"><button className="dialog-close" onClick={() => setDialog(null)} aria-label="Đóng"><Icon name="close"/></button><span className="eyebrow">Xử lý báo cáo</span><h2 id="admin-report-title">{reportTarget.targetTitle}</h2><p className="dialog-target">{reportTarget.targetType} · {reportTarget.reason}<br/>{reportTarget.description}</p><form className="dialog-form" onSubmit={saveReportDecision}>{actionError && <p className="form-message error" role="alert">{actionError}</p>}<label className="form-field"><span>Kết quả</span><select value={reportDecision} onChange={(event) => setReportDecision(event.target.value as ReportRecord["status"])}><option value="accepted">Chấp nhận báo cáo</option><option value="rejected">Từ chối báo cáo</option></select></label><label className="form-field"><span>Ghi chú / nội dung cảnh báo</span><textarea rows={4} value={reportNote} onChange={(event) => setReportNote(event.target.value)} placeholder="Ghi lại quyết định xử lý hoặc nội dung cảnh báo."/></label><label className="inline-check"><input type="checkbox" checked={sendWarning} onChange={(event) => setSendWarning(event.target.checked)}/>Gửi ghi chú này thành cảnh báo cho người dùng liên quan.</label><div className="dialog-actions"><Button type="button" variant="outline" onClick={() => setDialog(null)}>Hủy</Button><Button icon="send">Lưu kết quả</Button></div></form></section></div>}
+      {dialog === "report" && reportTarget && <div className="dialog-backdrop"><section ref={dialogRef} className="action-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-report-title"><button className="dialog-close" disabled={Boolean(busyId)} onClick={() => setDialog(null)} aria-label="Đóng"><Icon name="close"/></button><h2 id="admin-report-title">{reportTarget.targetTitle}</h2><p className="dialog-target">{reportTarget.targetType} · {reportTarget.reason}<br/>{reportTarget.description}</p><form className="dialog-form" onSubmit={saveReportDecision}>{actionError && <p className="form-message error" role="alert">{actionError}</p>}<label className="form-field"><span>Kết quả</span><select value={reportDecision} onChange={(event) => setReportDecision(event.target.value as ReportRecord["status"])}><option value="accepted">Chấp nhận báo cáo</option><option value="rejected">Từ chối báo cáo</option></select></label><label className="form-field"><span>Ghi chú / nội dung cảnh báo</span><textarea rows={4} value={reportNote} onChange={(event) => setReportNote(event.target.value)} placeholder="Ghi lại quyết định xử lý hoặc nội dung cảnh báo."/></label><label className="inline-check"><input type="checkbox" checked={sendWarning} onChange={(event) => setSendWarning(event.target.checked)}/>Gửi ghi chú này thành cảnh báo cho người dùng liên quan.</label><div className="dialog-actions"><Button type="button" variant="outline" disabled={Boolean(busyId)} onClick={() => setDialog(null)}>Hủy</Button><Button icon="send" disabled={Boolean(busyId)}>{busyId === "report" ? "Đang lưu…" : "Lưu kết quả"}</Button></div></form></section></div>}
 
     </main>
   )

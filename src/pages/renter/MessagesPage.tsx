@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import ReportDialog from "@/components/common/ReportDialog"
+import useDialogFocus from "@/hooks/useDialogFocus"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { useSearchParams, useNavigate, Link } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import { usePlatform } from "@/contexts/PlatformContext"
@@ -26,12 +28,14 @@ export default function MessagesPage() {
   const [params, setParams] = useSearchParams()
   const { user } = useAuth()
   const { toast } = useToast()
-  const { messages, listings, users, reviews, addReport, sendMessage, startConversation, markConversationRead, toggleConversationMute, refreshMessages } = usePlatform()
+  const { messages, listings, users, reviews, sendMessage, startConversation, markConversationRead, toggleConversationMute, refreshMessages } = usePlatform()
   const [search, setSearch] = useState("")
   const [onlyUnread, setOnlyUnread] = useState(false)
   const [mobileChat, setMobileChat] = useState(false)
   const [message, setMessage] = useState("")
   const [messageError, setMessageError] = useState("")
+  const [sending, setSending] = useState(false)
+  const [scheduling, setScheduling] = useState(false)
   const [selectContact, setSelectContact] = useState(false)
   const [contactError, setContactError] = useState("")
   const [startingContactId, setStartingContactId] = useState<string | null>(null)
@@ -45,9 +49,11 @@ export default function MessagesPage() {
   const [scheduleTime, setScheduleTime] = useState("17:30")
   const [scheduleNote, setScheduleNote] = useState("")
   const [reportModalOpen, setReportModalOpen] = useState(false)
-  const [reportReason, setReportReason] = useState("Yêu cầu đặt cọc trước khi xem phòng / Có dấu hiệu lừa đảo")
-  const [reportDescription, setReportDescription] = useState("")
-  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+
+  const scheduleDialogRef = useRef<HTMLElement>(null)
+  const contactDialogRef = useRef<HTMLElement>(null)
+  useDialogFocus(scheduleDialogRef, () => setScheduleModalOpen(false), scheduleModalOpen)
+  useDialogFocus(contactDialogRef, () => setSelectContact(false), selectContact)
 
   const selectedId = params.get("conversation") ?? ""
   const accountMessages = useMemo(() => messages.filter((item) => item.accountId === user?.id), [messages, user?.id])
@@ -60,7 +66,7 @@ export default function MessagesPage() {
   const isPassRoom = relatedRoom?.type === "Chuyển nhượng"
   const contactListings = useMemo(() => listings.filter((l) => l.ownerId === selectedContact?.id && l.status === "active"), [listings, selectedContact?.id])
   const roomReviews = useMemo(() => (relatedRoom ? reviews.filter((r) => r.listingId === relatedRoom.id) : []), [reviews, relatedRoom])
-  const averageRating = roomReviews.length ? roomReviews.reduce((sum, r) => sum + r.stars, 0) / roomReviews.length : 5.0
+  const averageRating = roomReviews.length ? roomReviews.reduce((sum, r) => sum + r.stars, 0) / roomReviews.length : 0
   const contactPhone = selectedContact?.phone || relatedRoom?.phone || ""
   const galleryPhotos = useMemo(() => (relatedRoom ? [...new Set([relatedRoom.image, ...(relatedRoom.gallery ?? [])])] : []), [relatedRoom])
 
@@ -70,7 +76,7 @@ export default function MessagesPage() {
   }, [selected?.id, selectedId, setParams])
 
   useEffect(() => {
-    if (selected && user) markConversationRead(selected.id, user.id)
+    if (selected && user) void markConversationRead(selected.id, user.id).catch(() => {})
   }, [selected?.id, user?.id])
 
   useEffect(() => {
@@ -79,7 +85,7 @@ export default function MessagesPage() {
     const socket = io({ auth: { token }, transports: ["websocket", "polling"] })
     const join = () => socket.emit("conversation:join", selected.id)
     socket.on("connect", join)
-    socket.on("message:new", () => { void refreshMessages() })
+    socket.on("message:new", () => { void refreshMessages().catch((error) => setMessageError(error instanceof Error ? error.message : "Không thể cập nhật tin nhắn mới.")) })
     if (socket.connected) join()
     return () => {
       socket.emit("conversation:leave", selected.id)
@@ -87,17 +93,26 @@ export default function MessagesPage() {
     }
   }, [selected?.id, refreshMessages])
 
+  const changeMute = async () => {
+    if (!selected || !user) return
+    try {
+      await toggleConversationMute(selected.id, user.id)
+      toast(selected.muted ? "Đã bật thông báo cuộc trò chuyện." : "Đã tắt thông báo cuộc trò chuyện.", "info")
+    } catch (error) { setMessageError(error instanceof Error ? error.message : "Không thể đổi thông báo.") }
+  }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!selected || !user || !message.trim()) return
+    if (!selected || !user || !message.trim() || sending) return
+    const text = message.trim()
+    setSending(true)
     setMessageError("")
     try {
-      await sendMessage(selected.id, user.id, message.trim())
-      setMessage("")
+      await sendMessage(selected.id, user.id, text)
+      setMessage((current) => current.trim() === text ? "" : current)
       setMobileChat(true)
     } catch (error) {
       setMessageError(error instanceof Error ? error.message : "Không gửi được tin nhắn.")
-    }
+    } finally { setSending(false) }
   }
   const startChat = async (contact: { name: string; initials: string; avatarUrl?: string; id: string; roomId: string }) => {
     setStartingContactId(contact.id)
@@ -156,7 +171,7 @@ export default function MessagesPage() {
         <aside className={mobileChat ? "conversation-list hidden-mobile" : "conversation-list"}>
           <div className="message-title">
             <div>
-              <span className="eyebrow">Trao đổi trực tiếp</span>
+              
               <h1>Tin nhắn</h1>
             </div>
             <button aria-label="Tìm bạn qua số điện thoại" title="Tìm bạn qua số điện thoại" onClick={openPhoneSearch}>
@@ -181,7 +196,7 @@ export default function MessagesPage() {
               autoComplete="off"
               spellCheck={false}
             />
-            {search && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setSearch("")}>×</button>}
+            {search && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setSearch("")}><Icon name="close" size={16}/></button>}
           </label>
           <div className="message-tabs">
             <button className={!onlyUnread ? "active" : ""} onClick={() => setOnlyUnread(false)}>Tất cả</button>
@@ -223,7 +238,7 @@ export default function MessagesPage() {
         {selected ? (
           <section className={mobileChat ? "chat-window open-mobile" : "chat-window"}>
             <div className="chat-head">
-              <button className="back-chat" aria-label="Quay lại danh sách" onClick={() => setMobileChat(false)}>‹</button>
+              <button className="back-chat" aria-label="Quay lại danh sách" onClick={() => setMobileChat(false)}><Icon name="chevron" size={20}/></button>
               <Link className="profile-avatar-link" to={`/nguoi-dung/${selected.userId}`} aria-label={`Xem hồ sơ ${selected.name}`}>
                 <PersonAvatar initials={selected.avatar} avatarUrl={selected.avatarUrl ?? selectedContact?.avatarUrl} active={selected.active} />
               </Link>
@@ -242,10 +257,7 @@ export default function MessagesPage() {
                   className={selected.muted ? "chat-mute muted" : "chat-mute"}
                   aria-label={selected.muted ? "Bật thông báo cuộc trò chuyện" : "Tắt thông báo cuộc trò chuyện"}
                   aria-pressed={Boolean(selected.muted)}
-                  onClick={() => {
-                    toggleConversationMute(selected.id, user?.id ?? "")
-                    toast(selected.muted ? "Đã bật thông báo cuộc trò chuyện." : "Đã tắt thông báo cuộc trò chuyện.", "info")
-                  }}
+                  onClick={() => void changeMute()}
                   title={selected.muted ? "Bật thông báo" : "Tắt thông báo"}
                 >
                   <Icon name="bell" />
@@ -352,6 +364,7 @@ export default function MessagesPage() {
                     id="message-entry"
                     className="chat-entry-input"
                     aria-label="Viết tin nhắn"
+                    maxLength={5000}
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                     placeholder="Viết tin nhắn..."
@@ -361,7 +374,7 @@ export default function MessagesPage() {
                     spellCheck={false}
                   />
                 </div>
-                <button className="send-btn" aria-label="Gửi tin nhắn" disabled={!message.trim()}>
+                <button className="send-btn" aria-label="Gửi tin nhắn" disabled={!message.trim() || sending}>
                   <Icon name="send" size={18} />
                 </button>
               </form>
@@ -409,21 +422,19 @@ export default function MessagesPage() {
                   {isPassRoom
                     ? "🔄 Người pass phòng"
                     : selectedContact?.role === "landlord"
-                    ? "Chủ trọ chính chủ"
+                    ? "Chủ trọ"
                     : selectedContact?.role === "renter"
                     ? "Người tìm phòng"
                     : "Thành viên Trọ Ơi"}
                 </span>
 
                 <div className="profile-stats-row">
-                  <span className="stat-badge" title="Tài khoản đã xác minh">
-                    <Icon name="shield" size={13} /> Xác thực
-                  </span>
+                  
                   <span className="stat-badge" title="Đánh giá phản hồi">
-                    <Icon name="star" size={13} /> {roomReviews.length ? `${averageRating.toFixed(1)}/5` : "5.0/5"}
+                    <Icon name="star" size={13} /> {roomReviews.length ? `${averageRating.toFixed(1)}/5` : "Chưa có đánh giá"}
                   </span>
                   <span className="stat-badge" title="Tin đăng hiện tại">
-                    <Icon name="building" size={13} /> {contactListings.length || 1} tin
+                    <Icon name="building" size={13} /> {contactListings.length} tin
                   </span>
                 </div>
 
@@ -433,9 +444,9 @@ export default function MessagesPage() {
                     <button
                       type="button"
                       className="quick-action-btn"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(contactPhone)
-                        toast(`Đã sao chép số điện thoại: ${contactPhone}`, "success")
+                      onClick={async () => {
+                        try { if (!navigator.clipboard) throw new Error("Trình duyệt chưa cho phép sao chép."); await navigator.clipboard.writeText(contactPhone); toast("Đã sao chép số điện thoại.", "success") }
+                        catch (error) { setMessageError(error instanceof Error ? error.message : "Không thể sao chép số điện thoại.") }
                       }}
                       title={`Gọi hoặc sao chép: ${contactPhone}`}
                     >
@@ -467,10 +478,7 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     className={`quick-action-btn ${selected.muted ? "is-muted" : ""}`}
-                    onClick={() => {
-                      toggleConversationMute(selected.id, user?.id ?? "")
-                      toast(selected.muted ? "Đã bật chuông cuộc trò chuyện." : "Đã tắt chuông cuộc trò chuyện.", "info")
-                    }}
+                    onClick={() => void changeMute()}
                     title={selected.muted ? "Bật thông báo" : "Tắt thông báo"}
                   >
                     <span className="action-icon-circle action-mute"><Icon name="bell" size={16} /></span>
@@ -516,7 +524,7 @@ export default function MessagesPage() {
                       </p>
 
                       <div className="spotlight-specs-row">
-                        <span className="spec-tag"><Icon name="building" size={13} /> {relatedRoom.area || "25 m²"}</span>
+                        <span className="spec-tag"><Icon name="building" size={13} /> {relatedRoom.area || "Chưa cập nhật diện tích"}</span>
                         <span className="spec-tag"><Icon name="shield" size={13} /> {relatedRoom.deposit || "Cọc thỏa thuận"}</span>
                       </div>
 
@@ -580,10 +588,12 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   className="safety-report-trigger"
+                  disabled={!relatedRoom}
+                  title={relatedRoom ? "Báo cáo tin phòng liên quan" : "Mở tin phòng để gửi báo cáo nội dung"}
                   onClick={() => setReportModalOpen(true)}
                 >
                   <Icon name="flag" size={13} />
-                  <span>Báo cáo cuộc trò chuyện này</span>
+                  <span>Báo cáo tin phòng liên quan</span>
                 </button>
               </div>
             </div>
@@ -593,7 +603,7 @@ export default function MessagesPage() {
         {/* Schedule Modal (Hẹn lịch xem phòng) */}
         {scheduleModalOpen && (
           <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setScheduleModalOpen(false) }}>
-            <section className="action-dialog schedule-dialog" role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
+            <section className="action-dialog schedule-dialog" ref={scheduleDialogRef} role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title">
               <button className="dialog-close" onClick={() => setScheduleModalOpen(false)} aria-label="Đóng"><Icon name="close" /></button>
               <div className="dialog-header-custom">
                 <span className="dialog-badge-icon schedule-badge-icon"><Icon name="calendar" size={22} /></span>
@@ -671,7 +681,10 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   className="btn-confirm-schedule"
+                  disabled={scheduling}
                   onClick={async () => {
+                    if (scheduling) return
+                    setScheduling(true)
                     const formattedMsg = `📅 [LỜI HẸN XEM PHÒNG] Em muốn hẹn xem phòng vào lúc ${scheduleTime} (${scheduleDate.toLowerCase()})${scheduleNote ? `. Ghi chú: ${scheduleNote}` : ""}. Anh/chị có tiện giờ này không ạ?`
                     try {
                       await sendMessage(selected.id, user?.id ?? "", formattedMsg)
@@ -680,113 +693,28 @@ export default function MessagesPage() {
                       toast("Đã gửi lời hẹn xem phòng thành công!", "success")
                     } catch {
                       toast("Không thể gửi tin nhắn hẹn, vui lòng thử lại.", "error")
-                    }
+                    } finally { setScheduling(false) }
                   }}
                 >
-                  Xác nhận gửi lời hẹn
+                  {scheduling ? "Đang gửi…" : "Gửi lời hẹn"}
                 </button>
               </div>
             </section>
           </div>
         )}
 
-        {/* Report Modal (Báo cáo cuộc trò chuyện) */}
-        {reportModalOpen && (
-          <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setReportModalOpen(false) }}>
-            <section className="action-dialog report-dialog" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
-              <button className="dialog-close" onClick={() => setReportModalOpen(false)} aria-label="Đóng"><Icon name="close" /></button>
-              <div className="dialog-header-custom">
-                <span className="dialog-badge-icon report-badge-icon"><Icon name="flag" size={22} /></span>
-                <div>
-                  <h2 id="report-modal-title">Báo cáo cuộc trò chuyện</h2>
-                  <p className="dialog-subtitle">Báo cáo hành vi vi phạm của {selected.name} để BQT kiểm duyệt</p>
-                </div>
-              </div>
-
-              <div className="report-form-body">
-                <div className="report-field-group">
-                  <label className="schedule-label">Lý do báo cáo:</label>
-                  <div className="report-radio-list">
-                    {[
-                      "Yêu cầu đặt cọc trước khi xem phòng / Có dấu hiệu lừa đảo",
-                      "Thông tin phòng hoặc giá thuê sai lệch thực tế",
-                      "Ngôn từ quấy rối, xúc phạm hoặc thái độ không phù hợp",
-                      "Spam hoặc quảng cáo dịch vụ khác",
-                      "Khác",
-                    ].map((reason) => (
-                      <label key={reason} className="report-radio-label">
-                        <input
-                          type="radio"
-                          name="reportReason"
-                          value={reason}
-                          checked={reportReason === reason}
-                          onChange={(e) => setReportReason(e.target.value)}
-                        />
-                        <span>{reason}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="report-field-group">
-                  <label className="schedule-label" htmlFor="report-desc">Mô tả chi tiết vi phạm:</label>
-                  <textarea
-                    id="report-desc"
-                    className="report-desc-input"
-                    rows={3}
-                    value={reportDescription}
-                    onChange={(e) => setReportDescription(e.target.value)}
-                    placeholder="Cung cấp thêm chi tiết hoặc bằng chứng để BQT xử lý nhanh hơn..."
-                  />
-                </div>
-              </div>
-
-              <div className="dialog-actions-row">
-                <button type="button" className="btn-cancel" onClick={() => setReportModalOpen(false)}>Hủy</button>
-                <button
-                  type="button"
-                  className="btn-confirm-report"
-                  disabled={isSubmittingReport}
-                  onClick={async () => {
-                    if (!user) return
-                    setIsSubmittingReport(true)
-                    try {
-                      await addReport({
-                        reporterId: user.id,
-                        reporter: user.name,
-                        targetType: "Tin phòng",
-                        targetId: relatedRoom?.id ?? selected.id,
-                        targetTitle: relatedRoom?.title ?? `Cuộc trò chuyện với ${selected.name}`,
-                        reason: reportReason,
-                        description: reportDescription || `Người dùng ${user.name} báo cáo cuộc trò chuyện với ${selected.name}: ${reportReason}`,
-                      })
-                      setReportModalOpen(false)
-                      setReportDescription("")
-                      toast("Cảm ơn bạn! Đội ngũ kiểm duyệt Trọ Ơi đã tiếp nhận báo cáo và sẽ xác minh xử lý.", "success")
-                    } catch {
-                      toast("Có lỗi xảy ra khi gửi báo cáo.", "error")
-                    } finally {
-                      setIsSubmittingReport(false)
-                    }
-                  }}
-                >
-                  {isSubmittingReport ? "Đang gửi..." : "Gửi báo cáo"}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
+        {reportModalOpen && relatedRoom && <ReportDialog targetType="Tin phòng" targetId={relatedRoom.id} targetTitle={relatedRoom.title} onClose={() => setReportModalOpen(false)} />}
 
         {selectContact && (
           <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectContact(false) }}>
-            <section className="action-dialog zalo-contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-picker-title">
+            <section className="action-dialog phone-contact-dialog" ref={contactDialogRef} role="dialog" aria-modal="true" aria-labelledby="contact-picker-title">
               <button className="dialog-close" onClick={() => setSelectContact(false)} aria-label="Đóng"><Icon name="close" /></button>
-              <span className="eyebrow">Kết nối & Nhắn tin</span>
+              
               <h2 id="contact-picker-title">Tìm bạn qua số điện thoại</h2>
-              <p className="contact-picker-intro">Nhập chính xác số điện thoại của người thuê hoặc chủ trọ để bảo mật quyền riêng tư (giống Zalo).</p>
+              <p className="contact-picker-intro">Tìm thành viên bằng số điện thoại hoặc tên để bắt đầu cuộc trò chuyện.</p>
 
-              <form className="zalo-search-box" onSubmit={handlePhoneSearch}>
-                <div className="zalo-input-wrapper">
+              <form className="phone-search-box" onSubmit={handlePhoneSearch}>
+                <div className="phone-input-wrapper">
                   <Icon name="phone" size={18} />
                   <input
                     value={phoneQuery}
@@ -797,48 +725,48 @@ export default function MessagesPage() {
                     spellCheck={false}
                   />
                   {phoneQuery && (
-                    <button type="button" className="zalo-clear-icon" onClick={() => { setPhoneQuery(""); setPhoneResults([]); setPhoneSearched(false); }}>
+                    <button type="button" className="phone-clear-icon" onClick={() => { setPhoneQuery(""); setPhoneResults([]); setPhoneSearched(false); }}>
                       <Icon name="close" size={15} />
                     </button>
                   )}
                 </div>
-                <button type="submit" className="zalo-search-btn" disabled={!phoneQuery.trim() || phoneSearching}>
+                <button type="submit" className="phone-search-btn" disabled={!phoneQuery.trim() || phoneSearching}>
                   {phoneSearching ? "Đang tìm..." : "Tìm kiếm"}
                 </button>
               </form>
 
               {contactError && <p className="form-message error" role="alert">{contactError}</p>}
 
-              <div className="zalo-results-container">
+              <div className="phone-results-container">
                 {!phoneSearched ? (
-                  <div className="zalo-empty-state">
-                    <div className="zalo-state-icon">
+                  <div className="phone-empty-state">
+                    <div className="phone-state-icon">
                       <Icon name="phone" size={32} />
                     </div>
                     <strong>Bảo mật danh bạ</strong>
-                    <p>Hệ thống không hiển thị công khai danh sách toàn bộ thành viên. Vui lòng nhập số điện thoại để tìm chính xác người cần liên hệ.</p>
+                    <p>Nhập số điện thoại hoặc tên của thành viên bạn muốn liên hệ.</p>
                   </div>
                 ) : phoneResults.length > 0 ? (
                   phoneResults.map((item) => {
                     const room = listings.find((listing) => listing.ownerId === item.id && listing.status === "active")
                     const role = item.role === "landlord" ? "Chủ trọ" : "Người thuê"
                     return (
-                      <div className="zalo-contact-card" key={item.id}>
-                        <div className="zalo-contact-header">
+                      <div className="phone-contact-card" key={item.id}>
+                        <div className="phone-contact-header">
                           <PersonAvatar initials={item.initials} avatarUrl={item.avatarUrl} />
-                          <div className="zalo-contact-meta">
-                            <div className="zalo-name-row">
+                          <div className="phone-contact-meta">
+                            <div className="phone-name-row">
                               <strong>{item.name}</strong>
                               <span className="role-badge">{role}</span>
                             </div>
-                            <span className="zalo-contact-phone">📞 {item.phone || "Chưa công khai SĐT"}</span>
+                            <span className="phone-contact-phone"><Icon name="phone" size={13}/> {item.phone || "Chưa công khai SĐT"}</span>
                             {room && <span className="contact-room-title">Phòng: {room.title}</span>}
                           </div>
                         </div>
-                        <div className="zalo-contact-actions">
+                        <div className="phone-contact-actions">
                           <button
                             type="button"
-                            className="zalo-btn-chat"
+                            className="phone-btn-chat"
                             disabled={startingContactId === item.id}
                             onClick={() => startChat({ name: item.name, initials: item.initials, avatarUrl: item.avatarUrl, id: item.id, roomId: room?.id ?? "" })}
                           >
@@ -847,7 +775,7 @@ export default function MessagesPage() {
                           </button>
                           <Link
                             to={`/nguoi-dung/${item.id}`}
-                            className="zalo-btn-profile"
+                            className="phone-btn-profile"
                             onClick={() => setSelectContact(false)}
                           >
                             Xem hồ sơ
@@ -857,8 +785,8 @@ export default function MessagesPage() {
                     )
                   })
                 ) : (
-                  <div className="zalo-empty-state is-not-found">
-                    <div className="zalo-state-icon is-danger">
+                  <div className="phone-empty-state is-not-found">
+                    <div className="phone-state-icon is-danger">
                       <Icon name="search" size={32} />
                     </div>
                     <strong>Không tìm thấy người dùng</strong>

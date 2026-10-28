@@ -5,30 +5,28 @@ import AuthShell from "@/pages/auth/AuthShell"
 import useAuth from "@/hooks/useAuth"
 import type { UserRole } from "@/types/auth"
 import { authService } from "@/services/authService"
+import { isApiMode } from "@/services/apiClient"
 
 export default function LoginPage({ admin = false }: { admin?: boolean }) {
-  const [identifier, setIdentifier] = useState(
-    admin ? "admin@phongtroplus.vn" : "",
-  )
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [remember, setRemember] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
-  const [role, setRole] = useState<UserRole>(admin ? "admin" : "renter")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const fillDemo = (demoEmail: string, demoRole: UserRole) => {
+  const fillDemo = (demoEmail: string, _demoRole: UserRole) => {
     setIdentifier(demoEmail)
     setPassword(authService.demoPassword)
-    setRole(demoRole)
     setError("")
   }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (loading) return
     setError("")
     if (!identifier.trim() || password.length < 6) {
       setError("Vui lòng nhập tài khoản và mật khẩu có ít nhất 6 ký tự.")
@@ -70,40 +68,6 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
       }
     >
       <form className="auth-form" onSubmit={submit} noValidate>
-        {!admin && (
-          <fieldset className="role-picker">
-            <legend>
-              Đăng nhập tài khoản <span>*</span>
-            </legend>
-            <label>
-              <input
-                type="radio"
-                name="login-role"
-                checked={role === "renter"}
-                onChange={() => setRole("renter")}
-              />{" "}
-              Người thuê
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="login-role"
-                checked={role === "landlord"}
-                onChange={() => setRole("landlord")}
-              />{" "}
-              Chủ trọ
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="login-role"
-                checked={role === "admin"}
-                onChange={() => setRole("admin")}
-              />{" "}
-              Quản trị viên
-            </label>
-          </fieldset>
-        )}
         <label className="form-field">
           <span>
             Email hoặc số điện thoại <b>*</b>
@@ -154,7 +118,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
           </p>
         )}
         <Button disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
-        <div className="demo-credentials">
+        {!isApiMode && <div className="demo-credentials">
           <div className="demo-credentials-header">
             <strong>Tài khoản thử nghiệm</strong>
             <small>Bấm vào tài khoản bên dưới để tự động điền nhanh:</small>
@@ -214,7 +178,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
               </NavLink>
             )}
           </div>
-        </div>
+        </div>}
         {!admin && (
           <p className="auth-switch">
             Chưa có tài khoản? <NavLink to="/dang-ky">Đăng ký ngay</NavLink>

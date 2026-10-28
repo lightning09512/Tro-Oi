@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type FormEvent } from "react"
 import { Link } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
+import useDialogFocus from "@/hooks/useDialogFocus"
 import { authService } from "@/services/authService"
 import { useFavorites } from "@/contexts/FavoritesContext"
 import { usePlatform } from "@/contexts/PlatformContext"
@@ -24,6 +25,8 @@ export default function AccountPage({
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [avatarFeedback, setAvatarFeedback] = useState<{ message: string; type: "success" | "error" } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const avatarDialogRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(avatarDialogRef, () => setShowAvatarModal(false), showAvatarModal)
 
   useEffect(() => {
     setName(user?.name ?? "")
@@ -101,6 +104,7 @@ export default function AccountPage({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (status === "loading" || uploadingAvatar) return
     setErrorMessage("")
     if (
       passwordMode
@@ -162,6 +166,8 @@ export default function AccountPage({
             role="button"
             tabIndex={0}
             title="Bấm để đổi ảnh đại diện"
+            aria-label="Đổi ảnh đại diện"
+            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setShowAvatarModal(true) } }}
           >
             <span className="avatar xlarge account-avatar-display">
               {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : user?.initials}
@@ -193,7 +199,7 @@ export default function AccountPage({
         </aside>
         <section className="account-card">
           <div className="account-heading">
-            <span>Tài khoản của tôi</span>
+            
             <h1>{passwordMode ? "Đổi mật khẩu" : "Cài đặt thông tin tài khoản"}</h1>
             <p>
               {passwordMode
@@ -237,6 +243,7 @@ export default function AccountPage({
                   </span>
                   <input
                     type="password"
+                    autoComplete="current-password"
                     value={currentPassword}
                     onChange={(event) => setCurrentPassword(event.target.value)}
                   />
@@ -248,6 +255,7 @@ export default function AccountPage({
                   <div className="password-input">
                     <input
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       value={newPassword}
                       onChange={(event) => setNewPassword(event.target.value)}
                     />
@@ -267,6 +275,7 @@ export default function AccountPage({
                   </span>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     value={confirm}
                     onChange={(event) => setConfirm(event.target.value)}
                   />
@@ -293,7 +302,7 @@ export default function AccountPage({
 
       {showAvatarModal && (
         <div className="avatar-modal-backdrop" onClick={() => setShowAvatarModal(false)}>
-          <div className="avatar-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+          <div className="avatar-modal" ref={avatarDialogRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
             <div className="avatar-modal-header">
               <div>
                 <h3 id="avatar-modal-title">Cập nhật ảnh đại diện</h3>

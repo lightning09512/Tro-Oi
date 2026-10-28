@@ -21,7 +21,7 @@ export default function FavoritesPage() {
         </div>
         <div className="results-head favorites-heading">
           <div>
-            <span className="eyebrow">Bộ sưu tập của bạn</span>
+            
             <h1>Tin yêu thích</h1>
             <p>{savedRooms.length} phòng đã được lưu</p>
           </div>

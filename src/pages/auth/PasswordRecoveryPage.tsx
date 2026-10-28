@@ -19,6 +19,7 @@ export default function PasswordRecoveryPage({ reset = false }: { reset?: boolea
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (status === "loading") return
     setError("")
     if (!reset) {
       if (!identifier.trim()) { setError("Nhập email hoặc số điện thoại đã đăng ký."); return }
@@ -56,7 +57,7 @@ export default function PasswordRecoveryPage({ reset = false }: { reset?: boolea
       </>}
       {error && <p className="form-message error" role="alert">{error}</p>}
       {status === "success" && <p className="form-message success" role="status">Mật khẩu đã được cập nhật. Bạn có thể đăng nhập bằng mật khẩu mới.</p>}
-      {status !== "success" && <Button icon="check">{status === "loading" ? "Đang xử lý..." : reset ? "Xác nhận mật khẩu mới" : "Gửi mã xác nhận"}</Button>}
+      {status !== "success" && <Button disabled={status === "loading"} icon="check">{status === "loading" ? "Đang xử lý..." : reset ? "Xác nhận mật khẩu mới" : "Gửi mã xác nhận"}</Button>}
       <p className="auth-switch"><NavLink to="/dang-nhap">Quay lại đăng nhập</NavLink></p>
     </form>
   </AuthShell>

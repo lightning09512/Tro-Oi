@@ -3,7 +3,6 @@ import { photos } from "@/mocks/content"
 import { Icon } from "@/components/common/legacy"
 
 export default function AuthShell({
-  eyebrow,
   title,
   description,
   children,
@@ -17,7 +16,6 @@ export default function AuthShell({
     <main className="auth-page">
       <section className="auth-card">
         <div className="auth-heading">
-          <span>{eyebrow}</span>
           <h1>{title}</h1>
           <p>{description}</p>
         </div>
@@ -26,7 +24,6 @@ export default function AuthShell({
       <aside className="auth-aside">
         <img className="auth-scene" src={photos[2]} alt="Phòng trọ có ánh sáng tự nhiên" />
         <div>
-          <span className="auth-kicker">Trọ Ơi · TP. Hồ Chí Minh</span>
           <h2>
             Tìm một nơi ở,
             <br />

@@ -311,12 +311,12 @@ export default function MembersPage() {
       <main className="page-bg fb-friends-hub-page">
         <div className="container" style={{ maxWidth: "600px", padding: "80px 16px", textAlign: "center" }}>
           <div className="members-auth-guard" style={{ background: "#ffffff", padding: "48px 24px", borderRadius: "24px", border: "1px solid #e3ede6", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
-            <span className="zalo-empty-circle" style={{ margin: "0 auto 16px", background: "#edf5ee", color: "#245f3b", width: "64px", height: "64px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            <span className="phone-empty-circle" style={{ margin: "0 auto 16px", background: "#edf5ee", color: "#245f3b", width: "64px", height: "64px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="users" size={32} />
             </span>
             <h2 style={{ fontSize: "24px", fontWeight: "800", marginBottom: "8px", color: "#1e382b" }}>Bạn bè & Kết nối</h2>
             <p style={{ color: "#62746a", fontSize: "14px", marginBottom: "28px", lineHeight: "1.6" }}>
-              Đăng nhập để xem lời mời kết bạn, kết nối với người thuê và chủ trọ uy tín, cùng nhắn tin thảo luận tìm phòng!
+              Đăng nhập để xem lời mời kết bạn, kết nối với người thuê và chủ trọ, cùng nhắn tin thảo luận tìm phòng!
             </p>
             <button
               type="button"
@@ -345,7 +345,7 @@ export default function MembersPage() {
             <div>
               <h1 className="fb-friends-title">Bạn bè & Kết nối</h1>
               <p className="fb-friends-subtitle">
-                Xem lời mời kết bạn, tìm kiếm người thuê trọ, chủ nhà uy tín hoặc tra cứu số điện thoại an toàn.
+                Xem lời mời kết bạn, tìm kiếm người thuê trọ, chủ nhà hoặc tra cứu số điện thoại an toàn.
               </p>
             </div>
           </div>
@@ -392,7 +392,7 @@ export default function MembersPage() {
               onClick={() => switchTab("search")}
             >
               <Icon name="phone" size={18} />
-              <span>Tìm qua SĐT (Zalo)</span>
+              <span>Tìm qua số điện thoại</span>
             </button>
           </nav>
         </header>
@@ -446,7 +446,7 @@ export default function MembersPage() {
                         ) : (
                           <span className="fb-user-avatar-initials">{item.initials}</span>
                         )}
-                        <span className="fb-online-dot" title="Đang trực tuyến" />
+                        
                       </div>
 
                       {/* Card Info */}
@@ -516,7 +516,7 @@ export default function MembersPage() {
               <div className="fb-tab-header">
                 <div>
                   <h2 className="fb-section-title">Những người bạn có thể biết</h2>
-                  <p className="fb-section-desc">Gợi ý người thuê phòng và chủ trọ uy tín trong khu vực của bạn.</p>
+                  <p className="fb-section-desc">Gợi ý người thuê phòng và chủ trọ trong khu vực của bạn.</p>
                 </div>
               </div>
 
@@ -656,7 +656,7 @@ export default function MembersPage() {
                         ) : (
                           <span className="fb-user-avatar-initials">{friend.initials}</span>
                         )}
-                        <span className="fb-online-dot" />
+                        
                       </div>
 
                       <div className="fb-user-body">
@@ -729,20 +729,20 @@ export default function MembersPage() {
             </section>
           )}
 
-          {/* ================= TAB 4: TÌM QUA SỐ ĐIỆN THOẠI (ZALO) ================= */}
+          {/* ================= TAB 4: TÌM QUA SỐ ĐIỆN THOẠI ================= */}
           {activeTab === "search" && (
             <section className="fb-tab-section">
               <div className="fb-search-panel">
                 <div className="fb-search-panel-header">
                   <span className="fb-phone-badge">
                     <Icon name="phone" size={16} />
-                    <span>Tra cứu Zalo-Style an toàn & bảo mật</span>
+                    <span>Tra cứu an toàn & bảo mật</span>
                   </span>
                   <h2>Tìm bạn qua số điện thoại</h2>
                   <p>
                     Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ nhà trọ và kết nối trực tiếp.
                   </p>
-                  <div className="zalo-privacy-box" style={{ maxWidth: "680px", margin: "16px auto 0" }}>
+                  <div className="phone-privacy-box" style={{ maxWidth: "680px", margin: "16px auto 0" }}>
                     <Icon name="shield" size={18} />
                     <span>
                       <b>Chính sách bảo mật:</b> Danh bạ không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
@@ -786,15 +786,15 @@ export default function MembersPage() {
                 {/* Search Results Display */}
                 <div className="fb-search-results-area" style={{ marginTop: "32px", maxWidth: "680px", margin: "32px auto 0" }}>
                   {!hasSearched ? (
-                    <div className="zalo-page-empty">
-                      <div className="zalo-empty-circle">
+                    <div className="phone-page-empty">
+                      <div className="phone-empty-circle">
                         <Icon name="phone" size={38} />
                       </div>
                       <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Nhập số điện thoại để tra cứu</h3>
                       <p style={{ color: "#65766c", fontSize: "14px", margin: 0 }}>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
                     </div>
                   ) : searchLoading ? (
-                    <div className="zalo-page-empty">
+                    <div className="phone-page-empty">
                       <div className="forum-lazy-spinner" />
                       <p style={{ marginTop: "16px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
                     </div>
@@ -898,8 +898,8 @@ export default function MembersPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="zalo-page-empty">
-                      <div className="zalo-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                    <div className="phone-page-empty">
+                      <div className="phone-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
                         <Icon name="close" size={38} />
                       </div>
                       <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Không tìm thấy người dùng</h3>

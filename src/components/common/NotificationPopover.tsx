@@ -97,6 +97,8 @@ export default function NotificationPopover({ onClose }: { onClose: () => void }
 
   const [mainTab, setMainTab] = useState<MainTab>("activity")
   const [filterCategory, setFilterCategory] = useState<FilterCategory>("all")
+  const [pending, setPending] = useState("")
+  const [error, setError] = useState("")
 
   const myNotifications = useMemo(() => {
     return notifications.filter((item) => item.userId === user?.id)
@@ -128,19 +130,26 @@ export default function NotificationPopover({ onClose }: { onClose: () => void }
     return tabFiltered.filter((item) => getCategory(item) === filterCategory)
   }, [tabFiltered, filterCategory])
 
-  const handleMarkAllRead = () => {
-    if (user?.id) {
-      markNotificationsRead(user.id)
-    }
+  const handleMarkAllRead = async () => {
+    if (!user?.id || pending) return
+    setPending("all")
+    setError("")
+    try { await markNotificationsRead(user.id) }
+    catch (failure) { setError(failure instanceof Error ? failure.message : "Chưa đánh dấu được thông báo. Hãy thử lại.") }
+    finally { setPending("") }
   }
 
-  const handleItemClick = (item: NotificationRecord) => {
-    if (!item.read) {
-      markSingleNotificationRead(item.id, true)
-    }
-    const targetUrl = getTargetUrl(item, user?.role)
-    onClose()
-    navigate(targetUrl)
+  const handleItemClick = async (item: NotificationRecord) => {
+    if (pending) return
+    setPending(item.id)
+    setError("")
+    try {
+      if (!item.read) await markSingleNotificationRead(item.id, true)
+      const targetUrl = getTargetUrl(item, user?.role)
+      onClose()
+      navigate(targetUrl)
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Chưa mở được thông báo. Hãy thử lại.") }
+    finally { setPending("") }
   }
 
   return (
@@ -148,15 +157,16 @@ export default function NotificationPopover({ onClose }: { onClose: () => void }
       {/* Header */}
       <div className="notification-popover-head">
         <div className="notification-head-row">
-          <h3 className="notification-head-title">Thông Báo</h3>
+          <h3 className="notification-head-title">Thông báo</h3>
           {unreadCount > 0 && (
             <button
               type="button"
               className="notification-mark-all-btn"
               onClick={handleMarkAllRead}
+              disabled={Boolean(pending)}
             >
               <Icon name="check" size={14} />
-              <span>Đã đọc tất cả</span>
+              <span>{pending === "all" ? "Đang cập nhật…" : "Đánh dấu đã đọc"}</span>
             </button>
           )}
         </div>
@@ -236,6 +246,7 @@ export default function NotificationPopover({ onClose }: { onClose: () => void }
 
       {/* Notification items list */}
       <div className="notification-list-body">
+        {error && <p className="form-error" role="alert">{error}</p>}
         {displayItems.length > 0 ? (
           displayItems.map((item) => {
             const category = getCategory(item)

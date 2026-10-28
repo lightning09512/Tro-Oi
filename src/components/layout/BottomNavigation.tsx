@@ -6,7 +6,7 @@ export default function BottomNavigation() {
   const { user } = useAuth()
   return (
     <nav className="bottom-nav" aria-label="Điều hướng di động">
-      <NavLink to="/">
+      <NavLink to="/" end>
         <Icon name="home" />
         <span>Trang chủ</span>
       </NavLink>
@@ -18,11 +18,11 @@ export default function BottomNavigation() {
         <Icon name="users" />
         <span>Diễn đàn</span>
       </NavLink>
-      <NavLink to={user ? "/tin-nhan" : "/dang-nhap"}>
-        <Icon name="chat" />
-        <span>Tin nhắn</span>
+      <NavLink to={user?.role === "admin" ? "/admin" : user ? "/tin-nhan" : "/dang-nhap"}>
+        <Icon name={user?.role === "admin" ? "chart" : "chat"} />
+        <span>{user?.role === "admin" ? "Quản trị" : "Tin nhắn"}</span>
       </NavLink>
-      <NavLink to={user ? "/trang-ca-nhan" : "/dang-nhap"}>
+      <NavLink to={user?.role === "admin" ? "/admin/ho-so" : user ? "/trang-ca-nhan" : "/dang-nhap"}>
         {user ? (
           <span className="avatar">
             {user.avatarUrl ? <img className="user-avatar-image" src={user.avatarUrl} alt="" /> : user.initials}

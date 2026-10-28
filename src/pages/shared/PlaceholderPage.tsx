@@ -17,7 +17,7 @@ export default function PlaceholderPage({
         <span className="placeholder-icon">
           <Icon name="building" size={28} />
         </span>
-        <span className="eyebrow">{eyebrow}</span>
+        
         <h1>{title}</h1>
         <p>{description}</p>
         <div>

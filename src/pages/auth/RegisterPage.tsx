@@ -34,6 +34,7 @@ export default function RegisterPage() {
     }
   }
   const requestCode = async () => {
+    if (sendingCode || loading) return
     setError("")
     setNotice("")
     const email = values.email.trim().toLocaleLowerCase("vi")
@@ -54,6 +55,7 @@ export default function RegisterPage() {
   }
   const submit = async (event: FormEvent) => {
     event.preventDefault()
+    if (loading || sendingCode) return
     setError("")
     if (Object.values(values).some((value) => !value.trim()))
       return setError("Vui lòng điền đầy đủ các trường bắt buộc.")
@@ -131,17 +133,30 @@ export default function RegisterPage() {
             Email <b>*</b>
           </span>
           <input
+            type="email"
             value={values.email}
             onChange={(event) => update("email", event.target.value)}
             placeholder="vidu@email.com"
             autoComplete="email"
           />
         </label>
-        <div className="full-field">
+        <label className="form-field">
+          <span>
+            Số điện thoại <b>*</b>
+          </span>
+          <input
+            type="tel"
+            value={values.phone}
+            onChange={(event) => update("phone", event.target.value)}
+            placeholder="09xx xxx xxx"
+            autoComplete="tel"
+          />
+        </label>
+        <div className="full-field registration-code-action">
           <Button type="button" variant="outline" onClick={requestCode} disabled={sendingCode || loading}>
             {sendingCode ? "Đang gửi mã..." : codeSentEmail ? "Gửi lại mã xác minh" : "Gửi mã xác minh"}
           </Button>
-          <small>{isApiMode ? "Mã sẽ được gửi tới email bằng dịch vụ SMTP của project." : "Chế độ demo hiển thị mã xác minh trên trang."}</small>
+          <small>{isApiMode ? "Kiểm tra hộp thư đến và thư rác để nhận mã xác minh." : "Chế độ demo hiển thị mã xác minh trên trang."}</small>
         </div>
         {notice && <p className="form-message success full-field" role="status">{notice}</p>}
         {codeSentEmail && <label className="form-field full-field">
@@ -156,17 +171,6 @@ export default function RegisterPage() {
           />
           <small>Mã chỉ dùng một lần và hết hạn sau 15 phút.</small>
         </label>}
-        <label className="form-field">
-          <span>
-            Số điện thoại <b>*</b>
-          </span>
-          <input
-            value={values.phone}
-            onChange={(event) => update("phone", event.target.value)}
-            placeholder="09xx xxx xxx"
-            autoComplete="tel"
-          />
-        </label>
         <label className="form-field">
           <span>
             Mật khẩu <b>*</b>
@@ -215,7 +219,7 @@ export default function RegisterPage() {
           </p>
         )}
         <div className="full-field">
-          <Button disabled={loading}>{loading ? "Đang tạo tài khoản..." : "Đăng ký"}</Button>
+          <Button disabled={loading || sendingCode}>{loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</Button>
         </div>
         <p className="auth-switch full-field">
           Đã có tài khoản? <NavLink to="/dang-nhap">Đăng nhập</NavLink>

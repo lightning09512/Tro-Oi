@@ -27,13 +27,22 @@ export default function MainHeader() {
   const avatarDropdownRef = useRef<HTMLDivElement>(null)
   const notificationDropdownRef = useRef<HTMLDivElement>(null)
   const menuNavRef = useRef<HTMLElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [headerLocation, setHeaderLocation] = useState("TP. Hồ Chí Minh")
+  const [headerLocation, setHeaderLocation] = useState("")
   const { user, logout } = useAuth()
   const { notifications } = usePlatform()
   const unreadNotifications = notifications.filter((item) => item.userId === user?.id && !item.read).length
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
+  useEffect(() => {
+    setMenuOpen(false)
+    setAvatarOpen(false)
+    setNotificationOpen(false)
+    const params = new URLSearchParams(search)
+    setSearchQuery(params.get("q") ?? "")
+    if (pathname === "/tim-phong") setHeaderLocation(params.get("location") ?? "")
+  }, [pathname, search])
   const isAuthPage =
     pathname === "/dang-nhap" ||
     pathname === "/dang-ky" ||
@@ -51,7 +60,7 @@ export default function MainHeader() {
       if (notificationOpen && notificationDropdownRef.current && !notificationDropdownRef.current.contains(target)) {
         setNotificationOpen(false)
       }
-      if (menuOpen && menuNavRef.current && !menuNavRef.current.contains(target)) {
+      if (menuOpen && menuNavRef.current && !menuNavRef.current.contains(target) && !menuButtonRef.current?.contains(target)) {
         setMenuOpen(false)
       }
     }
@@ -80,8 +89,8 @@ export default function MainHeader() {
         ]
       : user?.role === "renter"
         ? [...primaryLinks, ["/tim-ban-be", "Bạn bè"], ["/tin-nhan", "Tin nhắn"]]
-        : primaryLinks
-  const desktopLinks: NavigationLink[] = user
+        : [...primaryLinks, ["/dang-nhap", "Đăng nhập"], ["/dang-ky", "Đăng ký"]]
+  const desktopLinks: NavigationLink[] = user && user.role !== "admin"
     ? [...primaryLinks, ["/tim-ban-be", "Bạn bè"]]
     : primaryLinks
 
@@ -95,9 +104,11 @@ export default function MainHeader() {
   const actionClass = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-[#dfe7e0] bg-white px-4 text-[14px] font-semibold text-[#344b3a] transition-colors hover:border-[#bfd4c2] hover:bg-[#f4f8f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
 
   return (
-    <header className="sticky top-0 z-50 h-[72px] border-b border-[#e1e8e2] bg-white/95 backdrop-blur print:hidden">
+    <header className={`site-header ${user ? "site-header--authenticated" : ""} sticky top-0 z-50 h-[72px] border-b border-[#e1e8e2] bg-white print:hidden`}>
+      <a className="skip-link" href="#main-content">Đến nội dung chính</a>
       <div className="mx-auto flex h-full w-full max-w-[1480px] items-center gap-2 px-3 sm:gap-3 sm:px-5 xl:gap-4 xl:px-7">
         <button
+          ref={menuButtonRef}
           className="inline-grid size-10 shrink-0 place-items-center rounded-full border border-[#e1e8e2] bg-white text-[#345441] transition-colors hover:bg-[#f0f6f1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a] lg:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
@@ -114,7 +125,7 @@ export default function MainHeader() {
           aria-label="Trọ Ơi - Trang chủ"
         >
           <BrandMark size={34} />
-          <span>Trọ <span className="text-[#34794a]">Ơi</span></span>
+          <span>Trọ <span className="text-[#245f3b]">Ơi</span></span>
         </NavLink>
 
         {!isAuthPage && (
@@ -131,11 +142,11 @@ export default function MainHeader() {
             </div>
 
             <form
-              className="group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
+              className="header-search-form group hidden h-11 min-w-[180px] max-w-[320px] xl:max-w-[390px] 2xl:max-w-[460px] flex-1 items-center gap-2 rounded-full border border-transparent bg-[#f2f5f2] pl-3.5 pr-1 text-[#718078] transition-colors focus-within:border-[#c9dccd] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#34794a]/10 min-[1120px]:flex"
               onSubmit={(event) => {
                 event.preventDefault()
                 const params = new URLSearchParams()
-                if (searchQuery.trim()) params.set("location", searchQuery.trim())
+                if (searchQuery.trim()) params.set("q", searchQuery.trim())
                 navigate(`/tim-phong?${params.toString()}`)
               }}
             >
@@ -143,7 +154,7 @@ export default function MainHeader() {
               <input
                 className="header-search-field min-w-0 flex-1 border-0 bg-transparent text-[14px] text-[#26382e] outline-none placeholder:text-[#84908a]"
                 aria-label="Tìm kiếm"
-                placeholder="Tìm phòng, khu vực, tiện nghi..."
+                placeholder="Tìm tên phòng, khu vực…"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 autoComplete="off"
@@ -221,18 +232,18 @@ export default function MainHeader() {
               </div>
 
               <NavLink
-                to="/tin-nhan"
-                className={({ isActive }) => `${actionClass} max-lg:hidden lg:inline-flex ${isActive ? "border-[#bfd4c2] bg-[#edf5ee] text-[#245f3b]" : ""}`}
+                to={user.role === "admin" ? "/admin" : "/tin-nhan"}
+                className={({ isActive }) => `${actionClass} header-message-link max-lg:hidden lg:inline-flex ${isActive ? "border-[#bfd4c2] bg-[#edf5ee] text-[#245f3b]" : ""}`}
               >
-                <Icon name="chat" size={18} />
-                Tin nhắn
+                <Icon name={user.role === "admin" ? "chart" : "chat"} size={18} />
+                {user.role === "admin" ? "Quản trị" : "Tin nhắn"}
               </NavLink>
 
               {user.role === "landlord" && (
                 <>
                   <NavLink
                     to="/chu-tro/quan-ly-tin"
-                    className={({ isActive }) => `${actionClass} max-lg:hidden lg:inline-flex ${isActive ? "border-[#bfd4c2] bg-[#edf5ee] text-[#245f3b]" : ""}`}
+                    className={({ isActive }) => `${actionClass} header-manage-link max-lg:hidden lg:inline-flex ${isActive ? "border-[#bfd4c2] bg-[#edf5ee] text-[#245f3b]" : ""}`}
                   >
                     Quản lý tin
                   </NavLink>
@@ -263,7 +274,7 @@ export default function MainHeader() {
                   <Icon name="down" size={15} />
                 </button>
                 {avatarOpen && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] z-[90] w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[#e1e8e2] bg-white p-2 shadow-[0_16px_36px_rgb(29_58_38_/_0.14)]">
+                  <div className="header-account-menu absolute right-0 top-[calc(100%+8px)] z-[90] w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[#e1e8e2] bg-white p-2 shadow-[0_16px_36px_rgb(29_58_38_/_0.14)]">
                     <div className="mb-1.5 flex items-center gap-3 border-b border-[#e5ece6] px-2 py-2.5">
                       <span className="inline-grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">
                         {user.avatarUrl ? <img className="size-full object-cover" src={user.avatarUrl} alt="" /> : user.initials}
@@ -311,7 +322,7 @@ export default function MainHeader() {
           ) : (
             <div className="flex items-center gap-1 sm:gap-2">
               <button
-                className={`inline-flex h-10 items-center justify-center rounded-full px-2.5 text-[13px] font-semibold transition-colors sm:px-3 ${
+                className={`header-guest-login inline-flex h-11 items-center justify-center rounded-full px-2.5 text-[13px] font-semibold transition-colors sm:px-3 ${
                   pathname === "/dang-nhap"
                     ? "bg-[#edf5ee] text-[#245f3b]"
                     : "text-[#315b3d] hover:bg-[#f0f6f1]"

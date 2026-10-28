@@ -13,7 +13,7 @@ export default function MainLayout() {
   return (
     <>
       <MainHeader />
-      <Outlet />
+      <div id="main-content" className="content-route" tabIndex={-1}><Outlet /></div>
       {!isFocusedWorkspace && <SiteFooter variant={isPublicContent ? "full" : "compact"} />}
       <BottomNavigation />
     </>
