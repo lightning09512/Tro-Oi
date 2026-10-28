@@ -1,5 +1,6 @@
 /* Public discovery: a quiet green frame, useful photography and readable facts. */
-.public-home { background: #fff; }
+.public-home { background: #f5f8f5; }
+.public-search, .detail-page { background: #f5f8f5; }
 .public-home .hero { background: #edf4ed; overflow: visible; isolation: isolate; }
 .public-home .hero::after { display: none; }
 .public-home .hero-inner { padding-block: 48px 34px; }

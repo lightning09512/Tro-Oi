@@ -1,3 +1,35 @@
+/* ========================================================
+   UNIFIED APP-WIDE CANVAS & BACKGROUND (#f5f8f5)
+   ======================================================== */
+html,
+body,
+#root,
+#main-content,
+.content-route,
+.page-bg,
+.public-home,
+.public-search,
+.detail-page,
+.forum-page,
+.fb-friends-hub-page,
+.nhatot-page-wrapper,
+.favorites-page,
+.messages-page,
+.notifications-page,
+.account-page,
+.reports-page,
+.workspace-page,
+.management-page,
+.admin-shell,
+.admin-layout,
+.admin-main,
+.admin-resource-page,
+.auth-page,
+.error-page,
+.placeholder-page {
+  background-color: #f5f8f5 !important;
+}
+
 /* Shared product primitives. Page-specific refinements follow this file. */
 :root {
   --ui-space-1: 4px;
