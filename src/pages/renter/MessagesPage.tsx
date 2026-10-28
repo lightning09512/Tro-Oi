@@ -231,7 +231,7 @@ export default function MessagesPage() {
                 >
                   <img src={relatedRoom.image} alt={relatedRoom.title} />
                   <div>
-                    <small>Bạn đang hỏi về phòng</small>
+                    <small>{(user?.role === "landlord" || (relatedRoom && relatedRoom.ownerId === user?.id)) ? "Khách đang hỏi về phòng của bạn" : "Bạn đang hỏi về phòng"}</small>
                     <strong>{relatedRoom.title}</strong>
                     <span>
                       <b>{relatedRoom.price}/tháng</b>
@@ -276,7 +276,7 @@ export default function MessagesPage() {
 
             <div className="chat-composer">
               {messageError && <p className="form-message error" role="alert">{messageError}</p>}
-              {!message.trim() && (
+              {user?.role !== "landlord" && (!relatedRoom || relatedRoom.ownerId !== user?.id) && !message.trim() && (
                 <div className="chat-quick-actions" aria-label="Gợi ý tin nhắn">
                   {(relatedRoom
                     ? [
