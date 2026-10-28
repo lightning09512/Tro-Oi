@@ -144,6 +144,84 @@ function Home() {
   const [location, setLocation] = useState("TP. Hồ Chí Minh")
   const [maxPrice, setMaxPrice] = useState("")
   const [areaRange, setAreaRange] = useState("all")
+  const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : user ? "/chu-tro/dang-tin" : "/dang-nhap"
+
+  const promoCampaigns = useMemo(() => [
+    {
+      id: "landlord-campaign",
+      tag: "Chương trình dành cho chủ trọ",
+      image: "/images/banners/banner-nhatot-style.jpg",
+      title: "Đăng tin cho thuê trên Trọ Ơi - Tiếp cận hơn 50.000+ người thuê mỗi tháng",
+      description: "Đăng tin hoàn toàn miễn phí, kết nối người thuê trực tiếp không qua trung gian. Hệ thống hỗ trợ gắn nhãn chính chủ xác thực và quản lý lịch hẹn thông minh!",
+      buttonText: "Đăng tin ngay",
+      link: landlordProgramUrl,
+    },
+    {
+      id: "renter-campaign",
+      tag: "Ưu đãi sinh viên & người thuê",
+      image: "/images/banners/banner-student-nhatot.jpg",
+      title: "Rủ bạn cùng tìm phòng trên Trọ Ơi - Nhận trọn ưu đãi tiện ích",
+      description: "Khám phá hàng ngàn phòng trọ gần các trường đại học lớn tại TP.HCM, xem ảnh thật, giá điện nước minh bạch và hẹn xem phòng tiện lợi ngay trên hệ thống!",
+      buttonText: "Tìm phòng ngay",
+      link: "/tim-phong",
+    },
+    {
+      id: "community-campaign",
+      tag: "Cộng đồng & Tìm ở ghép",
+      image: "/images/banners/banner-roommate-community.jpg",
+      title: "Tìm bạn ở ghép & Pass phòng trên Diễn đàn Trọ Ơi",
+      description: "Kết nối bạn cùng phòng lý tưởng, pass phòng sang nhượng cọc nhanh chóng và chia sẻ kinh nghiệm thuê trọ thực tế từ cộng đồng.",
+      buttonText: "Tham gia diễn đàn",
+      link: "/dien-dan",
+    },
+    {
+      id: "verified-campaign",
+      tag: "Phòng trọ xác thực 100%",
+      image: "/images/banners/banner-verified-safety.jpg",
+      title: "Phòng trọ chính chủ xác thực - An tâm đặt cọc, không lo tin ảo",
+      description: "Trọ Ơi cam kết 100% tin phòng được kiểm duyệt thông tin, giá thuê minh bạch, hỗ trợ xem phòng trực tiếp và bảo vệ quyền lợi người thuê.",
+      buttonText: "Khám phá ngay",
+      link: "/tim-phong",
+    },
+  ], [landlordProgramUrl])
+
+  const [activeCampaignIndex, setActiveCampaignIndex] = useState(0)
+  const [isCarouselHovered, setIsCarouselHovered] = useState(false)
+  const currentCampaign = promoCampaigns[activeCampaignIndex] ?? promoCampaigns[0]
+  const touchStartXRef = useRef<number | null>(null)
+
+  const handlePrevCampaign = () => {
+    setActiveCampaignIndex((prev) => (prev - 1 + promoCampaigns.length) % promoCampaigns.length)
+  }
+
+  const handleNextCampaign = () => {
+    setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)
+  }
+
+  useEffect(() => {
+    if (isCarouselHovered) return
+    const timer = setInterval(() => {
+      setActiveCampaignIndex((prev) => (prev + 1) % promoCampaigns.length)
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [isCarouselHovered, promoCampaigns.length])
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return
+    const touchEndX = e.changedTouches[0].clientX
+    const diff = touchStartXRef.current - touchEndX
+    if (diff > 45) {
+      handleNextCampaign()
+    } else if (diff < -45) {
+      handlePrevCampaign()
+    }
+    touchStartXRef.current = null
+  }
+
   const buildSearchUrl = (roomType?: string) => {
     const params = new URLSearchParams()
     if (roomType) params.set("type", roomType)
@@ -225,6 +303,102 @@ function Home() {
         </Link>)}</div>
       </div></section>}
       <section className="home-action-section"><div className="container"><div className="home-action-band"><div><h2>{user?.role === "renter" ? "Tìm bạn ở ghép, chia sẻ chuyện thuê trọ." : "Có một căn phòng đang chờ người ở?"}</h2><p>{user?.role === "renter" ? "Đăng bài trên diễn đàn để tìm bạn cùng phòng hoặc chia sẻ thông tin pass phòng." : "Đăng tin với ảnh và thông tin rõ ràng, quản lý tin và trao đổi với người quan tâm ngay trên Trọ Ơi."}</p></div><Link to={postingLink} className="btn primary">{user?.role === "renter" ? "Vào diễn đàn" : user?.role === "admin" ? "Quản lý tin đăng" : "Bắt đầu đăng tin"}<Icon name="chevron" size={17}/></Link></div></div></section>
+      <section className="home-campaign-section" aria-labelledby="home-campaign-title">
+        <div className="container">
+          <div className="campaign-head">
+            <h2 id="home-campaign-title" className="campaign-section-title">Ưu đãi / Chương trình</h2>
+          </div>
+
+          <div
+            className="campaign-banner-card"
+            onMouseEnter={() => setIsCarouselHovered(true)}
+            onMouseLeave={() => setIsCarouselHovered(false)}
+          >
+            <div
+              className="campaign-carousel-viewport"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div
+                className="campaign-carousel-track"
+                style={{
+                  transform: `translate3d(-${activeCampaignIndex * 100}%, 0, 0)`,
+                  transition: "transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+              >
+                {promoCampaigns.map((campaign, idx) => (
+                  <div key={campaign.id} className="campaign-carousel-slide">
+                    <Link
+                      to={campaign.link}
+                      className="campaign-image-link"
+                      aria-label={campaign.title}
+                    >
+                      <img
+                        src={campaign.image}
+                        alt={campaign.title}
+                        loading={idx === 0 ? "eager" : "lazy"}
+                        draggable="false"
+                      />
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="campaign-nav-arrow campaign-nav-prev"
+                aria-label="Xem chương trình trước"
+                onClick={handlePrevCampaign}
+              >
+                <Icon name="chevron" size={18} />
+              </button>
+              <button
+                type="button"
+                className="campaign-nav-arrow campaign-nav-next"
+                aria-label="Xem chương trình tiếp theo"
+                onClick={handleNextCampaign}
+              >
+                <Icon name="chevron" size={18} />
+              </button>
+
+              <div className="campaign-dots" role="tablist" aria-label="Danh sách chương trình">
+                {promoCampaigns.map((item, idx) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={idx === activeCampaignIndex}
+                    className={`campaign-dot${idx === activeCampaignIndex ? " is-active" : ""}`}
+                    onClick={() => setActiveCampaignIndex(idx)}
+                    aria-label={`Chuyển đến chương trình ${idx + 1}`}
+                  >
+                    <span className="campaign-dot-inner" />
+                  </button>
+                ))}
+              </div>
+
+              <div className="campaign-counter-badge">
+                {activeCampaignIndex + 1} / {promoCampaigns.length}
+              </div>
+            </div>
+
+            <div className="campaign-info-bar" key={currentCampaign.id}>
+              <div className="campaign-copy">
+                <span className="campaign-tag">{currentCampaign.tag}</span>
+                <h3 className="campaign-title">{currentCampaign.title}</h3>
+                <p className="campaign-desc">{currentCampaign.description}</p>
+              </div>
+              <div className="campaign-action">
+                <Link to={currentCampaign.link} className="campaign-cta-btn">
+                  <span>{currentCampaign.buttonText}</span>
+                  <Icon name="chevron" size={14} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="container community-preview">
         <SectionTitle title="Chuyện thuê trọ từ cộng đồng" action="Vào diễn đàn" onAction={() => navigate("/dien-dan")}/>
         {latestPosts.length ? <div className="story-grid">
