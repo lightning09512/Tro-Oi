@@ -17,17 +17,20 @@
 .public-home .hero-room-location { margin: 0; color: #657168; font-size: 12px; }
 .public-home .hero-room-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; margin: 12px 0 0; color: #c4531e; font-size: 21px; font-weight: 700; }
 .public-home .hero-room-price small { color: #657168; font-size: 12px; font-weight: 400; white-space: nowrap; }
-.public-home .search-panel { border: 0; border-radius: 16px; padding: 22px; margin-top: 32px; box-shadow: 0 12px 28px rgba(24, 53, 34, .07); overflow: visible; }
-.public-home .search-panel-tabs { border: 0; margin: 0 0 16px; padding: 0; min-height: 0; }
-.public-home .search-panel-tab-active { padding: 0; min-height: 0; border: 0; color: #27362c; font-size: 15px; }
+.public-home .search-panel { border: 1px solid #dfe7e1; border-radius: 14px; padding: 14px 18px 16px; margin-top: 20px; box-shadow: 0 8px 24px rgba(24, 53, 34, .06); overflow: visible; background: #ffffff; }
+.public-home .search-panel-tabs { border: 0; margin: 0 0 10px; padding: 0; min-height: 0; }
+.public-home .search-panel-tab-active { padding: 3px 8px; min-height: 0; border: 0; color: #1b472c; font-size: 13px; font-weight: 600; background: #edf5ee; border-radius: 6px; }
 .public-home .search-panel-tab-active::after { display: none; }
-.public-home .hero .hero-fields { padding: 0 !important; gap: 12px !important; }
+.public-home .hero .hero-fields { padding: 0 !important; gap: 10px !important; }
 .public-home .hero .hero-fields > .hero-location-field,
-.public-home .hero .hero-fields > .home-filter-field { justify-content: flex-start !important; height: 82px !important; min-height: 82px !important; padding: 14px 16px !important; background: #f7faf7 !important; }
+.public-home .hero .hero-fields > .home-filter-field { justify-content: center !important; height: 56px !important; min-height: 56px !important; padding: 8px 14px !important; border: 1px solid #d5e0d8 !important; border-radius: 10px !important; background: #f7faf7 !important; transition: all 0.15s ease !important; }
 .public-home .hero .hero-fields > .hero-location-field > span,
-.public-home .hero .hero-fields > .home-filter-field > span { position: static !important; transform: none !important; font-size: 12px !important; font-weight: 500 !important; line-height: 18px !important; letter-spacing: 0 !important; text-transform: none !important; margin: 0 0 8px !important; padding: 0 !important; background: none !important; color: #657168 !important; }
-.public-home .hero-search-btn { display: flex !important; align-items: center !important; justify-content: center !important; flex-wrap: nowrap !important; gap: 8px !important; padding-inline: 16px !important; font-size: 14px !important; white-space: nowrap !important; height: 82px !important; min-height: 82px !important; border-radius: 12px !important; box-shadow: none !important; }
+.public-home .hero .hero-fields > .home-filter-field > span { position: static !important; transform: none !important; font-size: 11px !important; font-weight: 600 !important; line-height: 1.2 !important; letter-spacing: 0.3px !important; text-transform: none !important; margin: 0 0 3px !important; padding: 0 !important; background: none !important; color: #657168 !important; }
+.public-home .hero-search-btn { display: flex !important; align-items: center !important; justify-content: center !important; flex-wrap: nowrap !important; gap: 8px !important; padding-inline: 22px !important; font-size: 14.5px !important; font-weight: 650 !important; white-space: nowrap !important; height: 56px !important; min-height: 56px !important; border-radius: 10px !important; background: #245f3b !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(36, 95, 59, 0.22) !important; transition: all 0.15s ease !important; border: 0 !important; cursor: pointer !important; }
+.public-home .hero-search-btn:hover { background: #1a492d !important; box-shadow: 0 6px 18px rgba(36, 95, 59, 0.32) !important; transform: translateY(-1px) !important; }
 .public-home .hero-search-btn > span { white-space: nowrap; }
+.public-home .hero-fields .location-picker-trigger,
+.public-home .hero-fields .home-filter-trigger { min-height: 0 !important; height: auto !important; line-height: 1.25 !important; }
 .public-home .quick-section { padding-top: 28px; padding-bottom: 60px; scroll-margin-top: 90px; }
 .public-home .chips { justify-content: flex-start; flex-wrap: wrap; margin: 0 0 40px; gap: 10px; }
 .public-home .chip { min-height: 46px; gap: 9px; padding: 10px 15px; border-radius: 12px; font-size: 13px; }
