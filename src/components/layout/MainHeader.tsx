@@ -18,6 +18,7 @@ type NavigationLink = [path: string, label: string]
 const primaryLinks: NavigationLink[] = [
   ["/tim-phong", "Tìm phòng"],
   ["/dien-dan", "Diễn đàn"],
+  ["/thanh-vien", "Thành viên"],
 ]
 
 export default function MainHeader() {

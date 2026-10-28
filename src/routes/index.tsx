@@ -33,6 +33,7 @@ function ForumRouteWrapper() {
   )
 }
 import MessagesPage from "@/pages/renter/MessagesPage"
+import MembersPage from "@/pages/community/MembersPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminResourcePage from "@/pages/admin/AdminResourcePage"
 import AdminStatsPage from "@/pages/admin/AdminStatsPage"
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
       { path: "/tim-phong", Component: SearchPage },
       { path: "/phong/:id", Component: RoomDetailPage },
       { path: "/dien-dan", Component: ForumRouteWrapper },
+      { path: "/thanh-vien", Component: MembersPage },
       {
         path: "/bai-viet/:id",
         Component: ForumRouteWrapper,
