@@ -434,7 +434,28 @@ export default function ForumPage() {
       <div className="container forum-layout">
         <aside className="forum-left"><h3>Diễn đàn</h3><button className="active" onClick={() => navigate("/dien-dan")}><Icon name="home"/>Bảng tin</button><button onClick={() => navigate("/tim-ban-be")}><Icon name="users"/>Bạn bè</button><button onClick={() => user ? navigate("/trang-ca-nhan") : login()}><Icon name="user"/>Trang cá nhân</button><button onClick={() => user ? navigate("/tin-nhan") : login()}><Icon name="chat"/>Tin nhắn</button><div className="forum-banner"><Icon name="shield"/><strong>Giữ thông tin riêng tư</strong><p>Chia sẻ khu vực và tầm giá là đủ. Nếu gặp nội dung vi phạm, bạn có thể gửi báo cáo để quản trị viên xem xét.</p><button onClick={() => user ? navigate("/bao-cao-cua-toi") : login()}>Báo cáo của tôi</button></div></aside>
         <section className="feed">
-          <header className="forum-feed-heading"><h1>{id ? "Bài viết cộng đồng" : "Chuyện trọ của mình"}</h1><p>Chia sẻ kinh nghiệm, tìm bạn ở ghép và trao đổi cùng cộng đồng.</p></header>
+          {id && (
+            <button
+              type="button"
+              className="forum-back-btn"
+              onClick={() => navigate("/dien-dan")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "16px",
+                background: "none",
+                border: "none",
+                color: "#245f3b",
+                fontWeight: 600,
+                fontSize: "14px",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <Icon name="arrowLeft" size={16} /> Quay lại bảng tin
+            </button>
+          )}
 
           {/* Facebook Feed Composer */}
           <div className="fb-feed-composer">
