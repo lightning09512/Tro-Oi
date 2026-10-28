@@ -100,7 +100,9 @@
 .forum-page .fb-action-btn { min-height: 32px; padding-inline: 6px; }
 .forum-page .fb-feed-composer { padding: 20px; margin-bottom: 22px; }
 .forum-page .fb-composer-input-pill { height: auto; min-height: 46px; border-radius: 12px; line-height: 1.5; text-align: left; }
-.forum-page .forum-right h3 { font-size: 16px; }
+.forum-page .forum-right { display: flex !important; flex-direction: column !important; gap: 26px !important; }
+.forum-page .forum-right .side-card { border: 1px solid #dfe7e1 !important; border-radius: 16px !important; padding: 22px !important; background: #ffffff !important; box-shadow: none !important; }
+.forum-page .forum-right h3 { font-size: 16px; margin: 0 0 16px; }
 .forum-page .fb-post-create-dialog { border-radius: 16px; box-shadow: 0 24px 60px #173d3830; }
 .forum-page .fb-post-submit-btn { min-height: 48px; border-radius: 10px; background: #2f7a4b; }
 .community-photo-strip { margin-bottom: 22px; padding: 20px 0; border-block: 1px solid #dfe7e1; }

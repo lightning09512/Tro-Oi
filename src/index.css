@@ -117,7 +117,7 @@ button,input,select{font:inherit}button{cursor:pointer}.icon{display:inline-bloc
 .feed-comment-edit{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:7px}
 .feed-comment-edit input{flex:1 1 160px;min-width:0;min-height:40px;border:1px solid #dce8de;border-radius:8px;padding:0 10px}
 .feed-comment-edit button{min-height:36px;border:1px solid #dce8de;border-radius:8px;background:white;padding:0 10px;color:#245f3b}
-.forum-right{display:grid;gap:14px;height:max-content;min-width:0}
+.forum-right{display:grid;gap:26px;height:max-content;min-width:0}
 .side-card{padding:16px}
 .forum-left>h3,.side-card h3{font-family:var(--font-display);font-weight:700;font-size:16px;color:#294438}
 .side-card h3{margin:0 0 14px}

@@ -371,6 +371,23 @@ export default function ForumPage() {
     [posts, id, query],
   )
   const trendingPosts = useMemo(() => [...posts].filter((post) => post.status === "active").sort((a, b) => (b.likes + b.commentsCount) - (a.likes + a.commentsCount)).slice(0, 3), [posts])
+  const communityMembers = useMemo(() => {
+    const active = users.filter((item) => item.status === "active" && item.role !== "admin" && item.id !== user?.id)
+    if (active.length > 0) return active.slice(0, 3)
+    const unique = new Map<string, { id: string; name: string; initials: string; avatarUrl?: string; role: "renter" | "landlord" }>()
+    posts.forEach((p) => {
+      if (p.authorId && p.authorId !== user?.id && !unique.has(p.authorId)) {
+        unique.set(p.authorId, {
+          id: p.authorId,
+          name: p.name,
+          initials: p.initials,
+          avatarUrl: p.avatarUrl,
+          role: "renter",
+        })
+      }
+    })
+    return Array.from(unique.values()).slice(0, 3)
+  }, [users, posts, user?.id])
   const login = () => navigate("/dang-nhap", { state: { from: window.location.pathname } })
   const currentUserAvatarUrl = user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
 
@@ -629,9 +646,9 @@ export default function ForumPage() {
 
           <div className="side-card">
             <h3>Người thuê và chủ trọ</h3>
-            {users
-              .filter((item) => item.status === "active" && item.role !== "admin" && item.id !== user?.id)
-              .slice(0, 3)
+            {communityMembers
+
+
               .map((item) => (
                 <div className="member" key={item.id}>
                   <Link className="profile-avatar-link" to={`/nguoi-dung/${item.id}`} aria-label={`Xem hồ sơ ${item.name}`}>
@@ -663,6 +680,7 @@ export default function ForumPage() {
                   </button>
                 </div>
               ))}
+            {!communityMembers.length && <p className="forum-side-empty">Chưa có thành viên nào khác.</p>}
           </div>
         </aside>
       </div>
