@@ -180,11 +180,11 @@ export default function PublicProfilePage() {
         id: user.id,
         name: user.name,
         role: user.role,
-        status: user.status,
+        status: (user as any).status ?? "active",
         initials: user.initials,
         avatarUrl: user.avatarUrl,
         phone: user.phone,
-        createdAt: user.createdAt,
+        createdAt: (user as any).createdAt ?? new Date().toISOString(),
       } as PublicProfile
     }
     return isApiMode ? remoteProfile : (users.find((item) => item.id === targetId) as PublicProfile | undefined) ?? null

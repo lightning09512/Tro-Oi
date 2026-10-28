@@ -23,7 +23,7 @@ export default function MembersPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
-  const { users: platformUsers, listings, feedPosts } = usePlatform()
+  const { users: platformUsers, listings, posts } = usePlatform()
 
   const [members, setMembers] = useState<MemberItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,7 +71,7 @@ export default function MembersPage() {
           avatarUrl: u.avatarUrl,
           initials: u.initials,
           listingsCount: listings.filter((l) => l.ownerId === u.id).length,
-          postsCount: feedPosts.filter((p) => p.authorId === u.id).length,
+          postsCount: posts.filter((p) => p.authorId === u.id).length,
         }))
 
         if (alive) {
@@ -91,7 +91,7 @@ export default function MembersPage() {
       alive = false
       clearTimeout(timer)
     }
-  }, [search, roleFilter, platformUsers, listings, feedPosts])
+  }, [search, roleFilter, platformUsers, listings, posts])
 
   const stats = useMemo(() => {
     const total = members.length

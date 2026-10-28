@@ -7,7 +7,7 @@ const router = Router()
 export const forumSelect = `SELECT p.*,u.name AS author_name,u.avatar_url AS author_avatar_url,
   COALESCE((SELECT json_agg(json_build_object(
     'id',c.id,'authorId',c.author_id,'author',cu.name,'initials',upper(left(cu.name,2)),'avatarUrl',cu.avatar_url,
-    'text',c.content,'createdAt',c.created_at
+    'text',c.content,'createdAt',c.created_at,'parentId',c.parent_id
   ) ORDER BY c.created_at) FROM forum_comments c JOIN users cu ON cu.id=c.author_id
     WHERE c.post_id=p.id AND c.is_hidden=false),'[]'::json) AS comments,
   COALESCE((SELECT json_agg(r.user_id ORDER BY r.created_at) FROM forum_reactions r WHERE r.post_id=p.id),'[]'::json) AS liked_by
@@ -90,11 +90,29 @@ router.post("/:id/like", requireAuth, async (req, res) => {
 })
 
 router.post("/:id/comments", requireAuth, async (req, res) => {
-  const input = z.object({ text: z.string().trim().min(1).max(3000) }).parse(req.body)
-  const { rows } = await pool.query(`INSERT INTO forum_comments(post_id,author_id,content) SELECT id,$2,$3 FROM forum_posts WHERE id=$1 AND status='active' RETURNING id,author_id,content,created_at`, [req.params.id, req.user.id, input.text])
+  const input = z.object({
+    text: z.string().trim().min(1).max(3000),
+    parentId: z.string().trim().max(100).optional().nullable(),
+  }).parse(req.body)
+  const { rows } = await pool.query(
+    `INSERT INTO forum_comments(post_id,author_id,content,parent_id) SELECT id,$2,$3,$4 FROM forum_posts WHERE id=$1 AND status='active' RETURNING id,author_id,content,parent_id,created_at`,
+    [req.params.id, req.user.id, input.text, input.parentId || null]
+  )
   if (!rows[0]) return res.status(404).json({ error: "Không tìm thấy bài viết." })
   const author = await pool.query("SELECT name,avatar_url FROM users WHERE id=$1", [req.user.id])
-  res.status(201).json({ item: { id: rows[0].id, authorId: rows[0].author_id, author: author.rows[0].name, initials: author.rows[0].name.slice(0, 2).toUpperCase(), avatarUrl: author.rows[0].avatar_url ?? undefined, text: rows[0].content, createdAt: rows[0].created_at } })
+  const authorName = author.rows[0]?.name || "Thành viên"
+  res.status(201).json({
+    item: {
+      id: rows[0].id,
+      authorId: rows[0].author_id,
+      author: authorName,
+      initials: authorName.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase() || "TV",
+      avatarUrl: author.rows[0]?.avatar_url ?? undefined,
+      text: rows[0].content,
+      parentId: rows[0].parent_id ?? undefined,
+      createdAt: rows[0].created_at,
+    }
+  })
 })
 
 router.patch("/:id/comments/:commentId", requireAuth, async (req, res) => {

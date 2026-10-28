@@ -92,7 +92,7 @@ export function resolveLocationCoordinates(
   longitude?: unknown
 ): { center: [number, number]; isExact: boolean } {
   if (isValidMapPosition(latitude, longitude)) {
-    return { center: [latitude, longitude], isExact: true }
+    return { center: [latitude as number, longitude as number], isExact: true }
   }
 
   if (location) {

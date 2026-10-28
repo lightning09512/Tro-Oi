@@ -54,6 +54,7 @@ export interface PostComment {
   initials: string
   avatarUrl?: string
   text: string
+  parentId?: string
   createdAt: string
 }
 
@@ -305,7 +306,7 @@ interface PlatformContextValue {
   deletePost: (id: string) => Promise<void>
   setPostStatus: (id: string, status: ContentStatus) => Promise<void>
   togglePostLike: (id: string, user: AuthUser) => Promise<void>
-  addComment: (id: string, user: AuthUser, text: string) => Promise<void>
+  addComment: (id: string, user: AuthUser, text: string, parentId?: string) => Promise<void>
   deleteComment: (postId: string, commentId: string) => Promise<void>
   editComment: (postId: string, commentId: string, text: string) => Promise<void>
   addReport: (value: Omit<ReportRecord, "id" | "status" | "adminNote" | "createdAt">) => Promise<void>
@@ -502,13 +503,29 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         return { ...post, likedBy: liked ? post.likedBy.filter((userId) => userId !== actingUser.id) : [...post.likedBy, actingUser.id], likes: Math.max(0, post.likes + (liked ? -1 : 1)) }
       }))
     },
-    addComment: async (id, actingUser, text) => {
+    addComment: async (id, actingUser, text, parentId) => {
       if (isApiMode) {
-        const result = await apiRequest<{ item: PostComment }>(`forum/${encodeURIComponent(id)}/comments`, { method: "POST", body: JSON.stringify({ text }) })
+        const result = await apiRequest<{ item: PostComment }>(`forum/${encodeURIComponent(id)}/comments`, {
+          method: "POST",
+          body: JSON.stringify({ text, parentId: parentId || null }),
+        })
         setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, comments: [...post.comments, result.item], commentsCount: post.commentsCount + 1 }))
         return
       }
-      setFeedPosts((current) => current.map((post) => post.id !== id ? post : { ...post, commentsCount: post.commentsCount + 1, comments: [...post.comments, { id: `comment-${Date.now()}`, authorId: actingUser.id, author: actingUser.name, initials: actingUser.initials, avatarUrl: actingUser.avatarUrl, text, createdAt: new Date().toLocaleString("vi-VN") }] }))
+      setFeedPosts((current) => current.map((post) => post.id !== id ? post : {
+        ...post,
+        commentsCount: post.commentsCount + 1,
+        comments: [...post.comments, {
+          id: `comment-${Date.now()}`,
+          authorId: actingUser.id,
+          author: actingUser.name,
+          initials: actingUser.initials,
+          avatarUrl: actingUser.avatarUrl,
+          text,
+          parentId,
+          createdAt: new Date().toISOString(),
+        }],
+      }))
     },
     deleteComment: async (postId, commentId) => {
       if (isApiMode && !await platformRequest(`forum/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, { method: "DELETE" })) return
