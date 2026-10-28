@@ -14,6 +14,37 @@ import { RoomCardSkeletonGrid } from "@/components/common/Skeletons"
 
 const forumFallbackImage = "/images/tromoi/p301-quang-trung/anh-01.webp"
 
+const HERO_COMMUNITY_QUOTES = [
+  {
+    id: "quote-1",
+    className: "hero-quote-left-top",
+    avatar: "/images/avatars/demo-renter-01.jpg",
+    quote: "Đường này rộng rãi, xe hơi vào còn đ...",
+    author: "Anh Lộc · Shipper giao đồ",
+  },
+  {
+    id: "quote-2",
+    className: "hero-quote-left-bottom",
+    avatar: "/images/avatars/demo-renter-02.jpg",
+    quote: "Chấp mưa to gió lớn khu này chả ngập...",
+    author: "Mai Phương · SV Ngoại Thương",
+  },
+  {
+    id: "quote-3",
+    className: "hero-quote-right-top",
+    avatar: "/images/avatars/demo-owner-01.jpg",
+    quote: "Khu này muốn mua gì cũng có, hong sợ thiếu gì",
+    author: "Cô Thủy · Bán trái cây",
+  },
+  {
+    id: "quote-4",
+    className: "hero-quote-right-bottom",
+    avatar: "/images/avatars/demo-renter-03.jpg",
+    quote: "Phòng đúng ảnh 100%, an tâm đặt cọc",
+    author: "Thanh Tùng · NV Văn phòng",
+  },
+]
+
 type HomeFilterOption = { value: string; label: string }
 
 function HomeFilterDropdown({
@@ -144,6 +175,8 @@ function Home() {
   const [location, setLocation] = useState("TP. Hồ Chí Minh")
   const [maxPrice, setMaxPrice] = useState("")
   const [areaRange, setAreaRange] = useState("all")
+  const [keyword, setKeyword] = useState("")
+  const [activeTab, setActiveTab] = useState<"rental" | "roommate" | "apartment" | "house">("rental")
   const landlordProgramUrl = user?.role === "landlord" ? "/chu-tro/dang-tin" : user ? "/chu-tro/dang-tin" : "/dang-nhap"
 
   const promoCampaigns = useMemo(() => [
@@ -226,6 +259,7 @@ function Home() {
     const params = new URLSearchParams()
     if (roomType) params.set("type", roomType)
     else {
+      if (keyword.trim()) params.set("q", keyword.trim())
       if (location) params.set("location", location)
       if (maxPrice) params.set("maxPrice", maxPrice)
       if (areaRange !== "all") params.set("areaRange", areaRange)
@@ -236,52 +270,208 @@ function Home() {
 
   return (
     <main className="public-home">
-      <section className="hero">
-        <div className="container hero-inner">
-          <div className={`hero-intro-grid${featuredRoom ? " has-featured-room" : ""}`}>
-            <div className="hero-copy">
-              <div className="hero-eyebrow-pill">
-                <span className="hero-eyebrow-dot" />
-                <span>Nền tảng tìm phòng trọ & căn hộ uy tín</span>
-              </div>
-              <h1>Tìm phòng hợp túi tiền,<br/>gần nơi bạn cần.</h1>
-              <p>Lọc theo khu vực, giá thuê và diện tích. Xem ảnh thực tế, tiện nghi đầy đủ và trao đổi trực tiếp với chủ trọ.</p>
-              <div className="hero-trust-row">
-                <div className="hero-trust-item">
-                  <Icon name="shield" size={15}/>
-                  <span>Tin phòng xác thực</span>
-                </div>
-                <div className="hero-trust-item">
-                  <Icon name="check" size={15}/>
-                  <span>Không cọc ảo</span>
-                </div>
-                <div className="hero-trust-item">
-                  <Icon name="chat" size={15}/>
-                  <span>Trao đổi trực tiếp</span>
-                </div>
+      <section className="hero-nhatot-banner" aria-label="Tìm kiếm phòng trọ">
+        {/* Floating community review stickers on left and right */}
+        <div className="hero-quotes-layer" aria-hidden="true">
+          {HERO_COMMUNITY_QUOTES.map((item) => (
+            <div key={item.id} className={`hero-quote-pill ${item.className}`}>
+              <img src={item.avatar} alt="" className="hero-quote-avatar" />
+              <div className="hero-quote-text">
+                <span className="hero-quote-speech">{item.quote}</span>
+                <span className="hero-quote-author">{item.author}</span>
               </div>
             </div>
-            {featuredRoom && <Link className="hero-room-card" to={`/phong/${featuredRoom.id}`} aria-label={`Xem phòng ${featuredRoom.title}`}>
-              <img src={featuredRoom.image} alt={featuredRoom.title} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/tro-oi-icon.svg"; event.currentTarget.alt = "Ảnh phòng chưa tải được"; event.currentTarget.style.objectFit = "contain" }} />
-              <div className="hero-room-details">
-                <div className="hero-room-overline"><span>{featuredRoom.type}</span><span>{featuredRoom.area || "Diện tích chưa cập nhật"}</span></div>
-                <h2>{featuredRoom.title}</h2>
-                <p className="hero-room-location"><Icon name="pin" size={15}/>{featuredRoom.location}</p>
-                <p className="hero-room-price">{featuredRoom.price}<small>/tháng</small></p>
-              </div>
-            </Link>}
+          ))}
+        </div>
+
+        <div className="container hero-nhatot-content">
+          <h1 className="hero-nhatot-slogan">Phòng vừa ý, giá hợp lý!</h1>
+          <p className="hero-nhatot-subtitle">
+            Hơn 50.000+ phòng trọ, căn hộ mini & người ở ghép xác thực 100%
+          </p>
+
+          <div className="hero-nhatot-tabs" role="tablist">
+            <button
+              type="button"
+              className={`hero-nhatot-tab-btn${activeTab === "rental" ? " is-active" : ""}`}
+              onClick={() => setActiveTab("rental")}
+            >
+              Cho thuê phòng
+            </button>
+            <button
+              type="button"
+              className={`hero-nhatot-tab-btn${activeTab === "roommate" ? " is-active" : ""}`}
+              onClick={() => navigate("/dien-dan")}
+            >
+              Tìm ở ghép
+            </button>
+            <button
+              type="button"
+              className={`hero-nhatot-tab-btn${activeTab === "apartment" ? " is-active" : ""}`}
+              onClick={() => navigate(`/tim-phong?type=${encodeURIComponent("Căn hộ mini")}`)}
+            >
+              Căn hộ mini
+            </button>
+            <button
+              type="button"
+              className={`hero-nhatot-tab-btn${activeTab === "house" ? " is-active" : ""}`}
+              onClick={() => navigate(`/tim-phong?type=${encodeURIComponent("Nhà nguyên căn")}`)}
+            >
+              Nhà nguyên căn
+            </button>
           </div>
-          <div className="search-panel">
-            <div className="search-panel-tabs"><div className="search-panel-tab-active"><Icon name="home" size={18}/><span>Bạn muốn tìm phòng ở đâu?</span></div></div>
-            <div className="hero-fields">
-              <div className="hero-location-field"><span>Khu vực</span><LocationPicker value={location} onChange={setLocation}/></div>
-              <div className="home-filter-field"><span>Khoảng giá</span><HomeFilterDropdown label="Giá thuê tối đa" value={maxPrice} onChange={setMaxPrice} icon="chart" options={[
-                { value: "", label: "Mọi mức giá" }, { value: "3", label: "Dưới 3 triệu" }, { value: "5", label: "Dưới 5 triệu" }, { value: "7", label: "Dưới 7 triệu" }, { value: "10", label: "Dưới 10 triệu" }, { value: "20", label: "Dưới 20 triệu" },
-              ]}/></div>
-              <div className="home-filter-field"><span>Diện tích</span><HomeFilterDropdown label="Diện tích phòng" value={areaRange} onChange={setAreaRange} icon="grid" options={[
-                { value: "all", label: "Tất cả diện tích" }, { value: "under20", label: "Dưới 20 m²" }, { value: "20-30", label: "20–30 m²" }, { value: "30-50", label: "Trên 30–50 m²" }, { value: "over50", label: "Trên 50 m²" },
-              ]}/></div>
-              <button type="button" className="hero-search-btn" onClick={() => navigate(buildSearchUrl())}><Icon name="search" size={18}/><span>Tìm phòng</span></button>
+
+          <form
+            className="hero-nhatot-searchbar"
+            onSubmit={(e) => {
+              e.preventDefault()
+              navigate(buildSearchUrl())
+            }}
+          >
+            <div className="hero-search-keyword">
+              <Icon name="search" size={18} />
+              <input
+                type="text"
+                placeholder="Tìm tên phòng, trường học…"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+            </div>
+            <div className="hero-location-field">
+              <span>Khu vực</span>
+              <LocationPicker value={location} onChange={setLocation} />
+            </div>
+            <div className="home-filter-field">
+              <span>Khoảng giá</span>
+              <HomeFilterDropdown
+                label="Giá thuê tối đa"
+                value={maxPrice}
+                onChange={setMaxPrice}
+                icon="chart"
+                options={[
+                  { value: "", label: "Mọi mức giá" },
+                  { value: "3", label: "Dưới 3 triệu" },
+                  { value: "5", label: "Dưới 5 triệu" },
+                  { value: "7", label: "Dưới 7 triệu" },
+                  { value: "10", label: "Dưới 10 triệu" },
+                  { value: "20", label: "Dưới 20 triệu" },
+                ]}
+              />
+            </div>
+            <div className="home-filter-field">
+              <span>Diện tích</span>
+              <HomeFilterDropdown
+                label="Diện tích phòng"
+                value={areaRange}
+                onChange={setAreaRange}
+                icon="grid"
+                options={[
+                  { value: "all", label: "Tất cả diện tích" },
+                  { value: "under20", label: "Dưới 20 m²" },
+                  { value: "20-30", label: "20–30 m²" },
+                  { value: "30-50", label: "Trên 30–50 m²" },
+                  { value: "over50", label: "Trên 50 m²" },
+                ]}
+              />
+            </div>
+            <button type="submit" className="hero-search-submit-btn">
+              <Icon name="search" size={18} />
+              <span>Tìm phòng</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Quick Navigation Cards & Utility Panels (Nhà Tốt Style) */}
+      <section className="hero-category-container">
+        <div className="hero-quick-cards-grid">
+          <Link to="/tim-phong" className="hero-quick-card">
+            <div className="hero-quick-card-icon" style={{ background: "#eaf4ec", color: "#245f3b" }}>
+              <Icon name="home" size={24} />
+            </div>
+            <div className="hero-quick-card-info">
+              <h3>Cho thuê</h3>
+              <p>55.807 tin cho thuê</p>
+            </div>
+          </Link>
+
+          <Link to="/dien-dan" className="hero-quick-card">
+            <div className="hero-quick-card-icon" style={{ background: "#fff3e8", color: "#e36825" }}>
+              <Icon name="users" size={24} />
+            </div>
+            <div className="hero-quick-card-info">
+              <h3>Tìm ở ghép</h3>
+              <p>Kết nối bạn cùng phòng</p>
+            </div>
+          </Link>
+
+          <Link to={`/tim-phong?type=${encodeURIComponent("Căn hộ mini")}`} className="hero-quick-card">
+            <div className="hero-quick-card-icon" style={{ background: "#eef2ff", color: "#3b82f6" }}>
+              <Icon name="building" size={24} />
+            </div>
+            <div className="hero-quick-card-info">
+              <h3>Căn hộ & Studio</h3>
+              <p>5.292 căn hộ tiện nghi</p>
+            </div>
+          </Link>
+
+          <Link to="/tim-phong" className="hero-quick-card">
+            <div className="hero-quick-card-icon" style={{ background: "#ecfdf5", color: "#059669" }}>
+              <Icon name="shield" size={24} />
+            </div>
+            <div className="hero-quick-card-info">
+              <h3>Xác thực 100%</h3>
+              <p>Chính chủ, không cọc ảo</p>
+            </div>
+          </Link>
+        </div>
+
+        <div className="hero-utility-row">
+          <div className="hero-utility-card">
+            <div className="hero-utility-header">
+              <span className="hero-utility-title">Công cụ tiện ích</span>
+            </div>
+            <div className="hero-utility-links">
+              <Link to="/tim-phong" className="hero-utility-link">
+                <Icon name="chart" size={20} />
+                <div>
+                  <strong>Biểu đồ giá</strong>
+                  <small>Tra cứu giá theo quận</small>
+                </div>
+              </Link>
+              <Link to="/dien-dan" className="hero-utility-link">
+                <Icon name="chat" size={20} />
+                <div>
+                  <strong>Kinh nghiệm</strong>
+                  <small>Cẩm nang & chia sẻ</small>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          <div className="hero-utility-card">
+            <div className="hero-utility-header">
+              <span className="hero-utility-title">Dịch vụ dành cho chủ trọ</span>
+              <Link to={postingLink} className="hero-utility-viewmore">
+                Xem thêm <Icon name="chevron" size={14} />
+              </Link>
+            </div>
+            <div className="hero-utility-links">
+              <Link to={postingLink} className="hero-utility-link">
+                <span className="hero-utility-badge-hot">Mới</span>
+                <Icon name="plus" size={20} />
+                <div>
+                  <strong>Đăng tin miễn phí</strong>
+                  <small>Tiếp cận 50.000+ người</small>
+                </div>
+              </Link>
+              <Link to={postingLink} className="hero-utility-link">
+                <Icon name="user" size={20} />
+                <div>
+                  <strong>Quản lý phòng</strong>
+                  <small>Lịch hẹn & tin đăng</small>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
