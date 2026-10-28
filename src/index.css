@@ -14629,28 +14629,39 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .fb-stories-section {
-  margin-bottom: 20px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dce8de;
+  border-radius: 12px;
+  padding: 12px 14px 14px;
+  margin-bottom: 16px;
   position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .fb-stories-tabs {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #e4e6eb;
-  padding-bottom: 4px;
+  border-bottom: 1px solid #edf2ee;
+  padding-bottom: 6px;
 }
 
 .fb-tab-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   border: none;
   background: transparent;
   font-size: 13.5px;
   font-weight: 600;
-  color: #65676b;
+  color: #55675c;
   border-radius: 8px;
   cursor: pointer;
   position: relative;
@@ -14658,22 +14669,23 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .fb-tab-item:hover {
-  background: #f0f2f5;
-  color: #1c1e21;
+  background: #edf5ee;
+  color: #245f3b;
 }
 
 .fb-tab-item.active {
-  color: #1877f2;
+  color: #245f3b;
+  background: #edf5ee;
 }
 
 .fb-tab-item.active::after {
   content: "";
   position: absolute;
-  bottom: -5px;
-  left: 0;
-  right: 0;
+  bottom: -7px;
+  left: 12px;
+  right: 12px;
   height: 3px;
-  background: #1877f2;
+  background: #245f3b;
   border-radius: 3px 3px 0 0;
 }
 
@@ -14683,15 +14695,21 @@ input[type="file"]::file-selector-button:hover {
 
 .fb-stories-carousel-wrapper {
   position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .fb-stories-carousel {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  padding: 4px 2px;
+  padding: 2px 2px 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .fb-stories-carousel::-webkit-scrollbar {
@@ -14702,63 +14720,65 @@ input[type="file"]::file-selector-button:hover {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #ffffff;
   border: 1px solid #dce8df;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
   display: grid;
   place-items: center;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
-  color: #606770;
+  color: #1e382b;
   cursor: pointer;
   z-index: 10;
   transition: all 0.15s ease;
 }
 
 .fb-story-arrow:hover {
-  background: #f0f2f5;
-  color: #1c1e21;
-  transform: translateY(-50%) scale(1.06);
+  background: #f0f6f2;
+  color: #245f3b;
+  transform: translateY(-50%) scale(1.08);
 }
 
 .fb-story-arrow-left {
-  left: -14px;
+  left: 6px;
 }
 
 .fb-story-arrow-right {
-  right: -14px;
+  right: 6px;
 }
 
 .fb-story-card {
-  flex: 0 0 120px;
-  height: 195px;
-  border-radius: 12px;
+  flex: 0 0 114px;
+  width: 114px;
+  height: 188px;
+  border-radius: 10px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
 }
 
 .fb-story-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
 }
 
+/* Create Story Card */
 .fb-create-story-card {
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  border: 1px solid #e4e6eb;
+  border: 1px solid #dce8de;
 }
 
 .fb-create-story-top {
-  height: 135px;
-  background: #f0f2f5;
+  height: 128px;
+  background: #edf5ee;
   overflow: hidden;
   position: relative;
   display: grid;
@@ -14777,7 +14797,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .fb-create-avatar-initials {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: #245f3b;
 }
@@ -14795,37 +14815,39 @@ input[type="file"]::file-selector-button:hover {
 
 .fb-create-plus-icon {
   position: absolute;
-  top: -16px;
+  top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #1877f2;
+  background: #245f3b;
   color: #ffffff;
-  border: 3px solid #ffffff;
+  border: 2px solid #ffffff;
   display: grid;
   place-items: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .fb-create-text {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: #1c1e21;
+  color: #1e382b;
 }
 
+/* User Story / Reel Card */
 .fb-user-story-card {
-  background: #000000;
+  background: linear-gradient(135deg, #1b4d3e 0%, #245f3b 50%, #3a8a56 100%);
 }
 
 .fb-story-bg-wrapper {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  background: linear-gradient(135deg, #1b4d3e 0%, #245f3b 50%, #3a8a56 100%);
 }
 
 .fb-story-media-bg {
@@ -14835,6 +14857,12 @@ input[type="file"]::file-selector-button:hover {
   transition: transform 0.35s ease;
 }
 
+.fb-story-fallback-gradient {
+  background: linear-gradient(135deg, #1b4d3e 0%, #245f3b 50%, #3a8a56 100%);
+  width: 100%;
+  height: 100%;
+}
+
 .fb-user-story-card:hover .fb-story-media-bg {
   transform: scale(1.05);
 }
@@ -14842,23 +14870,23 @@ input[type="file"]::file-selector-button:hover {
 .fb-story-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, transparent 40%, rgba(0, 0, 0, 0.75) 100%);
 }
 
 .fb-story-author-avatar-wrap {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 36px;
-  height: 36px;
+  top: 8px;
+  left: 8px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 3px solid #1877f2;
+  border: 2px solid #245f3b;
   overflow: hidden;
   background: #ffffff;
   display: grid;
   place-items: center;
   z-index: 2;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .fb-story-author-img {
@@ -14870,13 +14898,13 @@ input[type="file"]::file-selector-button:hover {
 .fb-story-author-initials {
   font-size: 11px;
   font-weight: 700;
-  color: #1877f2;
+  color: #245f3b;
 }
 
 .fb-story-reel-badge {
   position: absolute;
-  top: 10px;
-  right: 8px;
+  top: 8px;
+  right: 6px;
   background: rgba(0, 0, 0, 0.65);
   color: #ffffff;
   font-size: 10px;
@@ -14890,8 +14918,8 @@ input[type="file"]::file-selector-button:hover {
 .fb-story-author-name {
   position: absolute;
   bottom: 8px;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;

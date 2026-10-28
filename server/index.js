@@ -36,7 +36,20 @@ const configuredOrigins = (process.env.WEB_ORIGIN || "http://localhost:8443").sp
 const io = new SocketServer(server, { cors: { origin: configuredOrigins, credentials: true }, maxHttpBufferSize: 1e6 })
 app.set("io", io)
 app.disable("x-powered-by")
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }))
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      mediaSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"],
+    },
+  },
+}))
 app.use(cors({ origin(origin, done) {
   if (!origin || configuredOrigins.includes(origin)) return done(null, true)
   done(new Error("Origin không được phép."))
