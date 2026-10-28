@@ -176,10 +176,10 @@ export default function RoomDetailPage() {
             <h1>{room.title}</h1>
             <p className="room-detail-address-line"><Icon name="pin" size={18} />{room.location}</p>
             <div className="room-detail-quickfacts">
-              <div className="room-detail-price-fact"><small>Giá thuê</small><strong>{room.price}<em>/tháng</em></strong></div>
-              <div><small>Diện tích</small><strong>{room.area || "Chưa cập nhật"}</strong></div>
-              <div><small>Tiền cọc</small><strong>{room.deposit || "Trao đổi khi liên hệ"}</strong></div>
-              <div><small>Loại phòng</small><strong>{room.type}</strong></div>
+              <div className="room-detail-price-fact"><small>Giá thuê</small><strong title={`${room.price}/tháng`}>{room.price}<em>/tháng</em></strong></div>
+              <div><small>Diện tích</small><strong title={room.area || "Chưa cập nhật"}>{room.area || "Chưa cập nhật"}</strong></div>
+              <div><small>Tiền cọc</small><strong title={room.deposit || "Trao đổi khi liên hệ"}>{room.deposit || "Trao đổi khi liên hệ"}</strong></div>
+              <div><small>Loại phòng</small><strong title={room.type}>{room.type}</strong></div>
             </div>
           </header>
         </div>

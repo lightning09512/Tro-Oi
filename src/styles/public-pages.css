@@ -104,12 +104,60 @@
 .detail-page .room-detail-summary-primary { border: 1px solid #dfe7e1; border-radius: 16px; box-shadow: none; }
 .detail-page .room-detail-summary-primary h1 { font-size: clamp(25px, 2.5vw, 34px); font-weight: 650; line-height: 1.45; letter-spacing: -.025em; }
 .detail-page .room-detail-address-line { color: #657168; font-size: 13px; line-height: 1.8; }
-.detail-page .room-detail-quickfacts { grid-template-columns: repeat(2, minmax(0, 1fr)); border-radius: 12px; background: #f5f8f5; }
-.detail-page .room-detail-quickfacts > div { padding: 18px; min-width: 0; border: 0; }
-.detail-page .room-detail-quickfacts small { margin-bottom: 8px; color: #657168; font-size: 12px; }
-.detail-page .room-detail-quickfacts strong { display: block; font-size: 16px; line-height: 1.6; color: #27362c; }
-.detail-page .room-detail-quickfacts .room-detail-price-fact strong { display: flex; flex-wrap: wrap; gap: 5px; align-items: baseline; font-size: clamp(18px, 2vw, 23px); color: #c4531e; }
-.detail-page .room-detail-quickfacts em { display: inline-block; white-space: nowrap; font-size: 12px; line-height: 1.5; font-style: normal; color: #657168; }
+.detail-page .room-detail-quickfacts,
+.detail-page .room-detail-main-column .room-detail-quickfacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: #e2e8f0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 14px;
+}
+.detail-page .room-detail-quickfacts > div {
+  padding: 10px 14px;
+  background: #f8fafc;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 0;
+}
+.detail-page .room-detail-quickfacts small {
+  margin-bottom: 2px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.detail-page .room-detail-quickfacts strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: #1e293b;
+  overflow-wrap: break-word;
+}
+.detail-page .room-detail-quickfacts .room-detail-price-fact strong {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: baseline;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #ea580c;
+}
+.detail-page .room-detail-quickfacts em {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.4;
+  font-style: normal;
+  color: #64748b;
+  font-weight: 500;
+}
 .detail-page .room-contact-card { border: 1px solid #dfe7e1; box-shadow: none; padding: 24px; }
 .detail-page .room-contact-card .landlord-stats { gap: 8px; }
 .detail-page .room-contact-card .landlord-stats span { font-size: 11px; line-height: 1.6; }
@@ -202,9 +250,11 @@
   .detail-page .room-gallery-thumb { width: 68px; height: 54px; }
   .detail-page .room-detail-main-column .room-detail-summary-primary { padding: 20px; }
   .detail-page .room-detail-summary-primary h1 { font-size: 25px; margin-top: 16px; }
-  .detail-page .room-detail-quickfacts > div { padding: 14px 12px; }
-  .detail-page .room-detail-quickfacts .room-detail-price-fact strong { font-size: 18px; }
-  .detail-page .room-detail-quickfacts strong { font-size: 14px; }
+  .detail-page .room-detail-quickfacts,
+  .detail-page .room-detail-main-column .room-detail-quickfacts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+  .detail-page .room-detail-quickfacts > div { padding: 8px 10px; }
+  .detail-page .room-detail-quickfacts .room-detail-price-fact strong { font-size: 15px; }
+  .detail-page .room-detail-quickfacts strong { font-size: 13px; }
   .detail-page .room-detail-panel { padding: 20px; }
   .detail-page .room-amenities-list { grid-template-columns: repeat(2, minmax(0, 1fr)); font-size: 13px; }
   .detail-page .similar-listings-heading { flex-direction: column; align-items: start; gap: 12px; }

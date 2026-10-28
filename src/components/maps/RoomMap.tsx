@@ -41,11 +41,10 @@ export default function RoomMap({ listings, center, zoom = 11, note, className =
   return <div className={className}>
     <MapBoundary key={`${center[0]}-${center[1]}-${retry}`}><MapContainer center={center} zoom={zoom} scrollWheelZoom={false}>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         eventHandlers={{ tileerror: () => setTileError(true) }}
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={20}
+        url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+        maxZoom={19}
       />
       {validListings.map((room) => <CircleMarker key={room.id} center={[room.latitude!, room.longitude!]} radius={9} pathOptions={{ color: "#0c8c72", fillColor: "#13aa8b", fillOpacity: 0.9 }}><Popup><strong>{room.title}</strong>{room.price && <><br/>{room.price}{room.area ? ` · ${room.area}` : ""}</>}{room.location && <><br/><span>{room.location}</span></>}<br/><Link to={`/phong/${room.id}`}>Xem chi tiết</Link></Popup></CircleMarker>)}
     </MapContainer></MapBoundary>
