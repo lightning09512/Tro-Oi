@@ -11957,7 +11957,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .spotlight-content {
-  padding: 12px 14px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;

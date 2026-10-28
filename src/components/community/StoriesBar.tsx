@@ -194,7 +194,6 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
     return initialStories
   })
 
-  const [activeTab, setActiveTab] = useState<"all" | "story" | "reel">("all")
   const [viewingIndex, setViewingIndex] = useState<number | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
@@ -241,7 +240,7 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
       el.removeEventListener("scroll", checkScroll)
       window.removeEventListener("resize", checkScroll)
     }
-  }, [stories, activeTab])
+  }, [stories])
 
   const scroll = (direction: "left" | "right") => {
     const el = carouselRef.current
@@ -252,10 +251,7 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
   }
 
   // Filtered stories by active tab
-  const filteredStories = stories.filter((s) => {
-    if (activeTab === "all") return true
-    return s.type === activeTab
-  })
+  const filteredStories = stories
 
   // Timer for viewing story
   useEffect(() => {
@@ -365,34 +361,6 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
 
   return (
     <div className="fb-stories-section">
-      {/* Tab Switcher: Tin vs Thước phim */}
-      <div className="fb-stories-tabs">
-        <button
-          type="button"
-          className={`fb-tab-item ${activeTab === "all" ? "active" : ""}`}
-          onClick={() => setActiveTab("all")}
-        >
-          <span className="fb-tab-icon">📖</span>
-          <span>Tất cả</span>
-        </button>
-        <button
-          type="button"
-          className={`fb-tab-item ${activeTab === "story" ? "active" : ""}`}
-          onClick={() => setActiveTab("story")}
-        >
-          <span className="fb-tab-icon">📸</span>
-          <span>Tin (Stories)</span>
-        </button>
-        <button
-          type="button"
-          className={`fb-tab-item ${activeTab === "reel" ? "active" : ""}`}
-          onClick={() => setActiveTab("reel")}
-        >
-          <span className="fb-tab-icon">🎬</span>
-          <span>Thước phim (Reels)</span>
-        </button>
-      </div>
-
       {/* Carousel Wrapper */}
       <div className="fb-stories-carousel-wrapper">
         {canScrollLeft && (
