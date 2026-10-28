@@ -103,11 +103,19 @@ export default function LocationPicker({ value, onChange, variant = "hero" }: Lo
       if (!bounds) return
       const width = Math.min(380, window.innerWidth - 32)
       const height = Math.min(dialogRef.current?.offsetHeight ?? 400, window.innerHeight - 32)
-      setPosition({ width, left: Math.max(16, Math.min(bounds.left, window.innerWidth - width - 16)), top: Math.max(16, Math.min(bounds.bottom + 12, window.innerHeight - height - 16)) })
+      setPosition({
+        width,
+        left: Math.max(16, Math.min(bounds.left, window.innerWidth - width - 16)),
+        top: Math.max(16, Math.min(bounds.bottom + 12, window.innerHeight - height - 16)),
+      })
     }
     updatePosition()
     window.addEventListener("resize", updatePosition)
-    return () => window.removeEventListener("resize", updatePosition)
+    window.addEventListener("scroll", updatePosition, true)
+    return () => {
+      window.removeEventListener("resize", updatePosition)
+      window.removeEventListener("scroll", updatePosition, true)
+    }
   }, [open])
   const apply = () => {
     onChange([ward, district, city].filter(Boolean).join(", "))

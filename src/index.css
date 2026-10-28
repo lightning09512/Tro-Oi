@@ -9059,8 +9059,7 @@ a,
   display: none !important;
 }
 
-.location-picker-popover,
-.location-picker-dropdown {
+.location-picker-popover {
   position: absolute !important;
   top: calc(100% + 10px) !important;
   left: 0 !important;
@@ -9078,6 +9077,30 @@ a,
   background: #ffffff !important;
   box-shadow: 0 16px 44px rgba(24, 52, 33, 0.16), 0 3px 12px rgba(24, 52, 33, 0.05) !important;
   color: #26382e !important;
+  animation: location-dropdown-slide 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.location-picker-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  background: rgba(18, 42, 28, 0.22) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+.location-picker-dropdown {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 10000 !important;
+  border: 1px solid #dfe7e1 !important;
+  border-radius: 18px !important;
+  padding: 22px 24px !important;
+  background: #ffffff !important;
+  box-shadow: 0 20px 48px rgba(18, 48, 28, 0.2), 0 4px 16px rgba(18, 48, 28, 0.08) !important;
+  color: #26382e !important;
+  max-height: min(560px, calc(100vh - 32px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
   animation: location-dropdown-slide 200ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -16197,51 +16220,28 @@ input[type="file"]::file-selector-button:hover {
    ========================================================================== */
 .hero {
   position: relative !important;
-  background:
-    radial-gradient(1200px circle at 15% 10%, rgba(36, 95, 59, 0.12) 0%, transparent 60%),
-    radial-gradient(1000px circle at 85% 20%, rgba(234, 88, 12, 0.10) 0%, transparent 55%),
-    radial-gradient(800px circle at 50% 100%, rgba(37, 99, 235, 0.05) 0%, transparent 60%),
-    linear-gradient(180deg, #f0f7f2 0%, #f7faf7 60%, #f5f8f5 100%) !important;
+  background: linear-gradient(180deg, #edf5f0 0%, #f7faf7 50%, #f5f8f5 100%) !important;
   border-bottom: 1px solid #dfe7e1 !important;
   overflow: hidden !important;
 }
 
-/* Subtle architectural dot grid pattern overlay */
+/* Remove AI tech dot grid pattern overlay */
 .hero::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background-image: radial-gradient(rgba(36, 95, 59, 0.14) 1px, transparent 1px) !important;
-  background-size: 28px 28px !important;
-  background-position: 0 0 !important;
-  mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, black 35%, transparent 80%) !important;
-  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 50% 30%, black 35%, transparent 80%) !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
+  display: none !important;
 }
 
-/* Ambient glow orb behind right column */
+/* Remove AI ambient glow orb */
 .hero::after {
-  content: "" !important;
-  position: absolute !important;
-  width: 520px !important;
-  height: 520px !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle, rgba(234, 88, 12, 0.12) 0%, rgba(47, 122, 75, 0.06) 50%, transparent 70%) !important;
-  right: -80px !important;
-  top: -100px !important;
-  filter: blur(50px) !important;
-  pointer-events: none !important;
-  z-index: 0 !important;
+  display: none !important;
 }
 
 .hero-inner {
   position: relative !important;
   z-index: 1 !important;
-  padding: 48px 0 44px !important;
+  padding: 44px 0 40px !important;
 }
 
-/* Eyebrow Trust Pill */
+/* Eyebrow Trust Pill - clean, grounded Vietnamese portal */
 .hero-eyebrow-pill {
   display: inline-flex !important;
   align-items: center !important;
@@ -16253,28 +16253,22 @@ input[type="file"]::file-selector-button:hover {
   color: #1b472c !important;
   font-size: 13px !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgba(36, 95, 59, 0.08) !important;
-  margin-bottom: 18px !important;
+  box-shadow: 0 1px 3px rgba(36, 95, 59, 0.06) !important;
+  margin-bottom: 16px !important;
   width: fit-content !important;
 }
 .hero-eyebrow-dot {
-  width: 8px !important;
-  height: 8px !important;
+  width: 7px !important;
+  height: 7px !important;
   border-radius: 50% !important;
-  background: #22c55e !important;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
-  animation: heroPulse 2s infinite !important;
-}
-@keyframes heroPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.75; }
+  background: #1f7a46 !important;
 }
 
 .hero h1 {
-  font-size: clamp(38px, 4.2vw, 56px) !important;
+  font-size: clamp(36px, 4vw, 52px) !important;
   font-weight: 800 !important;
-  line-height: 1.15 !important;
-  letter-spacing: -0.03em !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.025em !important;
   color: #172a20 !important;
   margin: 0 0 16px !important;
 }
@@ -16287,7 +16281,7 @@ input[type="file"]::file-selector-button:hover {
   margin: 0 0 22px !important;
 }
 
-/* Trust Proof Badges under hero text */
+/* Trust Proof Badges under hero text - crisp, clean, grounded */
 .hero-trust-row {
   display: flex !important;
   align-items: center !important;
@@ -16302,11 +16296,11 @@ input[type="file"]::file-selector-button:hover {
   font-size: 13px !important;
   font-weight: 600 !important;
   color: #2e4d3a !important;
-  background: rgba(255, 255, 255, 0.85) !important;
+  background: #ffffff !important;
   padding: 6px 12px !important;
   border-radius: 8px !important;
   border: 1px solid #dce8df !important;
-  backdrop-filter: blur(4px) !important;
+  box-shadow: 0 1px 2px rgba(18, 48, 28, 0.04) !important;
 }
 .hero-trust-item .icon {
   color: #245f3b !important;
