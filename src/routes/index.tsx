@@ -65,6 +65,7 @@ export const router = createBrowserRouter([
       { path: "/tim-phong", Component: SearchPage },
       { path: "/phong/:id", Component: RoomDetailPage },
       { path: "/dien-dan", Component: ForumRouteWrapper },
+      { path: "/tim-ban-be", Component: MembersPage },
       { path: "/thanh-vien", Component: MembersPage },
       {
         path: "/bai-viet/:id",

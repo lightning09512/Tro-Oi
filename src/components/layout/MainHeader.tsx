@@ -18,7 +18,6 @@ type NavigationLink = [path: string, label: string]
 const primaryLinks: NavigationLink[] = [
   ["/tim-phong", "Tìm phòng"],
   ["/dien-dan", "Diễn đàn"],
-  ["/thanh-vien", "Thành viên"],
 ]
 
 export default function MainHeader() {
@@ -289,6 +288,10 @@ export default function MainHeader() {
                         Tin yêu thích
                       </button>
                     )}
+                    <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/tim-ban-be"); }}>
+                      <Icon name="phone" size={18} />
+                      Tìm bạn qua SĐT
+                    </button>
                     {user.role === "landlord" && (
                       <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/chu-tro/thong-ke"); }}>
                         <Icon name="chart" size={18} />

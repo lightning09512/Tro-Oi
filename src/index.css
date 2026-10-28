@@ -14188,3 +14188,303 @@ input[type="file"]::file-selector-button:hover {
     max-width: 100%;
   }
 }
+
+
+/* ==========================================================================
+   ZALO-STYLE PHONE SEARCH & CHAT CONNECT
+   ========================================================================== */
+.find-contact-quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d4e7da;
+  background: #f0f7f2;
+  color: #245f3b;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.15s ease;
+}
+
+.find-contact-quick-btn:hover {
+  background: #245f3b;
+  color: #ffffff;
+  border-color: #245f3b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(36, 95, 59, 0.15);
+}
+
+.zalo-contact-dialog {
+  max-width: 500px !important;
+  padding: 26px !important;
+  border-radius: 18px !important;
+}
+
+.zalo-search-box {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 14px;
+}
+
+.zalo-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d4e7da;
+  border-radius: 10px;
+  background: #f7faf8;
+  padding: 0 12px;
+  min-height: 44px;
+  transition: all 0.15s ease;
+  color: #556b5e;
+}
+
+.zalo-input-wrapper:focus-within {
+  border-color: #245f3b;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(36, 95, 59, 0.12);
+  color: #245f3b;
+}
+
+.zalo-input-wrapper input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 14px;
+  color: #1e382b;
+  font-family: inherit;
+  padding: 0;
+}
+
+.zalo-clear-icon {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: #7b8e83;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.zalo-clear-icon:hover {
+  color: #dc2626;
+}
+
+.zalo-search-btn {
+  padding: 0 18px;
+  border-radius: 10px;
+  background: #245f3b;
+  color: #ffffff;
+  font-weight: 700;
+  border: none;
+  font-size: 13.5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.zalo-search-btn:hover:not(:disabled) {
+  background: #1b472c;
+}
+
+.zalo-search-btn:disabled {
+  background: #dbe4de;
+  color: #8fa094;
+  cursor: not-allowed;
+}
+
+.zalo-results-container {
+  max-height: 380px;
+  overflow-y: auto;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zalo-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px;
+  color: #5a6b61;
+}
+
+.zalo-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #edf6f0;
+  color: #245f3b;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+
+.zalo-state-icon.is-danger {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.zalo-empty-state strong {
+  font-size: 15px;
+  color: #24352b;
+  margin-bottom: 6px;
+}
+
+.zalo-empty-state p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #617367;
+  max-width: 380px;
+  margin: 0;
+}
+
+.zalo-empty-state small {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8c9e93;
+}
+
+.zalo-contact-card {
+  background: #ffffff;
+  border: 1px solid #dce8df;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.zalo-contact-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.zalo-contact-header .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.zalo-contact-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zalo-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zalo-name-row strong {
+  font-size: 14.5px;
+  color: #1e382b;
+}
+
+.zalo-contact-phone {
+  font-size: 13px;
+  font-weight: 600;
+  color: #245f3b;
+}
+
+.zalo-contact-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.zalo-btn-chat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  border-radius: 8px;
+  background: #245f3b;
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zalo-btn-chat:hover:not(:disabled) {
+  background: #1b472c;
+}
+
+.zalo-btn-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #d4e7da;
+  background: #f7faf8;
+  color: #243a2d;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.zalo-btn-profile:hover {
+  background: #eef5f0;
+  border-color: #245f3b;
+  color: #245f3b;
+}
+
+.zalo-privacy-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f0f7f2;
+  border: 1px solid #d4e7da;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #264a32;
+  text-align: left;
+  margin: 16px auto;
+  max-width: 640px;
+  line-height: 1.5;
+}
+
+.zalo-page-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 16px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5ede7;
+}
+
+.zalo-empty-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #eaf5ee;
+  color: #245f3b;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}

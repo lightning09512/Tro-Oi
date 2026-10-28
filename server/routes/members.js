@@ -1,11 +1,17 @@
 import { Router } from "express"
 import { pool } from "../config/db.js"
+import { requireAuth } from "../middleware/auth.js"
 
 const router = Router()
 
-router.get("/", async (req, res) => {
+router.get("/", requireAuth, async (req, res) => {
   const q = String(req.query.q || "").trim()
   const role = String(req.query.role || "").trim()
+
+  // Bảo vệ quyền riêng tư giống Zalo: Không hiển thị danh sách nếu không nhập thông tin tìm kiếm
+  if (!q) {
+    return res.json({ items: [] })
+  }
 
   const filters = ["u.status='active'", "u.role IN ('renter','landlord')"]
   const params = []
@@ -15,14 +21,12 @@ router.get("/", async (req, res) => {
     filters.push(`u.role = $${params.length}`)
   }
 
-  if (q) {
-    params.push(`%${q}%`)
-    const paramIdx = params.length
-    const cleanPhone = q.replace(/\s+/g, "")
-    params.push(`%${cleanPhone}%`)
-    const phoneIdx = params.length
-    filters.push(`(unaccent(u.name) ILIKE unaccent($${paramIdx}) OR regexp_replace(u.phone, '[[:space:]]', '', 'g') ILIKE $${phoneIdx})`)
-  }
+  const cleanPhone = q.replace(/[\s\.\-]+/g, "")
+  params.push(`%${q}%`)
+  const paramIdx = params.length
+  params.push(`%${cleanPhone}%`)
+  const phoneIdx = params.length
+  filters.push(`(unaccent(u.name) ILIKE unaccent($${paramIdx}) OR regexp_replace(u.phone, '[[:space:]\\.\\-]', '', 'g') ILIKE $${phoneIdx})`)
 
   const query = `
     SELECT 
@@ -41,7 +45,7 @@ router.get("/", async (req, res) => {
     WHERE ${filters.join(" AND ")}
     GROUP BY u.id
     ORDER BY u.created_at DESC
-    LIMIT 100
+    LIMIT 20
   `
 
   const { rows } = await pool.query(query, params)
@@ -59,27 +63,6 @@ router.get("/", async (req, res) => {
       listingsCount: Number(row.listings_count) || 0,
       postsCount: Number(row.posts_count) || 0,
     })),
-  })
-})
-
-router.get("/:id", async (req, res) => {
-  const { rows } = await pool.query(
-    "SELECT id,name,phone,role,status,avatar_url,created_at FROM users WHERE id=$1 AND status='active' AND role IN ('renter','landlord')",
-    [req.params.id],
-  )
-  const member = rows[0]
-  if (!member) return res.status(404).json({ error: "Hồ sơ này không tồn tại hoặc tài khoản không còn hoạt động." })
-  res.json({
-    item: {
-      id: member.id,
-      name: member.name,
-      phone: member.phone ?? "",
-      role: member.role,
-      status: member.status,
-      avatarUrl: member.avatar_url ?? undefined,
-      createdAt: member.created_at,
-      initials: member.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(),
-    },
   })
 })
 

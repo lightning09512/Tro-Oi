@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
+import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router"
-import { Icon } from "@/components/common/legacy"
+import { Button, Icon } from "@/components/common/legacy"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { apiRequest, isApiMode } from "@/services/apiClient"
@@ -19,49 +19,46 @@ interface MemberItem {
   postsCount?: number
 }
 
+function MemberAvatar({ initials, avatarUrl }: { initials: string; avatarUrl?: string }) {
+  return (
+    <span className="avatar members-card-avatar">
+      {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : initials}
+    </span>
+  )
+}
+
 export default function MembersPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast } = useToast()
-  const { users: platformUsers, listings, posts } = usePlatform()
+  const { users: platformUsers, listings, posts, startConversation } = usePlatform()
 
+  const [searchPhone, setSearchPhone] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const [members, setMembers] = useState<MemberItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [roleFilter, setRoleFilter] = useState<"all" | "landlord" | "renter">("all")
+  const [startingChatId, setStartingChatId] = useState<string | null>(null)
 
-  // Load members from API or fallback to platform context
-  useEffect(() => {
-    let alive = true
+  const handleSearch = async (e?: FormEvent) => {
+    if (e) e.preventDefault()
+    const q = searchPhone.trim()
+    if (!q) {
+      toast("Vui lòng nhập số điện thoại để tìm kiếm.", "info")
+      return
+    }
 
-    const fetchMembers = async () => {
-      setLoading(true)
-      try {
-        if (isApiMode) {
-          const queryParams = new URLSearchParams()
-          if (search.trim()) queryParams.set("q", search.trim())
-          if (roleFilter !== "all") queryParams.set("role", roleFilter)
-
-          const queryString = queryParams.toString() ? `?${queryParams.toString()}` : ""
-          const result = await apiRequest<{ items: MemberItem[] }>(`members${queryString}`)
-          if (alive) {
-            setMembers(result.items || [])
-            setLoading(false)
-          }
-          return
-        }
-
-        // Mock mode fallback
+    setLoading(true)
+    setHasSearched(true)
+    try {
+      if (isApiMode) {
+        const result = await apiRequest<{ items: MemberItem[] }>(`members?q=${encodeURIComponent(q)}`)
+        setMembers((result.items || []).filter((item) => item.id !== user?.id))
+      } else {
+        const clean = q.replace(/[\s\.\-]+/g, "").toLowerCase()
         const filtered = platformUsers.filter((u) => {
-          if (u.role === "admin" || u.status !== "active") return false
-          if (roleFilter !== "all" && u.role !== roleFilter) return false
-          if (search.trim()) {
-            const term = search.trim().toLowerCase()
-            const matchName = u.name.toLowerCase().includes(term)
-            const matchPhone = (u.phone || "").replace(/\s+/g, "").includes(term.replace(/\s+/g, ""))
-            return matchName || matchPhone
-          }
-          return true
+          if (u.id === user?.id || u.status !== "active" || u.role === "admin") return false
+          const uPhone = (u.phone || "").replace(/[\s\.\-]+/g, "")
+          return uPhone.includes(clean) || u.name.toLowerCase().includes(q.toLowerCase())
         }).map((u) => ({
           id: u.id,
           name: u.name,
@@ -73,32 +70,40 @@ export default function MembersPage() {
           listingsCount: listings.filter((l) => l.ownerId === u.id).length,
           postsCount: posts.filter((p) => p.authorId === u.id).length,
         }))
-
-        if (alive) {
-          setMembers(filtered)
-          setLoading(false)
-        }
-      } catch {
-        if (alive) {
-          setMembers([])
-          setLoading(false)
-        }
+        setMembers(filtered)
       }
+    } catch {
+      setMembers([])
+    } finally {
+      setLoading(false)
     }
+  }
 
-    const timer = setTimeout(fetchMembers, 200)
-    return () => {
-      alive = false
-      clearTimeout(timer)
+  const handleMessage = async (member: MemberItem) => {
+    if (!user) {
+      navigate("/dang-nhap", { state: { from: window.location.pathname } })
+      return
     }
-  }, [search, roleFilter, platformUsers, listings, posts])
-
-  const stats = useMemo(() => {
-    const total = members.length
-    const landlords = members.filter((m) => m.role === "landlord").length
-    const renters = members.filter((m) => m.role === "renter").length
-    return { total, landlords, renters }
-  }, [members])
+    setStartingChatId(member.id)
+    try {
+      const room = listings.find((l) => l.ownerId === member.id && l.status === "active")
+      const conversation = await startConversation({
+        accountId: user.id,
+        name: member.name,
+        avatar: member.initials,
+        avatarUrl: member.avatarUrl,
+        userId: member.id,
+        roomId: room?.id ?? "",
+      })
+      if (conversation) {
+        navigate(`/tin-nhan?conversation=${conversation}`)
+      }
+    } catch {
+      toast("Không thể mở cuộc trò chuyện lúc này.", "error")
+    } finally {
+      setStartingChatId(null)
+    }
+  }
 
   const copyPhone = (phone: string, name: string) => {
     if (!phone) return
@@ -106,188 +111,172 @@ export default function MembersPage() {
     toast(`Đã sao chép số điện thoại của ${name}: ${phone}`, "success")
   }
 
+  if (!user) {
+    return (
+      <main className="page-bg members-directory-page">
+        <div className="container" style={{ maxWidth: "600px", padding: "60px 16px", textAlign: "center" }}>
+          <div className="members-auth-guard" style={{ background: "#ffffff", padding: "40px 24px", borderRadius: "20px", border: "1px solid #e3ede6" }}>
+            <span className="zalo-empty-circle" style={{ margin: "0 auto 16px" }}><Icon name="phone" size={36} /></span>
+            <h2 style={{ fontSize: "22px", marginBottom: "8px", color: "#1e382b" }}>Tìm bạn qua số điện thoại</h2>
+            <p style={{ color: "#62746a", fontSize: "14px", marginBottom: "24px" }}>
+              Vui lòng đăng nhập để sử dụng tính năng tra cứu và kết nối qua số điện thoại theo chính sách bảo mật của Trọ Ơi.
+            </p>
+            <Button onClick={() => navigate("/dang-nhap", { state: { from: window.location.pathname } })}>
+              Đăng nhập ngay
+            </Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="page-bg members-directory-page">
-      <div className="container">
-        {/* Hero Header */}
-        <header className="members-hero">
+      <div className="container" style={{ maxWidth: "800px" }}>
+        {/* Header */}
+        <header className="members-hero" style={{ padding: "40px 16px 28px" }}>
           <div className="members-hero-badge">
-            <Icon name="users" size={16} />
-            <span>Mạng xã hội người thuê & chủ nhà</span>
+            <Icon name="phone" size={16} />
+            <span>Tra cứu an toàn & bảo mật</span>
           </div>
-          <h1>Cộng đồng Thành viên Trọ Ơi</h1>
+          <h1>Tìm bạn qua số điện thoại</h1>
           <p>
-            Tìm kiếm bạn cùng phòng, kết nối trực tiếp với chủ trọ uy tín hoặc tra cứu thành viên qua số điện thoại và họ tên.
+            Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ trọ và bắt đầu nhắn tin trao đổi trực tiếp (giống Zalo).
           </p>
 
-          {/* Search Box */}
-          <div className="members-search-wrapper">
+          {/* Privacy Note */}
+          <div className="zalo-privacy-box">
+            <Icon name="shield" size={18} />
+            <span>
+              <b>Chính sách bảo mật:</b> Danh bạ thành viên không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
+            </span>
+          </div>
+
+          {/* Search Form */}
+          <form className="members-search-wrapper" onSubmit={handleSearch}>
             <div className="members-search-bar">
-              <span className="search-icon"><Icon name="search" size={20} /></span>
+              <span className="search-icon"><Icon name="phone" size={20} /></span>
               <input
                 type="text"
-                placeholder="Tìm theo tên hoặc số điện thoại (ví dụ: 0395..., Hoàng Trang, Minh Ngọc)..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nhập số điện thoại (ví dụ: 0912345678, 0395...)..."
+                value={searchPhone}
+                onChange={(e) => setSearchPhone(e.target.value)}
                 autoComplete="off"
+                spellCheck={false}
+                autoFocus
               />
-              {search && (
+              {searchPhone && (
                 <button
                   type="button"
                   className="search-clear-btn"
-                  onClick={() => setSearch("")}
+                  onClick={() => {
+                    setSearchPhone("")
+                    setMembers([])
+                    setHasSearched(false)
+                  }}
                   aria-label="Xóa tìm kiếm"
                 >
                   <Icon name="close" size={16} />
                 </button>
               )}
             </div>
-
-            {/* Role Filter Tabs */}
-            <div className="members-role-tabs">
-              <button
-                type="button"
-                className={`role-tab-btn ${roleFilter === "all" ? "active" : ""}`}
-                onClick={() => setRoleFilter("all")}
-              >
-                Tất cả thành viên
-              </button>
-              <button
-                type="button"
-                className={`role-tab-btn ${roleFilter === "landlord" ? "active" : ""}`}
-                onClick={() => setRoleFilter("landlord")}
-              >
-                🏠 Chủ nhà trọ
-              </button>
-              <button
-                type="button"
-                className={`role-tab-btn ${roleFilter === "renter" ? "active" : ""}`}
-                onClick={() => setRoleFilter("renter")}
-              >
-                👤 Người tìm phòng
-              </button>
-            </div>
-          </div>
+            <button type="submit" className="members-search-btn" disabled={!searchPhone.trim() || loading}>
+              {loading ? "Đang tìm..." : "Tìm kiếm"}
+            </button>
+          </form>
         </header>
 
-        {/* Members Grid Section */}
-        <section className="members-section">
-          <div className="members-count-strip">
-            <span>
-              {loading
-                ? "Đang tìm kiếm..."
-                : `Tìm thấy ${members.length} thành viên phù hợp`}
-            </span>
-          </div>
-
-          {loading ? (
-            <div className="members-loading-grid">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="member-card skeleton-card">
-                  <div className="skeleton-avatar" />
-                  <div className="skeleton-line title" />
-                  <div className="skeleton-line pill" />
-                  <div className="skeleton-line details" />
-                </div>
-              ))}
+        {/* Results Area */}
+        <section className="members-section" style={{ paddingTop: "12px", paddingBottom: "60px" }}>
+          {!hasSearched ? (
+            <div className="zalo-page-empty">
+              <div className="zalo-empty-circle">
+                <Icon name="phone" size={38} />
+              </div>
+              <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Nhập số điện thoại để bắt đầu</h3>
+              <p style={{ color: "#65766c", fontSize: "14px", margin: 0 }}>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
             </div>
-          ) : members.length === 0 ? (
-            <div className="members-empty-box">
-              <span className="empty-icon"><Icon name="users" size={40} /></span>
-              <h3>Không tìm thấy thành viên phù hợp</h3>
-              <p>
-                {search
-                  ? `Không có kết quả nào khớp với "${search}". Vui lòng thử tìm với số điện thoại hoặc từ khóa khác.`
-                  : "Chưa có thành viên nào trong danh mục này."}
-              </p>
-              {search && (
-                <button type="button" className="btn-reset-search" onClick={() => setSearch("")}>
-                  Xem tất cả thành viên
-                </button>
-              )}
+          ) : loading ? (
+            <div className="zalo-page-empty">
+              <div className="forum-lazy-spinner" />
+              <p style={{ marginTop: "16px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
             </div>
-          ) : (
-            <div className="members-grid">
+          ) : members.length > 0 ? (
+            <div className="members-grid" style={{ gridTemplateColumns: "1fr", gap: "16px" }}>
               {members.map((member) => {
-                const isMe = user?.id === member.id
+                const roleText = member.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"
                 return (
-                  <article key={member.id} className="member-social-card">
+                  <article className="member-card" key={member.id} style={{ padding: "20px" }}>
                     <div className="member-card-header">
-                      <Link to={`/nguoi-dung/${member.id}`} className="member-avatar-wrap">
-                        {member.avatarUrl ? (
-                          <img src={member.avatarUrl} alt={member.name} className="member-avatar-img" />
-                        ) : (
-                          <span className="member-avatar-placeholder">{member.initials}</span>
-                        )}
-                        <span className="member-status-dot" title="Tài khoản đang hoạt động" />
-                      </Link>
+                      <MemberAvatar initials={member.initials} avatarUrl={member.avatarUrl} />
+                      <div className="member-info">
+                        <div className="member-name-row">
+                          <Link to={`/nguoi-dung/${member.id}`} className="member-name-link">
+                            <h2 style={{ fontSize: "18px" }}>{member.name}</h2>
+                          </Link>
+                          <span className={`member-role-badge ${member.role}`}>
+                            {member.role === "landlord" ? "🏠 " : "👤 "}
+                            {roleText}
+                          </span>
+                        </div>
 
-                      <div className="member-meta-block">
-                        <Link to={`/nguoi-dung/${member.id}`} className="member-name-link">
-                          <strong>{member.name}</strong>
-                          {isMe && <span className="me-badge">Bạn</span>}
-                        </Link>
-                        <span className={`member-role-tag ${member.role === "landlord" ? "tag-landlord" : "tag-renter"}`}>
-                          {member.role === "landlord" ? "🏠 Chủ trọ chính chủ" : "👤 Người tìm phòng"}
-                        </span>
+                        {member.phone && (
+                          <div className="member-phone-row" style={{ marginTop: "6px" }}>
+                            <span className="member-phone-val">📞 {member.phone}</span>
+                            <button
+                              type="button"
+                              className="copy-phone-btn"
+                              onClick={() => copyPhone(member.phone, member.name)}
+                              title="Sao chép số điện thoại"
+                            >
+                              <Icon name="copy" size={14} />
+                              <span>Sao chép</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="member-info-body">
-                      {member.phone ? (
-                        <div
-                          className="member-info-row clickable-phone"
-                          onClick={() => copyPhone(member.phone, member.name)}
-                          title="Bấm để sao chép số điện thoại"
-                        >
-                          <span className="info-icon">📞</span>
-                          <span className="phone-number">{member.phone}</span>
-                          <span className="copy-label">Sao chép</span>
-                        </div>
-                      ) : (
-                        <div className="member-info-row">
-                          <span className="info-icon">🔒</span>
-                          <span className="text-muted">Chưa công khai SĐT</span>
-                        </div>
-                      )}
-
-                      <div className="member-stats-row">
-                        {member.role === "landlord" ? (
-                          <span className="stat-item">
-                            <Icon name="building" size={14} />
-                            <b>{member.listingsCount || 0}</b> tin phòng
-                          </span>
-                        ) : (
-                          <span className="stat-item">
-                            <Icon name="chat" size={14} />
-                            <b>{member.postsCount || 0}</b> bài viết
-                          </span>
-                        )}
-                        <span className="stat-badge-trust">
-                          <Icon name="shield" size={13} /> Đã xác thực
+                    <div className="member-stats-row" style={{ margin: "14px 0" }}>
+                      {member.role === "landlord" ? (
+                        <span className="member-stat-item">
+                          🏠 <b>{member.listingsCount || 0}</b> tin phòng đăng
                         </span>
-                      </div>
+                      ) : (
+                        <span className="member-stat-item">
+                          💬 <b>{member.postsCount || 0}</b> bài viết diễn đàn
+                        </span>
+                      )}
                     </div>
 
                     <div className="member-card-actions">
-                      <Link to={`/nguoi-dung/${member.id}`} className="btn-view-profile">
+                      <button
+                        type="button"
+                        className="member-btn-chat"
+                        disabled={startingChatId === member.id}
+                        onClick={() => handleMessage(member)}
+                      >
+                        <Icon name="chat" size={16} />
+                        <span>{startingChatId === member.id ? "Đang mở chat..." : "Nhắn tin ngay"}</span>
+                      </button>
+                      <Link to={`/nguoi-dung/${member.id}`} className="member-btn-profile">
                         Xem trang cá nhân
                       </Link>
-                      {!isMe && (
-                        <button
-                          type="button"
-                          className="btn-chat-member"
-                          onClick={() => navigate(`/tin-nhan?conversation=&newContact=${member.id}`)}
-                          title={`Nhắn tin với ${member.name}`}
-                        >
-                          <Icon name="chat" size={16} />
-                          <span>Nhắn tin</span>
-                        </button>
-                      )}
                     </div>
                   </article>
                 )
               })}
+            </div>
+          ) : (
+            <div className="zalo-page-empty">
+              <div className="zalo-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                <Icon name="close" size={38} />
+              </div>
+              <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Không tìm thấy người dùng</h3>
+              <p style={{ color: "#65766c", fontSize: "14px", marginBottom: "4px" }}>
+                Không có tài khoản nào đăng ký số điện thoại <b>{searchPhone}</b> trên hệ thống Trọ Ơi.
+              </p>
+              <small style={{ color: "#8a9a90" }}>Vui lòng kiểm tra lại tính chính xác của số điện thoại và thử lại.</small>
             </div>
           )}
         </section>

@@ -5,7 +5,7 @@ import { usePlatform } from "@/contexts/PlatformContext"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { io } from "socket.io-client"
-import { getAccessToken, isApiMode } from "@/services/apiClient"
+import { getAccessToken, isApiMode, apiRequest } from "@/services/apiClient"
 
 function PersonAvatar({
   initials,
@@ -35,6 +35,10 @@ export default function MessagesPage() {
   const [selectContact, setSelectContact] = useState(false)
   const [contactError, setContactError] = useState("")
   const [startingContactId, setStartingContactId] = useState<string | null>(null)
+  const [phoneQuery, setPhoneQuery] = useState("")
+  const [phoneSearching, setPhoneSearching] = useState(false)
+  const [phoneResults, setPhoneResults] = useState<Array<{ id: string; name: string; initials: string; avatarUrl?: string; phone: string; role: string }>>([])
+  const [phoneSearched, setPhoneSearched] = useState(false)
   const [showDetails, setShowDetails] = useState(true)
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [scheduleDate, setScheduleDate] = useState("Ngày mai")
@@ -111,6 +115,41 @@ export default function MessagesPage() {
     }
   }
 
+  const handlePhoneSearch = async (event?: FormEvent) => {
+    if (event) event.preventDefault()
+    const q = phoneQuery.trim()
+    if (!q) return
+    setPhoneSearching(true)
+    setContactError("")
+    try {
+      if (isApiMode) {
+        const res = await apiRequest<{ items: Array<{ id: string; name: string; initials: string; avatarUrl?: string; phone: string; role: string }> }>(`members?q=${encodeURIComponent(q)}`)
+        setPhoneResults((res.items || []).filter((item: { id: string }) => item.id !== user?.id))
+      } else {
+        const clean = q.replace(/[\s\.\-]+/g, "").toLowerCase()
+        const found = users.filter((u) => {
+          if (u.id === user?.id || u.status !== "active") return false
+          const uPhone = (u.phone || "").replace(/[\s\.\-]+/g, "")
+          return uPhone.includes(clean) || u.name.toLowerCase().includes(q.toLowerCase())
+        })
+        setPhoneResults(found.map((u) => ({ id: u.id, name: u.name, initials: u.initials, avatarUrl: u.avatarUrl, phone: u.phone || "", role: u.role })))
+      }
+    } catch (err) {
+      setContactError(err instanceof Error ? err.message : "Không thể tìm kiếm lúc này.")
+    } finally {
+      setPhoneSearching(false)
+      setPhoneSearched(true)
+    }
+  }
+
+  const openPhoneSearch = () => {
+    setSelectContact(true)
+    setPhoneQuery("")
+    setPhoneResults([])
+    setPhoneSearched(false)
+    setContactError("")
+  }
+
   return (
     <main className="messages-page">
       <div className={`${selected ? "container messenger" : "container messenger is-empty"} ${showDetails ? "has-details" : "no-details"}`}>
@@ -120,10 +159,18 @@ export default function MessagesPage() {
               <span className="eyebrow">Trao đổi trực tiếp</span>
               <h1>Tin nhắn</h1>
             </div>
-            <button aria-label="Bắt đầu cuộc trò chuyện" onClick={() => setSelectContact(true)}>
+            <button aria-label="Tìm bạn qua số điện thoại" title="Tìm bạn qua số điện thoại" onClick={openPhoneSearch}>
               <Icon name="plus" />
             </button>
           </div>
+          <button
+            type="button"
+            className="find-contact-quick-btn"
+            onClick={openPhoneSearch}
+          >
+            <Icon name="phone" size={16} />
+            <span>Tìm bạn qua số điện thoại</span>
+          </button>
           <label className="message-search">
             <Icon name="search" />
             <input
@@ -732,36 +779,93 @@ export default function MessagesPage() {
 
         {selectContact && (
           <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectContact(false) }}>
-            <section className="action-dialog contact-picker" role="dialog" aria-modal="true" aria-labelledby="contact-picker-title">
+            <section className="action-dialog zalo-contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-picker-title">
               <button className="dialog-close" onClick={() => setSelectContact(false)} aria-label="Đóng"><Icon name="close" /></button>
-              <span className="eyebrow">Tin nhắn mới</span>
-              <h2 id="contact-picker-title">Chọn người để liên hệ</h2>
-              <p className="contact-picker-intro">Chọn người đăng tin hoặc thành viên để bắt đầu trao đổi.</p>
-              {contactError && <p className="form-message error" role="alert">{contactError}</p>}
-              {availableContacts.length ? (
-                availableContacts.map((item) => {
-                  const room = listings.find((listing) => listing.ownerId === item.id && listing.status === "active")
-                  const role = item.role === "landlord" ? "Chủ trọ" : "Người thuê"
-                  return (
-                    <button
-                      className="contact-picker-row"
-                      key={item.id}
-                      disabled={startingContactId === item.id}
-                      onClick={() => startChat({ name: item.name, initials: item.initials, avatarUrl: item.avatarUrl, id: item.id, roomId: room?.id ?? "" })}
-                    >
-                      <PersonAvatar initials={item.initials} avatarUrl={item.avatarUrl} />
-                      <span>
-                        <strong>{item.name}</strong>
-                        <small>{role}</small>
-                        {room && <small className="contact-room-title">Tin đang mở: {room.title}</small>}
-                      </span>
-                      <Icon name="chevron" size={17} />
+              <span className="eyebrow">Kết nối & Nhắn tin</span>
+              <h2 id="contact-picker-title">Tìm bạn qua số điện thoại</h2>
+              <p className="contact-picker-intro">Nhập chính xác số điện thoại của người thuê hoặc chủ trọ để bảo mật quyền riêng tư (giống Zalo).</p>
+
+              <form className="zalo-search-box" onSubmit={handlePhoneSearch}>
+                <div className="zalo-input-wrapper">
+                  <Icon name="phone" size={18} />
+                  <input
+                    value={phoneQuery}
+                    onChange={(e) => setPhoneQuery(e.target.value)}
+                    placeholder="Nhập số điện thoại (ví dụ: 0912345678)..."
+                    autoFocus
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  {phoneQuery && (
+                    <button type="button" className="zalo-clear-icon" onClick={() => { setPhoneQuery(""); setPhoneResults([]); setPhoneSearched(false); }}>
+                      <Icon name="close" size={15} />
                     </button>
-                  )
-                })
-              ) : (
-                <p className="contact-picker-empty">Hiện chưa có thành viên phù hợp để bắt đầu cuộc trò chuyện.</p>
-              )}
+                  )}
+                </div>
+                <button type="submit" className="zalo-search-btn" disabled={!phoneQuery.trim() || phoneSearching}>
+                  {phoneSearching ? "Đang tìm..." : "Tìm kiếm"}
+                </button>
+              </form>
+
+              {contactError && <p className="form-message error" role="alert">{contactError}</p>}
+
+              <div className="zalo-results-container">
+                {!phoneSearched ? (
+                  <div className="zalo-empty-state">
+                    <div className="zalo-state-icon">
+                      <Icon name="phone" size={32} />
+                    </div>
+                    <strong>Bảo mật danh bạ</strong>
+                    <p>Hệ thống không hiển thị công khai danh sách toàn bộ thành viên. Vui lòng nhập số điện thoại để tìm chính xác người cần liên hệ.</p>
+                  </div>
+                ) : phoneResults.length > 0 ? (
+                  phoneResults.map((item) => {
+                    const room = listings.find((listing) => listing.ownerId === item.id && listing.status === "active")
+                    const role = item.role === "landlord" ? "Chủ trọ" : "Người thuê"
+                    return (
+                      <div className="zalo-contact-card" key={item.id}>
+                        <div className="zalo-contact-header">
+                          <PersonAvatar initials={item.initials} avatarUrl={item.avatarUrl} />
+                          <div className="zalo-contact-meta">
+                            <div className="zalo-name-row">
+                              <strong>{item.name}</strong>
+                              <span className="role-badge">{role}</span>
+                            </div>
+                            <span className="zalo-contact-phone">📞 {item.phone || "Chưa công khai SĐT"}</span>
+                            {room && <span className="contact-room-title">Phòng: {room.title}</span>}
+                          </div>
+                        </div>
+                        <div className="zalo-contact-actions">
+                          <button
+                            type="button"
+                            className="zalo-btn-chat"
+                            disabled={startingContactId === item.id}
+                            onClick={() => startChat({ name: item.name, initials: item.initials, avatarUrl: item.avatarUrl, id: item.id, roomId: room?.id ?? "" })}
+                          >
+                            <Icon name="chat" size={16} />
+                            <span>{startingContactId === item.id ? "Đang mở..." : "Nhắn tin"}</span>
+                          </button>
+                          <Link
+                            to={`/nguoi-dung/${item.id}`}
+                            className="zalo-btn-profile"
+                            onClick={() => setSelectContact(false)}
+                          >
+                            Xem hồ sơ
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="zalo-empty-state is-not-found">
+                    <div className="zalo-state-icon is-danger">
+                      <Icon name="search" size={32} />
+                    </div>
+                    <strong>Không tìm thấy người dùng</strong>
+                    <p>Không có tài khoản nào đăng ký số điện thoại <b>{phoneQuery}</b>. Vui lòng kiểm tra lại số điện thoại.</p>
+                  </div>
+                )}
+              </div>
             </section>
           </div>
         )}
