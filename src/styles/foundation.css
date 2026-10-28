@@ -181,6 +181,42 @@ input, textarea { caret-color: var(--teal-dark); }
   .site-header { height: 64px; }
   .notification-popover { position: fixed; top: 76px; right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 164px); }
 }
+/* Bottom App Promo Banner (Nhà Tốt Style) */
+.site-footer-promo-band {
+  width: 100%;
+  background: #ea580c;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  display: block;
+}
+
+.site-footer-promo-band .container {
+  padding: 0;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.site-footer-promo-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  max-height: 420px;
+  transition: transform 0.25s ease;
+}
+
+.site-footer-promo-band:hover .site-footer-promo-img {
+  transform: scale(1.006);
+}
+
+@media (max-width: 640px) {
+  .site-footer-promo-img {
+    max-height: 220px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
