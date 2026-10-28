@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth"
 import { photos } from "@/mocks/content"
 import { isApiMode } from "@/services/apiClient"
 import { formatRelativeTime } from "@/utils/formatTime"
+import StoriesBar from "@/components/community/StoriesBar"
 
 function ProfileAvatar({ initials, avatarUrl, className = "" }: { initials: string; avatarUrl?: string; className?: string }) {
   return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" loading="lazy" decoding="async" /> : initials}</span>
@@ -228,8 +229,25 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
   return (
     <article className="post-card">
       <div className="post-head">
-        <Link className="profile-avatar-link" to={`/nguoi-dung/${post.authorId}`} aria-label={`Xem hồ sơ ${post.name}`}><ProfileAvatar className="peach" initials={post.initials} avatarUrl={authorAvatarUrl}/></Link>
-        <div className="post-author-wrap"><div className="post-author"><Link className="post-author-name" to={`/nguoi-dung/${post.authorId}`}>{post.name}</Link><span className="role-badge">{role ? (role === "landlord" ? "Chủ trọ" : "Người thuê") : "Thành viên"}</span></div><span>{post.time}</span></div>
+        <div className="fb-post-avatar-wrapper">
+          <Link className="profile-avatar-link" to={`/nguoi-dung/${post.authorId}`} aria-label={`Xem hồ sơ ${post.name}`}>
+            <ProfileAvatar className="peach" initials={post.initials} avatarUrl={authorAvatarUrl} />
+          </Link>
+          <span className="fb-online-dot" />
+        </div>
+        <div className="post-author-wrap">
+          <div className="post-author">
+            <Link className="post-author-name" to={`/nguoi-dung/${post.authorId}`}>
+              {post.name}
+            </Link>
+            <span className="role-badge">{role ? (role === "landlord" ? "Chủ trọ" : "Người thuê") : "Thành viên"}</span>
+          </div>
+          <div className="post-meta-sub">
+            <span className="post-relative-time">{formatRelativeTime(post.createdAt || post.time)}</span>
+            <span className="post-meta-dot">·</span>
+            <span className="post-privacy-icon" title="Công khai">🌐</span>
+          </div>
+        </div>
         {!isOwner && <button className="post-message-action" onClick={messageAuthor}><Icon name="chat" size={16}/><span>Nhắn tin</span></button>}
         <div className="post-menu-wrap"><button aria-label="Tùy chọn bài viết" aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Icon name="more"/></button>{menuOpen && <div className="post-menu">{isOwner ? <><button onClick={() => { setDraft(post.content); setEditing(true); setMenuOpen(false) }}><Icon name="edit" size={16}/>Sửa bài viết</button><button onClick={() => { if (window.confirm("Xóa bài viết này?")) { deletePost(post.id); toast("Đã xóa bài viết.", "info"); } }}><Icon name="trash" size={16}/>Xóa bài viết</button></> : <button onClick={() => { setReportOpen(true); setMenuOpen(false) }}><Icon name="shield" size={16}/>Báo cáo bài viết</button>}</div>}</div>
       </div>
@@ -410,21 +428,147 @@ export default function ForumPage() {
       <div className="container forum-layout">
         <aside className="forum-left"><h3>Diễn đàn</h3><button className="active" onClick={() => navigate("/dien-dan")}><Icon name="home"/>Bảng tin</button><button onClick={() => user ? navigate("/trang-ca-nhan") : login()}><Icon name="users"/>Trang cá nhân</button><button onClick={() => user ? navigate("/tin-nhan") : login()}><Icon name="chat"/>Tin nhắn</button><div className="forum-banner"><Icon name="shield"/><strong>Giữ thông tin riêng tư</strong><p>Chia sẻ khu vực và tầm giá là đủ. Nếu gặp nội dung vi phạm, bạn có thể gửi báo cáo để quản trị viên xem xét.</p><button onClick={() => user ? navigate("/bao-cao-cua-toi") : login()}>Báo cáo của tôi</button></div></aside>
         <section className="feed">
-          <label className="forum-search"><Icon name="search"/><input className="forum-search-field" aria-label="Tìm bài viết" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết trong cộng đồng" autoComplete="off" spellCheck={false}/>{query && <button type="button" onClick={() => setQuery("")}>Xóa</button>}</label>
-          <div className="composer"><div><ProfileAvatar initials={user?.initials ?? "?"} avatarUrl={currentUserAvatarUrl}/><button onClick={() => user ? setComposerOpen(true) : login()}>{user ? "Bạn muốn chia sẻ điều gì?" : "Đăng nhập để chia sẻ với cộng đồng"}</button></div><div><button onClick={() => user ? setComposerOpen(true) : login()}><Icon name="image"/>Thêm ảnh</button><button onClick={() => user ? setComposerOpen(true) : login()}><Icon name="edit"/>Viết bài</button></div></div>
-          {composerOpen && <form className="composer-editor" onSubmit={publish}>
-            <div className="composer-editor-head">
-              <div className="composer-editor-author">
-                <ProfileAvatar initials={user?.initials ?? "?"} avatarUrl={currentUserAvatarUrl}/>
-                <div className="composer-editor-identity"><strong>{user?.name}</strong><small>Chia sẻ công khai</small></div>
+          <label className="forum-search"><Icon name="search"/><input className="forum-search-field" aria-label="Tìm bài viết" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm bài viết trong cộng đồng..." autoComplete="off" spellCheck={false}/>{query && <button type="button" onClick={() => setQuery("")}>Xóa</button>}</label>
+
+          {/* Facebook Feed Composer */}
+          <div className="fb-feed-composer">
+            <div className="fb-composer-top-row">
+              <div className="fb-composer-avatar-wrap">
+                <ProfileAvatar initials={user?.initials ?? "?"} avatarUrl={currentUserAvatarUrl} />
+                {user && <span className="fb-composer-online-dot" />}
               </div>
-              <button className="composer-editor-close" type="button" aria-label="Đóng" onClick={() => setComposerOpen(false)}><Icon name="close"/></button>
+              <button
+                type="button"
+                className="fb-composer-input-pill"
+                onClick={() => (user ? setComposerOpen(true) : login())}
+              >
+                {user ? `${user.name} ơi, bạn đang nghĩ gì thế?` : "Đăng nhập để chia sẻ với cộng đồng..."}
+              </button>
             </div>
-            <textarea autoFocus rows={5} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Chia sẻ kinh nghiệm thuê trọ, tìm người ở ghép hoặc đăng pass phòng. Hãy ghi khu vực, giá thuê, tiền cọc và thời gian có thể nhận phòng..."/>
-            <label className="form-field"><span>Ảnh minh họa (đường dẫn)</span><input value={image} onChange={(event) => setImage(event.target.value)} placeholder="https://..." autoComplete="off"/></label>
-            {error && <p className="form-message error">{error}</p>}
-            <div className="composer-editor-actions"><span>Đừng đăng số giấy tờ hoặc địa chỉ riêng tư; có thể nhắn tin để trao đổi chi tiết.</span><Button icon="send">Đăng bài</Button></div>
-          </form>}
+
+            <div className="fb-composer-divider" />
+
+            <div className="fb-composer-action-bar">
+              <button
+                type="button"
+                className="fb-composer-action-btn action-video"
+                onClick={() => (user ? setComposerOpen(true) : login())}
+              >
+                <span className="fb-action-icon text-red-500">🎥</span>
+                <span>Video phòng</span>
+              </button>
+
+              <button
+                type="button"
+                className="fb-composer-action-btn action-photo"
+                onClick={() => (user ? setComposerOpen(true) : login())}
+              >
+                <span className="fb-action-icon text-green-500">🖼️</span>
+                <span>Ảnh/video</span>
+              </button>
+
+              <button
+                type="button"
+                className="fb-composer-action-btn action-feeling"
+                onClick={() => (user ? setComposerOpen(true) : login())}
+              >
+                <span className="fb-action-icon text-yellow-500">😊</span>
+                <span>Cảm xúc</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Facebook Stories & Reels Carousel */}
+          <StoriesBar onLogin={login} />
+
+          {/* Facebook Create Post Modal */}
+          {composerOpen && (
+            <div className="dialog-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setComposerOpen(false) }}>
+              <section className="action-dialog fb-post-create-dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+                <div className="fb-post-create-head">
+                  <h2>Tạo bài viết</h2>
+                  <button type="button" className="dialog-close" onClick={() => setComposerOpen(false)} aria-label="Đóng">
+                    <Icon name="close" />
+                  </button>
+                </div>
+
+                <div className="fb-create-author-row">
+                  <div className="fb-composer-avatar-wrap">
+                    <ProfileAvatar initials={user?.initials ?? "?"} avatarUrl={currentUserAvatarUrl} />
+                    <span className="fb-composer-online-dot" />
+                  </div>
+                  <div>
+                    <strong>{user?.name}</strong>
+                    <div className="fb-audience-pill">
+                      <span>🌐 Công khai</span>
+                    </div>
+                  </div>
+                </div>
+
+                <form className="fb-post-create-form" onSubmit={publish}>
+                  <textarea
+                    autoFocus
+                    rows={4}
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    placeholder={`${user?.name || "Bạn"} ơi, bạn đang nghĩ gì thế? Chia sẻ kinh nghiệm thuê trọ, tìm bạn ghép hoặc pass phòng...`}
+                  />
+
+                  {image && (
+                    <div className="fb-create-image-preview">
+                      <img src={image} alt="Ảnh đính kèm" />
+                      <button type="button" className="fb-remove-img-btn" onClick={() => setImage("")} title="Gỡ ảnh">
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="fb-create-attachment-bar">
+                    <span>Thêm vào bài viết của bạn</span>
+                    <div className="fb-attachment-icons">
+                      <button
+                        type="button"
+                        className="fb-attach-btn"
+                        title="Thêm ảnh"
+                        onClick={() => {
+                          const url = prompt("Nhập đường dẫn ảnh (URL):", image || photos[2])
+                          if (url) setImage(url)
+                        }}
+                      >
+                        🖼️
+                      </button>
+                      <button
+                        type="button"
+                        className="fb-attach-btn"
+                        title="Chọn ảnh mẫu"
+                        onClick={() => {
+                          const nextIdx = Math.floor(Math.random() * photos.length)
+                          setImage(photos[nextIdx])
+                        }}
+                      >
+                        ✨
+                      </button>
+                      <button
+                        type="button"
+                        className="fb-attach-btn"
+                        title="Thêm cảm xúc"
+                        onClick={() => setDraft((prev) => prev ? `${prev} 😊` : "Hôm nay tìm được phòng ưng ý ghê 😊")}
+                      >
+                        😊
+                      </button>
+                    </div>
+                  </div>
+
+                  {error && <p className="form-message error">{error}</p>}
+
+                  <button type="submit" className="fb-post-submit-btn" disabled={!draft.trim()}>
+                    Đăng bài viết
+                  </button>
+                </form>
+              </section>
+            </div>
+          )}
+
           {displayedPosts.map((post) => (
             <PostCard key={post.id} post={post} onLogin={login} isDetail={Boolean(id && id === post.id)} />
           ))}
