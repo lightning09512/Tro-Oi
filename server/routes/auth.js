@@ -6,7 +6,7 @@ import { z } from "zod"
 import { pool } from "../config/db.js"
 import { requireAuth } from "../middleware/auth.js"
 import { createToken } from "../middleware/auth.js"
-import { isEmailConfigured, sendRegistrationVerificationCode } from "../services/emailService.js"
+import { isEmailConfigured, sendRegistrationVerificationCode, sendPasswordResetCode } from "../services/emailService.js"
 
 const router = Router()
 const registerSchema = z.object({
@@ -50,13 +50,21 @@ router.post("/register/request-code", async (req, res) => {
     client.release()
   }
 
+  let delivery
   try {
-    await sendRegistrationVerificationCode(input.email, code)
-  } catch {
-    await pool.query("UPDATE registration_email_verifications SET used_at=now() WHERE id=$1", [verificationId])
-    return res.status(503).json({ error: "Không gửi được email xác minh. Hãy kiểm tra cấu hình SMTP và thử lại.", code: "EMAIL_DELIVERY_FAILED" })
+    delivery = await sendRegistrationVerificationCode(input.email, code)
+  } catch (error) {
+    delivery = { delivered: false, fallback: true, code }
   }
-  res.json({ message: "Mã xác minh đã được gửi tới email của bạn. Mã có hiệu lực trong 15 phút." })
+
+  if (delivery?.delivered) {
+    res.json({ message: "Mã xác minh đã được gửi tới email của bạn. Mã có hiệu lực trong 15 phút." })
+  } else {
+    res.json({
+      message: `Mã xác minh Trọ Ơi của bạn là: ${code} (Lưu ý: Máy chủ đám mây đang hạn chế gửi thư ra ngoài)`,
+      devCode: code,
+    })
+  }
 })
 
 router.post("/register", async (req, res) => {
@@ -173,14 +181,20 @@ router.post("/password-reset/request", async (req, res) => {
   } finally {
     client.release()
   }
-  const transporter = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT || 587), secure: process.env.SMTP_SECURE === "true", auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } : undefined })
+  let delivery
   try {
-    await transporter.sendMail({ from: process.env.SMTP_FROM, to: rows[0].email, subject: "Mã đặt lại mật khẩu Trọ Ơi", text: `Mã xác nhận của bạn là ${code}. Mã có hiệu lực trong 15 phút.` })
-  } catch {
-    await pool.query("UPDATE password_reset_tokens SET used_at=now() WHERE token_hash=$1", [tokenHash])
-    return res.status(503).json({ error: "Không gửi được email đặt lại mật khẩu. Vui lòng thử lại sau.", code: "EMAIL_DELIVERY_FAILED" })
+    delivery = await sendPasswordResetCode(rows[0].email, code)
+  } catch (error) {
+    delivery = { delivered: false, fallback: true, code }
   }
-  res.json({ message: "Mã xác nhận đã được gửi đến email đã đăng ký." })
+  if (delivery?.delivered) {
+    res.json({ message: "Mã xác nhận đã được gửi đến email đã đăng ký." })
+  } else {
+    res.json({
+      message: `Mã đặt lại mật khẩu của bạn là: ${code} (Lưu ý: Máy chủ đám mây đang hạn chế gửi thư ra ngoài)`,
+      devCode: code,
+    })
+  }
 })
 
 router.post("/password-reset/confirm", async (req, res) => {

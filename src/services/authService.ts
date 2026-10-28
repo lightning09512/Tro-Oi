@@ -83,8 +83,11 @@ export const authService = {
   async requestRegistrationCode(email: string): Promise<string> {
     const normalizedEmail = email.trim().toLocaleLowerCase("vi")
     if (isApiMode) {
-      await apiRequest("auth/register/request-code", { method: "POST", body: JSON.stringify({ email: normalizedEmail }) })
-      return ""
+      const result = await apiRequest<{ message?: string; devCode?: string }>("auth/register/request-code", {
+        method: "POST",
+        body: JSON.stringify({ email: normalizedEmail }),
+      })
+      return result?.devCode || ""
     }
     await wait()
     if (getAccounts().some((item) => item.email.trim().toLocaleLowerCase("vi") === normalizedEmail)) {
@@ -96,8 +99,11 @@ export const authService = {
   },
   async requestPasswordReset(identifier: string): Promise<string> {
     if (isApiMode) {
-      await apiRequest("auth/password-reset/request", { method: "POST", body: JSON.stringify({ identifier }) })
-      return ""
+      const result = await apiRequest<{ message?: string; devCode?: string }>("auth/password-reset/request", {
+        method: "POST",
+        body: JSON.stringify({ identifier }),
+      })
+      return result?.devCode || ""
     }
     await wait()
     const account = getAccounts().find((item) => item.email.toLocaleLowerCase("vi") === identifier.trim().toLocaleLowerCase("vi") || item.phone.replace(/\s/g, "") === identifier.trim().replace(/\s/g, ""))

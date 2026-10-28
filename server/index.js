@@ -28,6 +28,7 @@ import { requireAuth } from "./middleware/auth.js"
 import { flushNotificationOutbox } from "./services/notificationService.js"
 
 const app = express()
+app.set("trust proxy", 1)
 const server = http.createServer(app)
 const serverDirectory = path.dirname(fileURLToPath(import.meta.url))
 const configuredOrigins = (process.env.WEB_ORIGIN || "http://localhost:8443").split(",").map((value) => value.trim())
@@ -45,9 +46,20 @@ if (process.env.NODE_ENV !== "production") {
 app.use(express.json({ limit: "1mb" }))
 app.use(express.urlencoded({ extended: false, limit: "1mb" }))
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau." } })
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau." } })
 const apiLimiter = rateLimit({ windowMs: 60_000, limit: 180, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn gửi quá nhiều yêu cầu. Vui lòng thử lại sau." } })
-const emailCodeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 3, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn đã yêu cầu quá nhiều mã. Vui lòng đợi trước khi thử lại." } })
+const emailCodeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false, xForwardedForHeader: false },
+  keyGenerator: (req) => {
+    const target = req.body?.email || req.body?.identifier || ""
+    return target ? `${req.ip}_${target}` : req.ip
+  },
+  message: { error: "Bạn đã yêu cầu quá nhiều mã. Vui lòng đợi 15 phút trước khi thử lại." },
+})
 app.use("/api", apiLimiter)
 app.get("/api/health", async (_req, res) => {
   const databases = await databaseStatus()
