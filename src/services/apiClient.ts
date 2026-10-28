@@ -1,4 +1,4 @@
-export const isApiMode = import.meta.env.VITE_DATA_MODE === "api"
+export const isApiMode = import.meta.env.VITE_DATA_MODE !== "mock"
 const TOKEN_KEY = "trooi_access_token"
 const AUTH_KEY = "phongtroplus_auth_user"
 
