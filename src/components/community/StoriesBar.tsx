@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react"
-import { Icon } from "@/components/common/legacy"
-import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
+import { useToast } from "@/contexts/ToastContext"
 import { formatRelativeTime } from "@/utils/formatTime"
 
-export interface ForumStory {
+export interface ForumReel {
   id: string
-  type: "story" | "reel"
+  type: "reel" | "photo"
   authorId: string
   authorName: string
   authorAvatar?: string
@@ -16,7 +15,7 @@ export interface ForumStory {
   views?: number
   likes?: number
   createdAt: string
-  isUserStory?: boolean
+  isUserReel?: boolean
 }
 
 const PRESET_PHOTOS = [
@@ -42,88 +41,88 @@ const PRESET_PHOTOS = [
   },
 ]
 
-const initialStories: ForumStory[] = [
+const initialReels: ForumReel[] = [
   {
-    id: "story-1",
-    type: "story",
+    id: "reel-1",
+    type: "photo",
     authorId: "user-renter-01",
     authorName: "Hoàng Trang",
     authorAvatar: "/images/avatars/demo-owner-01.jpg",
     mediaUrl: "/images/rooms/blue-bedroom.jpg",
     mediaType: "image",
-    caption: "Studio ban công lầu 2 Ung Văn Khiêm siêu thoáng mát đón nắng sớm 🌿",
+    caption: "Studio ban công lầu 2 Ung Văn Khiêm siêu thoáng mát đón nắng sớm",
     views: 450,
     likes: 38,
     createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
   },
   {
-    id: "story-2",
+    id: "reel-2",
     type: "reel",
     authorId: "user-landlord-01",
     authorName: "Minh Ngọc",
     authorAvatar: "/images/avatars/demo-owner-03.jpg",
     mediaUrl: "/images/rooms/city-window.jpg",
     mediaType: "image",
-    caption: "Tour nhanh phòng Tô Hiến Thành Q10 có gác đúc cao ráo không đụng đầu ✨",
+    caption: "Tour nhanh phòng Tô Hiến Thành Q10 có gác đúc cao ráo không đụng đầu",
     views: 1250,
     likes: 112,
     createdAt: new Date(Date.now() - 4 * 3600000).toISOString(),
   },
   {
-    id: "story-3",
-    type: "story",
+    id: "reel-3",
+    type: "photo",
     authorId: "user-renter-03",
     authorName: "Thu Hà",
     authorAvatar: "/images/avatars/demo-owner-02.jpg",
     mediaUrl: "/images/rooms/compact-color-room.jpg",
     mediaType: "image",
-    caption: "Setup góc bàn làm việc bên cửa sổ chill chill phòng mới decor xong ☕",
+    caption: "Setup góc bàn làm việc bên cửa sổ phòng mới decor xong",
     views: 680,
     likes: 85,
     createdAt: new Date(Date.now() - 6 * 3600000).toISOString(),
   },
   {
-    id: "story-4",
+    id: "reel-4",
     type: "reel",
     authorId: "user-landlord-02",
     authorName: "Ngô Lan Hương",
     authorAvatar: "/images/avatars/demo-owner-05.jpg",
     mediaUrl: "/images/rooms/scandinavian-room.jpg",
     mediaType: "image",
-    caption: "Hoàng hôn buông nhìn từ ban công chung cư mini Bình Thạnh 🌅",
+    caption: "Hoàng hôn buông nhìn từ ban công chung cư mini Bình Thạnh",
     views: 2890,
     likes: 240,
     createdAt: new Date(Date.now() - 8 * 3600000).toISOString(),
   },
   {
-    id: "story-5",
-    type: "story",
+    id: "reel-5",
+    type: "photo",
     authorId: "user-renter-04",
     authorName: "Thiên Tài",
     authorAvatar: "/images/avatars/demo-owner-04.jpg",
     mediaUrl: "/images/rooms/studio-kitchen.jpg",
     mediaType: "image",
-    caption: "Góc bếp nhỏ xinh đầy đủ bếp từ tủ lạnh, nấu bữa tối ấm cúng 🍳",
+    caption: "Góc bếp nhỏ xinh đầy đủ bếp từ tủ lạnh, nấu bữa tối ấm cúng",
     views: 320,
     likes: 42,
     createdAt: new Date(Date.now() - 11 * 3600000).toISOString(),
   },
   {
-    id: "story-6",
+    id: "reel-6",
     type: "reel",
     authorId: "user-renter-02",
     authorName: "Như Quỳnh",
     authorAvatar: "/images/avatars/demo-owner-06.jpg",
     mediaUrl: "/images/rooms/wood-accent-room.jpg",
     mediaType: "image",
-    caption: "Chill chiều mưa ngắm thành phố từ góc phòng trọ nhỏ ✨",
+    caption: "Phòng trọ mới view thoáng thành phố về đêm cực chill",
     views: 4120,
     likes: 310,
     createdAt: new Date(Date.now() - 14 * 3600000).toISOString(),
   },
 ]
 
-function StoryAuthorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
+function ReelAuthorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
   const [error, setError] = useState(false)
   const initials = name.trim().split(/\s+/).slice(-2).map((p) => p[0]).join("").toUpperCase() || "TO"
 
@@ -141,7 +140,7 @@ function StoryAuthorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: stri
   )
 }
 
-function StoryMediaBackground({
+function ReelMediaBackground({
   mediaUrl,
   mediaType,
   alt = "",
@@ -183,44 +182,44 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
   const { user } = useAuth()
   const { toast } = useToast()
 
-  const [stories, setStories] = useState<ForumStory[]>(() => {
+  const [reels, setReels] = useState<ForumReel[]>(() => {
     try {
-      const saved = localStorage.getItem("trooi_forum_stories_v2")
+      const saved = localStorage.getItem("trooi_forum_reels_v3")
       if (saved) {
-        const parsed = JSON.parse(saved) as ForumStory[]
+        const parsed = JSON.parse(saved) as ForumReel[]
         if (Array.isArray(parsed) && parsed.length > 0) return parsed
       }
     } catch {}
-    return initialStories
+    return initialReels
   })
 
   const [viewingIndex, setViewingIndex] = useState<number | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
   // Creation form state
-  const [formType, setFormType] = useState<"story" | "reel">("story")
+  const [formType, setFormType] = useState<"reel" | "photo">("reel")
   const [formCaption, setFormCaption] = useState("")
   const [formMediaUrl, setFormMediaUrl] = useState("")
-  const [formMediaType, setFormMediaType] = useState<"image" | "video">("image")
+  const [formMediaType, setFormMediaType] = useState<"image" | "video">("video")
   const [submitting, setSubmitting] = useState(false)
 
   // Viewer state
   const [progress, setProgress] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [muted, setMuted] = useState(true)
-  const [storyComment, setStoryComment] = useState("")
+  const [reelComment, setReelComment] = useState("")
   const [hasLikedCurrent, setHasLikedCurrent] = useState(false)
 
   const carouselRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
 
-  // Save stories to localStorage
+  // Save reels to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem("trooi_forum_stories_v2", JSON.stringify(stories))
+      localStorage.setItem("trooi_forum_reels_v3", JSON.stringify(reels))
     } catch {}
-  }, [stories])
+  }, [reels])
 
   // Check scroll position
   const checkScroll = () => {
@@ -240,7 +239,7 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
       el.removeEventListener("scroll", checkScroll)
       window.removeEventListener("resize", checkScroll)
     }
-  }, [stories])
+  }, [reels])
 
   const scroll = (direction: "left" | "right") => {
     const el = carouselRef.current
@@ -250,20 +249,16 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
     setTimeout(checkScroll, 300)
   }
 
-  // Filtered stories by active tab
-  const filteredStories = stories
-
-  // Timer for viewing story
+  // Timer for viewing reel
   useEffect(() => {
     if (viewingIndex === null || isPaused) return
-    const duration = 5000 // 5 seconds per story
+    const duration = 6000 // 6 seconds per reel
     const step = 50
     const interval = setInterval(() => {
       setProgress((prev) => {
         const next = prev + (step / duration) * 100
         if (next >= 100) {
-          // Advance to next story or close
-          if (viewingIndex < filteredStories.length - 1) {
+          if (viewingIndex < reels.length - 1) {
             setViewingIndex(viewingIndex + 1)
             return 0
           } else {
@@ -276,25 +271,25 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
     }, step)
 
     return () => clearInterval(interval)
-  }, [viewingIndex, isPaused, filteredStories.length])
+  }, [viewingIndex, isPaused, reels.length])
 
-  // Reset progress and like state when story changes
+  // Reset progress and like state when reel changes
   useEffect(() => {
     setProgress(0)
     setHasLikedCurrent(false)
-    setStoryComment("")
+    setReelComment("")
   }, [viewingIndex])
 
-  const handleNextStory = () => {
+  const handleNextReel = () => {
     if (viewingIndex === null) return
-    if (viewingIndex < filteredStories.length - 1) {
+    if (viewingIndex < reels.length - 1) {
       setViewingIndex(viewingIndex + 1)
     } else {
       setViewingIndex(null)
     }
   }
 
-  const handlePrevStory = () => {
+  const handlePrevReel = () => {
     if (viewingIndex === null) return
     if (viewingIndex > 0) {
       setViewingIndex(viewingIndex - 1)
@@ -305,10 +300,10 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
 
   const handleLikeCurrent = () => {
     if (viewingIndex === null) return
-    const cur = filteredStories[viewingIndex]
+    const cur = reels[viewingIndex]
     if (!cur) return
     setHasLikedCurrent((prev) => !prev)
-    setStories((all) =>
+    setReels((all) =>
       all.map((item) =>
         item.id === cur.id
           ? { ...item, likes: (item.likes || 0) + (hasLikedCurrent ? -1 : 1) }
@@ -317,15 +312,15 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
     )
   }
 
-  const handleSendStoryComment = (e: FormEvent) => {
+  const handleSendReelComment = (e: FormEvent) => {
     e.preventDefault()
-    if (!storyComment.trim()) return
-    toast(`Đã gửi phản hồi đến ${filteredStories[viewingIndex ?? 0]?.authorName}: "${storyComment}"`, "success")
-    setStoryComment("")
+    if (!reelComment.trim()) return
+    toast(`Đã gửi phản hồi đến ${reels[viewingIndex ?? 0]?.authorName}: "${reelComment}"`, "success")
+    setReelComment("")
   }
 
-  // Create Story / Reel
-  const handleCreateStory = (e: FormEvent) => {
+  // Create Reel / Photo
+  const handleCreateReel = (e: FormEvent) => {
     e.preventDefault()
     if (!user) {
       onLogin()
@@ -334,30 +329,30 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
     const finalMedia = formMediaUrl.trim() || PRESET_PHOTOS[0].url
     setSubmitting(true)
 
-    const newStory: ForumStory = {
-      id: `story-${Date.now()}`,
+    const newReel: ForumReel = {
+      id: `reel-${Date.now()}`,
       type: formType,
       authorId: user.id,
       authorName: user.name,
       authorAvatar: user.avatarUrl,
       mediaUrl: finalMedia,
       mediaType: formMediaType,
-      caption: formCaption.trim() || (formType === "reel" ? "Reel chia sẻ phòng trọ mới ✨" : "Tin mới từ tôi 🌿"),
+      caption: formCaption.trim() || (formType === "reel" ? "Reel chia sẻ phòng trọ mới" : "Ảnh phòng mới"),
       views: 1,
       likes: 0,
       createdAt: new Date().toISOString(),
-      isUserStory: true,
+      isUserReel: true,
     }
 
-    setStories((prev) => [newStory, ...prev])
+    setReels((prev) => [newReel, ...prev])
     setSubmitting(false)
     setCreateModalOpen(false)
     setFormCaption("")
     setFormMediaUrl("")
-    toast(formType === "reel" ? "Đã đăng thước phim (Reel) mới!" : "Đã đăng tin (Story) mới!", "success")
+    toast(formType === "reel" ? "Đã đăng thước phim (Reel) mới!" : "Đã đăng ảnh phòng mới!", "success")
   }
 
-  const currentViewingStory = viewingIndex !== null ? filteredStories[viewingIndex] : null
+  const currentViewingReel = viewingIndex !== null ? reels[viewingIndex] : null
 
   return (
     <div className="fb-stories-section">
@@ -370,12 +365,14 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
             onClick={() => scroll("left")}
             aria-label="Cuộn sang trái"
           >
-            ‹
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
         )}
 
         <div className="fb-stories-carousel" ref={carouselRef}>
-          {/* Card 1: Tạo tin (Create Story) */}
+          {/* Card 1: Tạo Reel */}
           <div
             className="fb-story-card fb-create-story-card"
             onClick={() => (user ? setCreateModalOpen(true) : onLogin())}
@@ -390,51 +387,54 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
               )}
             </div>
             <div className="fb-create-story-bottom">
-              <span className="fb-create-plus-icon">+</span>
-              <span className="fb-create-text">Tạo tin / Reel</span>
+              <span className="fb-create-plus-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span className="fb-create-text">Tạo Reel</span>
             </div>
           </div>
 
-          {/* Subsequent Story Cards */}
-          {filteredStories.map((story, index) => {
-            const isReel = story.type === "reel"
-            return (
-              <div
-                className="fb-story-card fb-user-story-card"
-                key={story.id}
-                onClick={() => setViewingIndex(index)}
-                role="button"
-                tabIndex={0}
-              >
-                {/* Background Media */}
-                <div className="fb-story-bg-wrapper">
-                  <StoryMediaBackground
-                    mediaUrl={story.mediaUrl}
-                    mediaType={story.mediaType}
-                    alt={story.caption}
-                  />
-                  <div className="fb-story-overlay" />
-                </div>
-
-                {/* Top-left Avatar with Story Ring */}
-                <div className="fb-story-author-avatar-wrap">
-                  <StoryAuthorAvatar name={story.authorName} avatarUrl={story.authorAvatar} />
-                </div>
-
-                {/* Badge if Reel */}
-                {isReel && (
-                  <span className="fb-story-reel-badge" title="Thước phim">
-                    ▶ {story.views ? `${story.views > 999 ? `${(story.views / 1000).toFixed(1)}k` : story.views}` : "Reel"}
-                  </span>
-                )}
-
-                {/* Bottom Author Name */}
-                <div className="fb-story-author-name">
-                  <span>{story.authorName}</span>
-                </div>
+          {/* Subsequent Reel Cards */}
+          {reels.map((reel, index) => (
+            <div
+              className="fb-story-card fb-user-story-card"
+              key={reel.id}
+              onClick={() => setViewingIndex(index)}
+              role="button"
+              tabIndex={0}
+            >
+              {/* Background Media */}
+              <div className="fb-story-bg-wrapper">
+                <ReelMediaBackground
+                  mediaUrl={reel.mediaUrl}
+                  mediaType={reel.mediaType}
+                  alt={reel.caption}
+                />
+                <div className="fb-story-overlay" />
               </div>
-            )
-          })}
+
+              {/* Top-left Avatar with Reel Ring */}
+              <div className="fb-story-author-avatar-wrap">
+                <ReelAuthorAvatar name={reel.authorName} avatarUrl={reel.authorAvatar} />
+              </div>
+
+              {/* Reel Play Badge */}
+              <span className="fb-story-reel-badge" title="Thước phim">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: "3px" }}>
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                {reel.views ? `${reel.views > 999 ? `${(reel.views / 1000).toFixed(1)}k` : reel.views}` : "Reel"}
+              </span>
+
+              {/* Bottom Author Name */}
+              <div className="fb-story-author-name">
+                <span>{reel.authorName}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
         {canScrollRight && (
@@ -444,19 +444,21 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
             onClick={() => scroll("right")}
             aria-label="Cuộn sang phải"
           >
-            ›
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         )}
       </div>
 
-      {/* Modal: Fullscreen Story Viewer */}
-      {currentViewingStory && (
+      {/* Modal: Fullscreen Reel Viewer */}
+      {currentViewingReel && (
         <div
           className="fb-story-viewer-backdrop"
           onClick={() => setViewingIndex(null)}
           onKeyDown={(e) => {
-            if (e.key === "ArrowLeft") handlePrevStory()
-            if (e.key === "ArrowRight") handleNextStory()
+            if (e.key === "ArrowLeft") handlePrevReel()
+            if (e.key === "ArrowRight") handleNextReel()
             if (e.key === "Escape") setViewingIndex(null)
           }}
           tabIndex={0}
@@ -469,8 +471,8 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
           >
             {/* Top Progress Bars */}
             <div className="fb-viewer-progress-row">
-              {filteredStories.map((s, idx) => (
-                <div className="fb-progress-track" key={s.id}>
+              {reels.map((r, idx) => (
+                <div className="fb-progress-track" key={r.id}>
                   <div
                     className="fb-progress-fill"
                     style={{
@@ -490,15 +492,15 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
             <div className="fb-viewer-header">
               <div className="fb-viewer-author-info">
                 <div className="fb-viewer-avatar">
-                  <StoryAuthorAvatar
-                    name={currentViewingStory.authorName}
-                    avatarUrl={currentViewingStory.authorAvatar}
+                  <ReelAuthorAvatar
+                    name={currentViewingReel.authorName}
+                    avatarUrl={currentViewingReel.authorAvatar}
                   />
                 </div>
                 <div>
-                  <div className="fb-viewer-author-name">{currentViewingStory.authorName}</div>
+                  <div className="fb-viewer-author-name">{currentViewingReel.authorName}</div>
                   <div className="fb-viewer-time">
-                    {formatRelativeTime(currentViewingStory.createdAt)} • {currentViewingStory.type === "reel" ? "Reel" : "Tin"}
+                    {formatRelativeTime(currentViewingReel.createdAt)} • Thước phim
                   </div>
                 </div>
               </div>
@@ -510,7 +512,16 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                   onClick={() => setIsPaused(!isPaused)}
                   title={isPaused ? "Tiếp tục" : "Tạm dừng"}
                 >
-                  {isPaused ? "▶" : "⏸"}
+                  {isPaused ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -518,7 +529,18 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                   onClick={() => setMuted(!muted)}
                   title={muted ? "Bật âm thanh" : "Tắt âm thanh"}
                 >
-                  {muted ? "🔇" : "🔊"}
+                  {muted ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                      <line x1="23" y1="9" x2="17" y2="15" />
+                      <line x1="17" y1="9" x2="23" y2="15" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    </svg>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -526,16 +548,19 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                   onClick={() => setViewingIndex(null)}
                   title="Đóng (Esc)"
                 >
-                  ✕
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
             </div>
 
             {/* Media Content */}
             <div className="fb-viewer-media-wrap">
-              {currentViewingStory.mediaType === "video" ? (
+              {currentViewingReel.mediaType === "video" ? (
                 <video
-                  src={currentViewingStory.mediaUrl}
+                  src={currentViewingReel.mediaUrl}
                   className="fb-viewer-video"
                   autoPlay
                   playsInline
@@ -544,16 +569,16 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                 />
               ) : (
                 <img
-                  src={currentViewingStory.mediaUrl}
-                  alt={currentViewingStory.caption}
+                  src={currentViewingReel.mediaUrl}
+                  alt={currentViewingReel.caption}
                   className="fb-viewer-image"
                 />
               )}
 
               {/* Caption Overlay */}
-              {currentViewingStory.caption && (
+              {currentViewingReel.caption && (
                 <div className="fb-viewer-caption">
-                  <p>{currentViewingStory.caption}</p>
+                  <p>{currentViewingReel.caption}</p>
                 </div>
               )}
 
@@ -561,28 +586,31 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
               <button
                 type="button"
                 className="fb-viewer-zone fb-zone-left"
-                onClick={handlePrevStory}
-                aria-label="Tin trước"
+                onClick={handlePrevReel}
+                aria-label="Reel trước"
               />
               <button
                 type="button"
                 className="fb-viewer-zone fb-zone-right"
-                onClick={handleNextStory}
-                aria-label="Tin tiếp theo"
+                onClick={handleNextReel}
+                aria-label="Reel tiếp theo"
               />
             </div>
 
             {/* Footer: Quick reply & Reaction */}
             <div className="fb-viewer-footer">
-              <form className="fb-viewer-reply-form" onSubmit={handleSendStoryComment}>
+              <form className="fb-viewer-reply-form" onSubmit={handleSendReelComment}>
                 <input
                   type="text"
-                  placeholder={`Gửi phản hồi đến ${currentViewingStory.authorName}...`}
-                  value={storyComment}
-                  onChange={(e) => setStoryComment(e.target.value)}
+                  placeholder={`Gửi phản hồi đến ${currentViewingReel.authorName}...`}
+                  value={reelComment}
+                  onChange={(e) => setReelComment(e.target.value)}
                 />
-                <button type="submit" disabled={!storyComment.trim()}>
-                  <Icon name="send" size={16} />
+                <button type="submit" disabled={!reelComment.trim()} aria-label="Gửi phản hồi">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" />
+                  </svg>
                 </button>
               </form>
 
@@ -593,15 +621,32 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                   onClick={handleLikeCurrent}
                   title="Thích"
                 >
-                  ❤️ {currentViewingStory.likes || (hasLikedCurrent ? 1 : 0)}
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill={hasLikedCurrent ? "#e41e3f" : "none"}
+                    stroke={hasLikedCurrent ? "#e41e3f" : "currentColor"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ marginRight: "4px" }}
+                  >
+                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5a5.5 5.5 0 0 0 1-8.9Z" />
+                  </svg>
+                  <span>{currentViewingReel.likes || (hasLikedCurrent ? 1 : 0)}</span>
                 </button>
                 <button
                   type="button"
                   className="fb-reaction-btn"
-                  onClick={() => toast("Đã chia sẻ tin này!", "success")}
+                  onClick={() => toast("Đã chia sẻ thước phim này!", "success")}
                   title="Chia sẻ"
                 >
-                  ↗️
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -609,46 +654,55 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
         </div>
       )}
 
-      {/* Modal: Tạo tin / Reel mới */}
+      {/* Modal: Tạo Reel mới */}
       {createModalOpen && (
         <div className="dialog-backdrop" onClick={() => setCreateModalOpen(false)}>
           <section className="action-dialog fb-create-story-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="fb-dialog-head">
-              <h2>Tạo tin hoặc thước phim mới</h2>
-              <button type="button" className="dialog-close" onClick={() => setCreateModalOpen(false)}>
-                ✕
+              <h2>Tạo thước phim (Reel) & Ảnh phòng</h2>
+              <button type="button" className="dialog-close" onClick={() => setCreateModalOpen(false)} aria-label="Đóng">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
             </div>
 
-            <form onSubmit={handleCreateStory} className="fb-create-form">
+            <form onSubmit={handleCreateReel} className="fb-create-form">
               {/* Type Switcher */}
               <div className="fb-create-type-switch">
                 <button
                   type="button"
-                  className={`fb-type-option ${formType === "story" ? "active" : ""}`}
-                  onClick={() => setFormType("story")}
+                  className={`fb-type-option ${formType === "reel" ? "active" : ""}`}
+                  onClick={() => {
+                    setFormType("reel")
+                    setFormMediaType("video")
+                  }}
                 >
-                  📸 Tin (Story)
+                  Video Reel
                 </button>
                 <button
                   type="button"
-                  className={`fb-type-option ${formType === "reel" ? "active" : ""}`}
-                  onClick={() => setFormType("reel")}
+                  className={`fb-type-option ${formType === "photo" ? "active" : ""}`}
+                  onClick={() => {
+                    setFormType("photo")
+                    setFormMediaType("image")
+                  }}
                 >
-                  🎬 Thước phim (Reel)
+                  Ảnh phòng
                 </button>
               </div>
 
               {/* Caption */}
               <div className="fb-field-group">
-                <label htmlFor="story-caption">Mô tả / Cảm xúc</label>
+                <label htmlFor="story-caption">Mô tả căn phòng / Nội dung</label>
                 <textarea
                   id="story-caption"
                   rows={3}
                   placeholder={
                     formType === "reel"
-                      ? "Chia sẻ video ngắn về căn phòng trọ, mẹo dọn dẹp hoặc cuộc sống trọ..."
-                      : "Bạn đang muốn chia sẻ khoảnh khắc gì hôm nay?..."
+                      ? "Chia sẻ video ngắn về căn phòng trọ, tiện ích hoặc cuộc sống quanh khu vực..."
+                      : "Mô tả góc phòng đẹp, ban công hoặc nội thất nổi bật..."
                   }
                   value={formCaption}
                   onChange={(e) => setFormCaption(e.target.value)}
@@ -704,7 +758,7 @@ export default function StoriesBar({ onLogin }: { onLogin: () => void }) {
                   Hủy
                 </button>
                 <button type="submit" className="btn-submit" disabled={submitting}>
-                  {submitting ? "Đang đăng..." : formType === "reel" ? "Đăng thước phim" : "Chia sẻ lên tin"}
+                  {submitting ? "Đang đăng..." : formType === "reel" ? "Đăng thước phim" : "Đăng ảnh phòng"}
                 </button>
               </div>
             </form>

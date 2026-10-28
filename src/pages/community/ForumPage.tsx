@@ -163,7 +163,11 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
 
             {isCommentLiked && (
               <span className="fb-reaction-badge" title="Đã thích">
-                <span className="fb-reaction-icon">👍</span> 1
+                <span className="fb-reaction-icon fb-like-badge" title="Thích">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="#ffffff" aria-hidden="true">
+                    <path d="M7 10v11H3V10h4Zm7-8c-.8 0-1.5.7-1.6 1.6L12 7.8 9.4 10H8v11h11.2c.9 0 1.7-.6 1.9-1.5l1.8-8.1c.2-1.1-.6-2.4-1.8-2.4h-5.2l.8-3.6c.1-.6-.1-1.3-.6-1.7-.4-.5-1-.7-1.7-.7Z" />
+                  </svg>
+                </span> 1
               </span>
             )}
           </div>
@@ -245,7 +249,13 @@ function PostCard({ post, onLogin, isDetail = false }: { post: ForumPost; onLogi
           <div className="post-meta-sub">
             <span className="post-relative-time">{formatRelativeTime(post.createdAt || post.time)}</span>
             <span className="post-meta-dot">·</span>
-            <span className="post-privacy-icon" title="Công khai">🌐</span>
+            <span className="post-privacy-icon" title="Công khai">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ verticalAlign: "-1px" }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </span>
           </div>
         </div>
         {!isOwner && <button className="post-message-action" onClick={messageAuthor}><Icon name="chat" size={16}/><span>Nhắn tin</span></button>}
@@ -453,7 +463,10 @@ export default function ForumPage() {
                 className="fb-composer-action-btn action-video"
                 onClick={() => (user ? setComposerOpen(true) : login())}
               >
-                <span className="fb-action-icon text-red-500">🎥</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e41e3f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="23 7 16 12 23 17 23 7" fill="#e41e3f" />
+                  <rect x="1" y="5" width="15" height="14" rx="3" fill="#e41e3f" />
+                </svg>
                 <span>Video phòng</span>
               </button>
 
@@ -462,7 +475,11 @@ export default function ForumPage() {
                 className="fb-composer-action-btn action-photo"
                 onClick={() => (user ? setComposerOpen(true) : login())}
               >
-                <span className="fb-action-icon text-green-500">🖼️</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#45bd62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect width="18" height="18" x="3" y="3" rx="3" fill="#eaf8ed" />
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="#45bd62" />
+                  <path d="m21 15-5-5L5 21" stroke="#45bd62" strokeWidth="2" />
+                </svg>
                 <span>Ảnh/video</span>
               </button>
 
@@ -471,7 +488,12 @@ export default function ForumPage() {
                 className="fb-composer-action-btn action-feeling"
                 onClick={() => (user ? setComposerOpen(true) : login())}
               >
-                <span className="fb-action-icon text-yellow-500">😊</span>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f7b125" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" fill="#fef8ec" />
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#f7b125" strokeWidth="2" />
+                  <line x1="9" x2="9.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
+                  <line x1="15" x2="15.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
+                </svg>
                 <span>Cảm xúc</span>
               </button>
             </div>
@@ -499,7 +521,7 @@ export default function ForumPage() {
                   <div>
                     <strong>{user?.name}</strong>
                     <div className="fb-audience-pill">
-                      <span>🌐 Công khai</span>
+                      <span>Công khai</span>
                     </div>
                   </div>
                 </div>
@@ -517,7 +539,10 @@ export default function ForumPage() {
                     <div className="fb-create-image-preview">
                       <img src={image} alt="Ảnh đính kèm" />
                       <button type="button" className="fb-remove-img-btn" onClick={() => setImage("")} title="Gỡ ảnh">
-                        ✕
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
                       </button>
                     </div>
                   )}
@@ -534,7 +559,11 @@ export default function ForumPage() {
                           if (url) setImage(url)
                         }}
                       >
-                        🖼️
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#45bd62" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect width="18" height="18" x="3" y="3" rx="3" fill="#eaf8ed" />
+                          <circle cx="8.5" cy="8.5" r="1.5" fill="#45bd62" />
+                          <path d="m21 15-5-5L5 21" stroke="#45bd62" strokeWidth="2" />
+                        </svg>
                       </button>
                       <button
                         type="button"
@@ -545,15 +574,22 @@ export default function ForumPage() {
                           setImage(photos[nextIdx])
                         }}
                       >
-                        ✨
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#245f3b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" fill="#edf5ee" />
+                        </svg>
                       </button>
                       <button
                         type="button"
                         className="fb-attach-btn"
                         title="Thêm cảm xúc"
-                        onClick={() => setDraft((prev) => prev ? `${prev} 😊` : "Hôm nay tìm được phòng ưng ý ghê 😊")}
+                        onClick={() => setDraft((prev) => prev ? `${prev} (rất hài lòng)` : "Hôm nay tìm được phòng ưng ý ghê!")}
                       >
-                        😊
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f7b125" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" fill="#fef8ec" />
+                          <path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="#f7b125" strokeWidth="2" />
+                          <line x1="9" x2="9.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="15" x2="15.01" y1="9" y2="9" stroke="#f7b125" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
                       </button>
                     </div>
                   </div>
