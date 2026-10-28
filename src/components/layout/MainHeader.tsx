@@ -73,14 +73,17 @@ export default function MainHeader() {
     user?.role === "landlord"
       ? [
           ...primaryLinks,
+          ["/tim-ban-be", "Bạn bè"],
           ["/chu-tro/quan-ly-tin", "Quản lý tin"],
           ["/chu-tro/thong-ke", "Thống kê"],
           ["/tin-nhan", "Tin nhắn"],
         ]
       : user?.role === "renter"
-        ? [...primaryLinks, ["/tin-nhan", "Tin nhắn"]]
+        ? [...primaryLinks, ["/tim-ban-be", "Bạn bè"], ["/tin-nhan", "Tin nhắn"]]
         : primaryLinks
-  const desktopLinks: NavigationLink[] = primaryLinks
+  const desktopLinks: NavigationLink[] = user
+    ? [...primaryLinks, ["/tim-ban-be", "Bạn bè"]]
+    : primaryLinks
 
   const handleLogout = () => {
     if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi tài khoản này?")) return
@@ -289,8 +292,8 @@ export default function MainHeader() {
                       </button>
                     )}
                     <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/tim-ban-be"); }}>
-                      <Icon name="phone" size={18} />
-                      Tìm bạn qua SĐT
+                      <Icon name="users" size={18} />
+                      Bạn bè & Kết nối
                     </button>
                     {user.role === "landlord" && (
                       <button className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] text-[#384b3e] hover:bg-[#edf5ee] hover:text-[#245f3b]" onClick={() => { setAvatarOpen(false); navigate("/chu-tro/thong-ke"); }}>

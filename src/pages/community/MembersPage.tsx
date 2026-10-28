@@ -1,98 +1,233 @@
-import { useState, type FormEvent } from "react"
-import { Link, useNavigate } from "react-router"
-import { Button, Icon } from "@/components/common/legacy"
+import { useState, useEffect, type FormEvent, useMemo } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router"
+import { Icon } from "@/components/common/legacy"
 import { useToast } from "@/contexts/ToastContext"
 import useAuth from "@/hooks/useAuth"
 import { apiRequest, isApiMode } from "@/services/apiClient"
 import { usePlatform } from "@/contexts/PlatformContext"
 
-interface MemberItem {
+interface FriendUser {
   id: string
   name: string
   phone: string
   role: "renter" | "landlord"
-  status: string
+  status?: string
   avatarUrl?: string
   initials: string
-  createdAt?: string
   listingsCount?: number
   postsCount?: number
+  createdAt?: string
+  connectedAt?: string
+  connectionId?: string
 }
 
-function MemberAvatar({ initials, avatarUrl }: { initials: string; avatarUrl?: string }) {
-  return (
-    <span className="avatar members-card-avatar">
-      {avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : initials}
-    </span>
-  )
+interface FriendRequestItem extends FriendUser {
+  senderId: string
+  receiverId: string
 }
+
+type TabKey = "requests" | "suggestions" | "friends" | "search"
 
 export default function MembersPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const { toast } = useToast()
   const { users: platformUsers, listings, posts, startConversation } = usePlatform()
 
+  const tabParam = searchParams.get("tab") as TabKey | null
+  const [activeTab, setActiveTab] = useState<TabKey>(tabParam || "requests")
+
+  // State lists
+  const [requests, setRequests] = useState<FriendRequestItem[]>([])
+  const [suggestions, setSuggestions] = useState<FriendUser[]>([])
+  const [friends, setFriends] = useState<FriendUser[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Sent requests tracker (to update UI instantly on suggestions/search)
+  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set())
+  const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<Set<string>>(new Set())
+
+  // Search by phone state
   const [searchPhone, setSearchPhone] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
-  const [members, setMembers] = useState<MemberItem[]>([])
+  const [searchResults, setSearchResults] = useState<FriendUser[]>([])
+
+  // Friend filter keyword
+  const [friendFilter, setFriendFilter] = useState("")
+
+  // Loading chat state
   const [startingChatId, setStartingChatId] = useState<string | null>(null)
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
 
-  const handleSearch = async (e?: FormEvent) => {
-    if (e) e.preventDefault()
-    const q = searchPhone.trim()
-    if (!q) {
-      toast("Vui lòng nhập số điện thoại để tìm kiếm.", "info")
-      return
-    }
+  // Keep URL in sync with activeTab
+  const switchTab = (tab: TabKey) => {
+    setActiveTab(tab)
+    setSearchParams({ tab }, { replace: true })
+  }
 
+  // Fetch initial data
+  const fetchData = async () => {
+    if (!user) return
     setLoading(true)
-    setHasSearched(true)
     try {
       if (isApiMode) {
-        const result = await apiRequest<{ items: MemberItem[] }>(`members?q=${encodeURIComponent(q)}`)
-        setMembers((result.items || []).filter((item) => item.id !== user?.id))
+        // Fetch requests, suggestions, and friends concurrently
+        const [reqRes, sugRes, frRes] = await Promise.allSettled([
+          apiRequest<{ items: FriendRequestItem[] }>("friends/requests"),
+          apiRequest<{ items: FriendUser[] }>("friends/suggestions"),
+          apiRequest<{ items: FriendUser[] }>("friends"),
+        ])
+
+        if (reqRes.status === "fulfilled") setRequests(reqRes.value.items || [])
+        if (sugRes.status === "fulfilled") setSuggestions(sugRes.value.items || [])
+        if (frRes.status === "fulfilled") setFriends(frRes.value.items || [])
       } else {
-        const clean = q.replace(/[\s\.\-]+/g, "").toLowerCase()
-        const filtered = platformUsers.filter((u) => {
-          if (u.id === user?.id || u.status !== "active" || u.role === "admin") return false
-          const uPhone = (u.phone || "").replace(/[\s\.\-]+/g, "")
-          return uPhone.includes(clean) || u.name.toLowerCase().includes(q.toLowerCase())
-        }).map((u) => ({
-          id: u.id,
+        // Fallback for mock mode
+        const otherUsers = platformUsers.filter((u) => u.id !== user.id && u.role !== "admin")
+        
+        // Mock incoming requests (first 2)
+        const mockRequests: FriendRequestItem[] = otherUsers.slice(0, 2).map((u) => ({
+          id: `req-${u.id}`,
+          senderId: u.id,
+          receiverId: user.id,
           name: u.name,
           phone: u.phone || "",
           role: u.role as "renter" | "landlord",
-          status: u.status,
           avatarUrl: u.avatarUrl,
           initials: u.initials,
           listingsCount: listings.filter((l) => l.ownerId === u.id).length,
           postsCount: posts.filter((p) => p.authorId === u.id).length,
         }))
-        setMembers(filtered)
+        setRequests(mockRequests)
+
+        // Mock suggestions
+        const mockSuggestions: FriendUser[] = otherUsers.slice(2).map((u) => ({
+          id: u.id,
+          name: u.name,
+          phone: u.phone || "",
+          role: u.role as "renter" | "landlord",
+          avatarUrl: u.avatarUrl,
+          initials: u.initials,
+          listingsCount: listings.filter((l) => l.ownerId === u.id).length,
+          postsCount: posts.filter((p) => p.authorId === u.id).length,
+        }))
+        setSuggestions(mockSuggestions)
       }
     } catch {
-      setMembers([])
+      // Graceful fallback
     } finally {
       setLoading(false)
     }
   }
 
-  const handleMessage = async (member: MemberItem) => {
+  useEffect(() => {
+    fetchData()
+  }, [user])
+
+  // Accept friend request
+  const handleAcceptRequest = async (item: FriendRequestItem) => {
+    setActionLoadingId(item.id)
+    try {
+      if (isApiMode) {
+        await apiRequest(`friends/requests/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "accepted" }),
+        })
+      }
+      setRequests((prev) => prev.filter((r) => r.id !== item.id))
+      setFriends((prev) => [
+        {
+          id: item.senderId || item.id,
+          name: item.name,
+          phone: item.phone,
+          role: item.role,
+          avatarUrl: item.avatarUrl,
+          initials: item.initials,
+          listingsCount: item.listingsCount,
+          postsCount: item.postsCount,
+        },
+        ...prev,
+      ])
+      toast(`Đã đồng ý kết bạn với ${item.name}!`, "success")
+    } catch {
+      toast("Không thể chấp nhận lời mời kết bạn lúc này.", "error")
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
+  // Reject friend request
+  const handleRejectRequest = async (item: FriendRequestItem) => {
+    setActionLoadingId(item.id)
+    try {
+      if (isApiMode) {
+        await apiRequest(`friends/requests/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "rejected" }),
+        })
+      }
+      setRequests((prev) => prev.filter((r) => r.id !== item.id))
+      toast(`Đã gỡ lời mời kết bạn của ${item.name}.`, "info")
+    } catch {
+      toast("Không thể từ chối lời mời lúc này.", "error")
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
+  // Send friend request
+  const handleSendRequest = async (targetUser: FriendUser) => {
+    setActionLoadingId(targetUser.id)
+    try {
+      if (isApiMode) {
+        await apiRequest("friends/requests", {
+          method: "POST",
+          body: JSON.stringify({ receiverId: targetUser.id }),
+        })
+      }
+      setSentRequestIds((prev) => new Set([...prev, targetUser.id]))
+      toast(`Đã gửi lời mời kết bạn đến ${targetUser.name}!`, "success")
+    } catch {
+      toast("Không thể gửi lời mời kết bạn lúc này.", "error")
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
+  // Unfriend
+  const handleUnfriend = async (friend: FriendUser) => {
+    if (!window.confirm(`Bạn có chắc muốn hủy kết bạn với ${friend.name}?`)) return
+    setActionLoadingId(friend.id)
+    try {
+      if (isApiMode) {
+        await apiRequest(`friends/${friend.id}`, { method: "DELETE" })
+      }
+      setFriends((prev) => prev.filter((f) => f.id !== friend.id))
+      toast(`Đã hủy kết bạn với ${friend.name}.`, "info")
+    } catch {
+      toast("Không thể hủy kết bạn lúc này.", "error")
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
+  // Start chat with user
+  const handleMessage = async (target: FriendUser) => {
     if (!user) {
       navigate("/dang-nhap", { state: { from: window.location.pathname } })
       return
     }
-    setStartingChatId(member.id)
+    setStartingChatId(target.id)
     try {
-      const room = listings.find((l) => l.ownerId === member.id && l.status === "active")
+      const room = listings.find((l) => l.ownerId === target.id && l.status === "active")
       const conversation = await startConversation({
         accountId: user.id,
-        name: member.name,
-        avatar: member.initials,
-        avatarUrl: member.avatarUrl,
-        userId: member.id,
+        name: target.name,
+        avatar: target.initials,
+        avatarUrl: target.avatarUrl,
+        userId: target.id,
         roomId: room?.id ?? "",
       })
       if (conversation) {
@@ -105,25 +240,92 @@ export default function MembersPage() {
     }
   }
 
+  // Search by phone handler
+  const handleSearchPhone = async (e?: FormEvent) => {
+    if (e) e.preventDefault()
+    const q = searchPhone.trim()
+    if (!q) {
+      toast("Vui lòng nhập số điện thoại để tra cứu.", "info")
+      return
+    }
+    setSearchLoading(true)
+    setHasSearched(true)
+    try {
+      if (isApiMode) {
+        const result = await apiRequest<{ items: FriendUser[] }>(`members?q=${encodeURIComponent(q)}`)
+        setSearchResults((result.items || []).filter((item) => item.id !== user?.id))
+      } else {
+        const clean = q.replace(/[\s\.\-]+/g, "").toLowerCase()
+        const filtered = platformUsers.filter((u) => {
+          if (u.id === user?.id || u.status !== "active" || u.role === "admin") return false
+          const uPhone = (u.phone || "").replace(/[\s\.\-]+/g, "")
+          return uPhone.includes(clean) || u.name.toLowerCase().includes(q.toLowerCase())
+        }).map((u) => ({
+          id: u.id,
+          name: u.name,
+          phone: u.phone || "",
+          role: u.role as "renter" | "landlord",
+          avatarUrl: u.avatarUrl,
+          initials: u.initials,
+          listingsCount: listings.filter((l) => l.ownerId === u.id).length,
+          postsCount: posts.filter((p) => p.authorId === u.id).length,
+        }))
+        setSearchResults(filtered)
+      }
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
   const copyPhone = (phone: string, name: string) => {
     if (!phone) return
     navigator.clipboard?.writeText(phone)
     toast(`Đã sao chép số điện thoại của ${name}: ${phone}`, "success")
   }
 
+  // Filtered friends
+  const filteredFriends = useMemo(() => {
+    if (!friendFilter.trim()) return friends
+    const kw = friendFilter.toLowerCase()
+    return friends.filter(
+      (f) => f.name.toLowerCase().includes(kw) || f.phone.includes(kw)
+    )
+  }, [friends, friendFilter])
+
+  // Filtered suggestions
+  const visibleSuggestions = useMemo(() => {
+    const friendIdSet = new Set(friends.map((f) => f.id))
+    const requestIdSet = new Set(requests.map((r) => r.senderId || r.id))
+    return suggestions.filter(
+      (s) =>
+        !friendIdSet.has(s.id) &&
+        !requestIdSet.has(s.id) &&
+        !dismissedSuggestionIds.has(s.id)
+    )
+  }, [suggestions, friends, requests, dismissedSuggestionIds])
+
   if (!user) {
     return (
-      <main className="page-bg members-directory-page">
-        <div className="container" style={{ maxWidth: "600px", padding: "60px 16px", textAlign: "center" }}>
-          <div className="members-auth-guard" style={{ background: "#ffffff", padding: "40px 24px", borderRadius: "20px", border: "1px solid #e3ede6" }}>
-            <span className="zalo-empty-circle" style={{ margin: "0 auto 16px" }}><Icon name="phone" size={36} /></span>
-            <h2 style={{ fontSize: "22px", marginBottom: "8px", color: "#1e382b" }}>Tìm bạn qua số điện thoại</h2>
-            <p style={{ color: "#62746a", fontSize: "14px", marginBottom: "24px" }}>
-              Vui lòng đăng nhập để sử dụng tính năng tra cứu và kết nối qua số điện thoại theo chính sách bảo mật của Trọ Ơi.
+      <main className="page-bg fb-friends-hub-page">
+        <div className="container" style={{ maxWidth: "600px", padding: "80px 16px", textAlign: "center" }}>
+          <div className="members-auth-guard" style={{ background: "#ffffff", padding: "48px 24px", borderRadius: "24px", border: "1px solid #e3ede6", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            <span className="zalo-empty-circle" style={{ margin: "0 auto 16px", background: "#edf5ee", color: "#245f3b", width: "64px", height: "64px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="users" size={32} />
+            </span>
+            <h2 style={{ fontSize: "24px", fontWeight: "800", marginBottom: "8px", color: "#1e382b" }}>Bạn bè & Kết nối</h2>
+            <p style={{ color: "#62746a", fontSize: "14px", marginBottom: "28px", lineHeight: "1.6" }}>
+              Đăng nhập để xem lời mời kết bạn, kết nối với người thuê và chủ trọ uy tín, cùng nhắn tin thảo luận tìm phòng!
             </p>
-            <Button onClick={() => navigate("/dang-nhap", { state: { from: window.location.pathname } })}>
+            <button
+              type="button"
+              className="fb-btn-confirm"
+              style={{ padding: "12px 28px", fontSize: "15px", borderRadius: "999px", margin: "0 auto" }}
+              onClick={() => navigate("/dang-nhap", { state: { from: window.location.pathname } })}
+            >
               Đăng nhập ngay
-            </Button>
+            </button>
           </div>
         </div>
       </main>
@@ -131,155 +333,587 @@ export default function MembersPage() {
   }
 
   return (
-    <main className="page-bg members-directory-page">
-      <div className="container" style={{ maxWidth: "800px" }}>
-        {/* Header */}
-        <header className="members-hero" style={{ padding: "40px 16px 28px" }}>
-          <div className="members-hero-badge">
-            <Icon name="phone" size={16} />
-            <span>Tra cứu an toàn & bảo mật</span>
+    <main className="page-bg fb-friends-hub-page">
+      <div className="container fb-friends-container">
+        {/* Top Hero Banner */}
+        <header className="fb-friends-hero">
+          <div className="fb-friends-hero-badge">
+            <Icon name="users" size={16} />
+            <span>Mạng xã hội Trọ Ơi • Bạn bè & Kết nối</span>
           </div>
-          <h1>Tìm bạn qua số điện thoại</h1>
-          <p>
-            Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ trọ và bắt đầu nhắn tin trao đổi trực tiếp (giống Zalo).
-          </p>
-
-          {/* Privacy Note */}
-          <div className="zalo-privacy-box">
-            <Icon name="shield" size={18} />
-            <span>
-              <b>Chính sách bảo mật:</b> Danh bạ thành viên không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
-            </span>
-          </div>
-
-          {/* Search Form */}
-          <form className="members-search-wrapper" onSubmit={handleSearch}>
-            <div className="members-search-bar">
-              <span className="search-icon"><Icon name="phone" size={20} /></span>
-              <input
-                type="text"
-                placeholder="Nhập số điện thoại (ví dụ: 0912345678, 0395...)..."
-                value={searchPhone}
-                onChange={(e) => setSearchPhone(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-                autoFocus
-              />
-              {searchPhone && (
-                <button
-                  type="button"
-                  className="search-clear-btn"
-                  onClick={() => {
-                    setSearchPhone("")
-                    setMembers([])
-                    setHasSearched(false)
-                  }}
-                  aria-label="Xóa tìm kiếm"
-                >
-                  <Icon name="close" size={16} />
-                </button>
-              )}
+          <div className="fb-friends-hero-content">
+            <div>
+              <h1 className="fb-friends-title">Bạn bè & Kết nối</h1>
+              <p className="fb-friends-subtitle">
+                Xem lời mời kết bạn, tìm kiếm người thuê trọ, chủ nhà uy tín hoặc tra cứu số điện thoại an toàn.
+              </p>
             </div>
-            <button type="submit" className="members-search-btn" disabled={!searchPhone.trim() || loading}>
-              {loading ? "Đang tìm..." : "Tìm kiếm"}
+          </div>
+
+          {/* Navigation Tabs (Facebook Style Pills) */}
+          <nav className="fb-friends-nav-tabs" aria-label="Menu Bạn bè">
+            <button
+              type="button"
+              className={`fb-nav-tab ${activeTab === "requests" ? "active" : ""}`}
+              onClick={() => switchTab("requests")}
+            >
+              <Icon name="chat" size={18} />
+              <span>Lời mời kết bạn</span>
+              {requests.length > 0 && (
+                <span className="fb-nav-badge">{requests.length}</span>
+              )}
             </button>
-          </form>
+
+            <button
+              type="button"
+              className={`fb-nav-tab ${activeTab === "suggestions" ? "active" : ""}`}
+              onClick={() => switchTab("suggestions")}
+            >
+              <Icon name="users" size={18} />
+              <span>Gợi ý kết bạn</span>
+              {visibleSuggestions.length > 0 && (
+                <span className="fb-nav-badge subtle">{visibleSuggestions.length}</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className={`fb-nav-tab ${activeTab === "friends" ? "active" : ""}`}
+              onClick={() => switchTab("friends")}
+            >
+              <Icon name="check" size={18} />
+              <span>Tất cả bạn bè</span>
+              <span className="fb-nav-badge subtle">{friends.length}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`fb-nav-tab ${activeTab === "search" ? "active" : ""}`}
+              onClick={() => switchTab("search")}
+            >
+              <Icon name="phone" size={18} />
+              <span>Tìm qua SĐT (Zalo)</span>
+            </button>
+          </nav>
         </header>
 
-        {/* Results Area */}
-        <section className="members-section" style={{ paddingTop: "12px", paddingBottom: "60px" }}>
-          {!hasSearched ? (
-            <div className="zalo-page-empty">
-              <div className="zalo-empty-circle">
-                <Icon name="phone" size={38} />
+        {/* Content Area Based on Active Tab */}
+        <div className="fb-friends-main-content">
+          {/* ================= TAB 1: LỜI MỜI KẾT BẠN ================= */}
+          {activeTab === "requests" && (
+            <section className="fb-tab-section">
+              <div className="fb-tab-header">
+                <div>
+                  <h2 className="fb-section-title">
+                    Lời mời kết bạn
+                    {requests.length > 0 && (
+                      <span className="fb-count-chip">{requests.length}</span>
+                    )}
+                  </h2>
+                  <p className="fb-section-desc">
+                    {requests.length > 0
+                      ? `Bạn có ${requests.length} lời mời kết bạn mới đang chờ phản hồi.`
+                      : "Hiện tại không có lời mời kết bạn nào đang chờ."}
+                  </p>
+                </div>
+                {requests.length > 0 && (
+                  <button
+                    type="button"
+                    className="fb-quick-link-btn"
+                    onClick={() => switchTab("suggestions")}
+                  >
+                    Xem thêm gợi ý →
+                  </button>
+                )}
               </div>
-              <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Nhập số điện thoại để bắt đầu</h3>
-              <p style={{ color: "#65766c", fontSize: "14px", margin: 0 }}>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
-            </div>
-          ) : loading ? (
-            <div className="zalo-page-empty">
-              <div className="forum-lazy-spinner" />
-              <p style={{ marginTop: "16px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
-            </div>
-          ) : members.length > 0 ? (
-            <div className="members-grid" style={{ gridTemplateColumns: "1fr", gap: "16px" }}>
-              {members.map((member) => {
-                const roleText = member.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"
-                return (
-                  <article className="member-card" key={member.id} style={{ padding: "20px" }}>
-                    <div className="member-card-header">
-                      <MemberAvatar initials={member.initials} avatarUrl={member.avatarUrl} />
-                      <div className="member-info">
-                        <div className="member-name-row">
-                          <Link to={`/nguoi-dung/${member.id}`} className="member-name-link">
-                            <h2 style={{ fontSize: "18px" }}>{member.name}</h2>
-                          </Link>
-                          <span className={`member-role-badge ${member.role}`}>
-                            {member.role === "landlord" ? "🏠 " : "👤 "}
-                            {roleText}
-                          </span>
+
+              {loading ? (
+                <div className="fb-empty-state">
+                  <div className="forum-lazy-spinner" />
+                  <p>Đang tải danh sách lời mời...</p>
+                </div>
+              ) : requests.length > 0 ? (
+                <div className="fb-cards-grid">
+                  {requests.map((item) => (
+                    <article className="fb-user-card" key={item.id}>
+                      {/* Cover Pattern */}
+                      <div className="fb-user-cover" />
+
+                      {/* Overlapping Avatar */}
+                      <div className="fb-user-avatar-wrap">
+                        {item.avatarUrl ? (
+                          <img src={item.avatarUrl} alt={item.name} className="fb-user-avatar-img" />
+                        ) : (
+                          <span className="fb-user-avatar-initials">{item.initials}</span>
+                        )}
+                        <span className="fb-online-dot" title="Đang trực tuyến" />
+                      </div>
+
+                      {/* Card Info */}
+                      <div className="fb-user-body">
+                        <Link to={`/nguoi-dung/${item.senderId || item.id}`} className="fb-user-name">
+                          {item.name}
+                        </Link>
+                        <span className={`fb-user-role ${item.role}`}>
+                          {item.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                        </span>
+
+                        <div className="fb-user-meta">
+                          {item.role === "landlord" ? (
+                            <span>🏠 {item.listingsCount || 1} phòng trọ cho thuê</span>
+                          ) : (
+                            <span>💬 {item.postsCount || 1} bài viết cộng đồng</span>
+                          )}
                         </div>
 
-                        {member.phone && (
-                          <div className="member-phone-row" style={{ marginTop: "6px" }}>
-                            <span className="member-phone-val">📞 {member.phone}</span>
+                        {/* Action Buttons: Confirm or Delete */}
+                        <div className="fb-user-actions">
+                          <button
+                            type="button"
+                            className="fb-btn-confirm"
+                            disabled={actionLoadingId === item.id}
+                            onClick={() => handleAcceptRequest(item)}
+                          >
+                            <Icon name="check" size={16} />
+                            <span>{actionLoadingId === item.id ? "Đang xử lý..." : "Xác nhận"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="fb-btn-delete"
+                            disabled={actionLoadingId === item.id}
+                            onClick={() => handleRejectRequest(item)}
+                          >
+                            <span>Xóa</span>
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="fb-empty-state">
+                  <div className="fb-empty-icon">
+                    <Icon name="chat" size={40} />
+                  </div>
+                  <h3>Không có lời mời kết bạn nào</h3>
+                  <p>Khi có người gửi lời mời kết bạn, danh sách sẽ hiển thị ở đây để bạn dễ dàng xác nhận.</p>
+                  <button
+                    type="button"
+                    className="fb-btn-confirm"
+                    style={{ marginTop: "16px", borderRadius: "999px" }}
+                    onClick={() => switchTab("suggestions")}
+                  >
+                    Khám phá người bạn có thể biết
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ================= TAB 2: GỢI Ý KẾT BẠN ================= */}
+          {activeTab === "suggestions" && (
+            <section className="fb-tab-section">
+              <div className="fb-tab-header">
+                <div>
+                  <h2 className="fb-section-title">Những người bạn có thể biết</h2>
+                  <p className="fb-section-desc">Gợi ý người thuê phòng và chủ trọ uy tín trong khu vực của bạn.</p>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="fb-empty-state">
+                  <div className="forum-lazy-spinner" />
+                  <p>Đang tải gợi ý bạn bè...</p>
+                </div>
+              ) : visibleSuggestions.length > 0 ? (
+                <div className="fb-cards-grid">
+                  {visibleSuggestions.map((item) => {
+                    const isSent = sentRequestIds.has(item.id)
+                    return (
+                      <article className="fb-user-card" key={item.id}>
+                        <div className="fb-user-cover suggestions" />
+                        <div className="fb-user-avatar-wrap">
+                          {item.avatarUrl ? (
+                            <img src={item.avatarUrl} alt={item.name} className="fb-user-avatar-img" />
+                          ) : (
+                            <span className="fb-user-avatar-initials">{item.initials}</span>
+                          )}
+                        </div>
+
+                        <div className="fb-user-body">
+                          <Link to={`/nguoi-dung/${item.id}`} className="fb-user-name">
+                            {item.name}
+                          </Link>
+                          <span className={`fb-user-role ${item.role}`}>
+                            {item.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                          </span>
+
+                          <div className="fb-user-meta">
+                            {item.role === "landlord" ? (
+                              <span>🏠 {item.listingsCount || 1} phòng trọ đăng</span>
+                            ) : (
+                              <span>💬 {item.postsCount || 1} bài viết thảo luận</span>
+                            )}
+                          </div>
+
+                          <div className="fb-user-actions">
+                            {isSent ? (
+                              <button type="button" className="fb-btn-sent" disabled>
+                                <Icon name="check" size={16} />
+                                <span>Đã gửi lời mời</span>
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="fb-btn-confirm"
+                                  disabled={actionLoadingId === item.id}
+                                  onClick={() => handleSendRequest(item)}
+                                >
+                                  <Icon name="plus" size={16} />
+                                  <span>Thêm bạn bè</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="fb-btn-delete"
+                                  onClick={() =>
+                                    setDismissedSuggestionIds((prev) => new Set([...prev, item.id]))
+                                  }
+                                >
+                                  <span>Gỡ</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="fb-empty-state">
+                  <div className="fb-empty-icon">
+                    <Icon name="users" size={40} />
+                  </div>
+                  <h3>Chưa có thêm gợi ý mới</h3>
+                  <p>Bạn đã kết nối hoặc xem hết các gợi ý hiện tại. Hãy thử tìm kiếm bạn bè qua số điện thoại!</p>
+                  <button
+                    type="button"
+                    className="fb-btn-confirm"
+                    style={{ marginTop: "16px", borderRadius: "999px" }}
+                    onClick={() => switchTab("search")}
+                  >
+                    Tìm qua số điện thoại
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ================= TAB 3: TẤT CẢ BẠN BÈ ================= */}
+          {activeTab === "friends" && (
+            <section className="fb-tab-section">
+              <div className="fb-tab-header">
+                <div>
+                  <h2 className="fb-section-title">
+                    Tất cả bạn bè
+                    <span className="fb-count-chip">{friends.length}</span>
+                  </h2>
+                  <p className="fb-section-desc">Danh sách bạn bè đã kết nối trên mạng xã hội Trọ Ơi.</p>
+                </div>
+
+                {friends.length > 0 && (
+                  <div className="fb-friends-filter-bar">
+                    <Icon name="search" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Tìm trong danh sách bạn bè..."
+                      value={friendFilter}
+                      onChange={(e) => setFriendFilter(e.target.value)}
+                    />
+                    {friendFilter && (
+                      <button type="button" onClick={() => setFriendFilter("")}>
+                        <Icon name="close" size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="fb-empty-state">
+                  <div className="forum-lazy-spinner" />
+                  <p>Đang tải danh sách bạn bè...</p>
+                </div>
+              ) : filteredFriends.length > 0 ? (
+                <div className="fb-cards-grid">
+                  {filteredFriends.map((friend) => (
+                    <article className="fb-user-card" key={friend.id}>
+                      <div className="fb-user-cover friends" />
+                      <div className="fb-user-avatar-wrap">
+                        {friend.avatarUrl ? (
+                          <img src={friend.avatarUrl} alt={friend.name} className="fb-user-avatar-img" />
+                        ) : (
+                          <span className="fb-user-avatar-initials">{friend.initials}</span>
+                        )}
+                        <span className="fb-online-dot" />
+                      </div>
+
+                      <div className="fb-user-body">
+                        <Link to={`/nguoi-dung/${friend.id}`} className="fb-user-name">
+                          {friend.name}
+                        </Link>
+                        <span className={`fb-user-role ${friend.role}`}>
+                          {friend.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                        </span>
+
+                        {friend.phone && (
+                          <div className="fb-friend-phone-row">
+                            <span>📞 {friend.phone}</span>
                             <button
                               type="button"
-                              className="copy-phone-btn"
-                              onClick={() => copyPhone(member.phone, member.name)}
-                              title="Sao chép số điện thoại"
+                              className="fb-phone-copy-btn"
+                              onClick={() => copyPhone(friend.phone, friend.name)}
+                              title="Sao chép SĐT"
                             >
-                              <Icon name="copy" size={14} />
-                              <span>Sao chép</span>
+                              <Icon name="copy" size={13} />
                             </button>
                           </div>
                         )}
+
+                        <div className="fb-user-actions" style={{ marginTop: "auto" }}>
+                          <button
+                            type="button"
+                            className="fb-btn-confirm"
+                            disabled={startingChatId === friend.id}
+                            onClick={() => handleMessage(friend)}
+                          >
+                            <Icon name="chat" size={16} />
+                            <span>{startingChatId === friend.id ? "Đang mở..." : "Nhắn tin"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="fb-btn-delete"
+                            title="Hủy kết bạn"
+                            disabled={actionLoadingId === friend.id}
+                            onClick={() => handleUnfriend(friend)}
+                          >
+                            <span>Hủy kết bạn</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    </article>
+                  ))}
+                </div>
+              ) : friends.length > 0 ? (
+                <div className="fb-empty-state">
+                  <p>Không tìm thấy bạn bè nào khớp với từ khóa "{friendFilter}".</p>
+                </div>
+              ) : (
+                <div className="fb-empty-state">
+                  <div className="fb-empty-icon">
+                    <Icon name="users" size={40} />
+                  </div>
+                  <h3>Bạn chưa có bạn bè nào</h3>
+                  <p>Hãy kết nối với người thuê hoặc chủ nhà trọ từ danh sách gợi ý để trò chuyện dễ dàng hơn!</p>
+                  <button
+                    type="button"
+                    className="fb-btn-confirm"
+                    style={{ marginTop: "16px", borderRadius: "999px" }}
+                    onClick={() => switchTab("suggestions")}
+                  >
+                    Xem gợi ý kết bạn ngay
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
 
-                    <div className="member-stats-row" style={{ margin: "14px 0" }}>
-                      {member.role === "landlord" ? (
-                        <span className="member-stat-item">
-                          🏠 <b>{member.listingsCount || 0}</b> tin phòng đăng
-                        </span>
-                      ) : (
-                        <span className="member-stat-item">
-                          💬 <b>{member.postsCount || 0}</b> bài viết diễn đàn
-                        </span>
-                      )}
-                    </div>
+          {/* ================= TAB 4: TÌM QUA SỐ ĐIỆN THOẠI (ZALO) ================= */}
+          {activeTab === "search" && (
+            <section className="fb-tab-section">
+              <div className="fb-search-panel">
+                <div className="fb-search-panel-header">
+                  <span className="fb-phone-badge">
+                    <Icon name="phone" size={16} />
+                    <span>Tra cứu Zalo-Style an toàn & bảo mật</span>
+                  </span>
+                  <h2>Tìm bạn qua số điện thoại</h2>
+                  <p>
+                    Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ nhà trọ và kết nối trực tiếp.
+                  </p>
+                  <div className="zalo-privacy-box" style={{ maxWidth: "680px", margin: "16px auto 0" }}>
+                    <Icon name="shield" size={18} />
+                    <span>
+                      <b>Chính sách bảo mật:</b> Danh bạ không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
+                    </span>
+                  </div>
+                </div>
 
-                    <div className="member-card-actions">
+                {/* Search Form */}
+                <form className="members-search-wrapper" onSubmit={handleSearchPhone} style={{ maxWidth: "680px", margin: "24px auto 0" }}>
+                  <div className="members-search-bar">
+                    <span className="search-icon"><Icon name="phone" size={20} /></span>
+                    <input
+                      type="text"
+                      placeholder="Nhập số điện thoại (ví dụ: 0912345678, 0395...)..."
+                      value={searchPhone}
+                      onChange={(e) => setSearchPhone(e.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
+                      autoFocus
+                    />
+                    {searchPhone && (
                       <button
                         type="button"
-                        className="member-btn-chat"
-                        disabled={startingChatId === member.id}
-                        onClick={() => handleMessage(member)}
+                        className="search-clear-btn"
+                        onClick={() => {
+                          setSearchPhone("")
+                          setSearchResults([])
+                          setHasSearched(false)
+                        }}
+                        aria-label="Xóa tìm kiếm"
                       >
-                        <Icon name="chat" size={16} />
-                        <span>{startingChatId === member.id ? "Đang mở chat..." : "Nhắn tin ngay"}</span>
+                        <Icon name="close" size={16} />
                       </button>
-                      <Link to={`/nguoi-dung/${member.id}`} className="member-btn-profile">
-                        Xem trang cá nhân
-                      </Link>
+                    )}
+                  </div>
+                  <button type="submit" className="members-search-btn" disabled={!searchPhone.trim() || searchLoading}>
+                    {searchLoading ? "Đang tìm..." : "Tìm kiếm"}
+                  </button>
+                </form>
+
+                {/* Search Results Display */}
+                <div className="fb-search-results-area" style={{ marginTop: "32px", maxWidth: "680px", margin: "32px auto 0" }}>
+                  {!hasSearched ? (
+                    <div className="zalo-page-empty">
+                      <div className="zalo-empty-circle">
+                        <Icon name="phone" size={38} />
+                      </div>
+                      <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Nhập số điện thoại để tra cứu</h3>
+                      <p style={{ color: "#65766c", fontSize: "14px", margin: 0 }}>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
                     </div>
-                  </article>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="zalo-page-empty">
-              <div className="zalo-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
-                <Icon name="close" size={38} />
+                  ) : searchLoading ? (
+                    <div className="zalo-page-empty">
+                      <div className="forum-lazy-spinner" />
+                      <p style={{ marginTop: "16px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="fb-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
+                      {searchResults.map((member) => {
+                        const isFriend = friends.some((f) => f.id === member.id)
+                        const isRequested = requests.some((r) => r.senderId === member.id)
+                        const isSent = sentRequestIds.has(member.id)
+                        return (
+                          <article className="fb-user-card" key={member.id} style={{ flexDirection: "row", padding: "16px", alignItems: "center", gap: "20px" }}>
+                            <div className="fb-user-avatar-wrap" style={{ margin: 0 }}>
+                              {member.avatarUrl ? (
+                                <img src={member.avatarUrl} alt={member.name} className="fb-user-avatar-img" style={{ width: "72px", height: "72px" }} />
+                              ) : (
+                                <span className="fb-user-avatar-initials" style={{ width: "72px", height: "72px", fontSize: "24px" }}>{member.initials}</span>
+                              )}
+                            </div>
+
+                            <div className="fb-user-body" style={{ padding: 0, flex: 1 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                                <Link to={`/nguoi-dung/${member.id}`} className="fb-user-name" style={{ fontSize: "18px" }}>
+                                  {member.name}
+                                </Link>
+                                <span className={`fb-user-role ${member.role}`}>
+                                  {member.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                                </span>
+                              </div>
+
+                              {member.phone && (
+                                <div className="fb-friend-phone-row" style={{ marginTop: "6px" }}>
+                                  <span>📞 {member.phone}</span>
+                                  <button
+                                    type="button"
+                                    className="fb-phone-copy-btn"
+                                    onClick={() => copyPhone(member.phone, member.name)}
+                                    title="Sao chép SĐT"
+                                  >
+                                    <Icon name="copy" size={13} />
+                                  </button>
+                                </div>
+                              )}
+
+                              <div className="fb-user-meta" style={{ marginTop: "6px" }}>
+                                {member.role === "landlord" ? (
+                                  <span>🏠 {member.listingsCount || 0} phòng cho thuê</span>
+                                ) : (
+                                  <span>💬 {member.postsCount || 0} bài viết diễn đàn</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="fb-search-card-actions" style={{ display: "flex", flexDirection: "column", gap: "8px", minWidth: "160px" }}>
+                              {isFriend ? (
+                                <button
+                                  type="button"
+                                  className="fb-btn-confirm"
+                                  onClick={() => handleMessage(member)}
+                                >
+                                  <Icon name="chat" size={16} />
+                                  <span>Nhắn tin</span>
+                                </button>
+                              ) : isRequested ? (
+                                <button
+                                  type="button"
+                                  className="fb-btn-confirm"
+                                  onClick={() => switchTab("requests")}
+                                >
+                                  <Icon name="check" size={16} />
+                                  <span>Xem lời mời</span>
+                                </button>
+                              ) : isSent ? (
+                                <button type="button" className="fb-btn-sent" disabled>
+                                  <Icon name="check" size={16} />
+                                  <span>Đã gửi lời mời</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="fb-btn-confirm"
+                                  disabled={actionLoadingId === member.id}
+                                  onClick={() => handleSendRequest(member)}
+                                >
+                                  <Icon name="plus" size={16} />
+                                  <span>Thêm bạn bè</span>
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                className="fb-btn-delete"
+                                disabled={startingChatId === member.id}
+                                onClick={() => handleMessage(member)}
+                              >
+                                <Icon name="chat" size={14} />
+                                <span>Nhắn tin ngay</span>
+                              </button>
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="zalo-page-empty">
+                      <div className="zalo-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                        <Icon name="close" size={38} />
+                      </div>
+                      <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Không tìm thấy người dùng</h3>
+                      <p style={{ color: "#65766c", fontSize: "14px", marginBottom: "4px" }}>
+                        Không có tài khoản nào đăng ký số điện thoại <b>{searchPhone}</b> trên hệ thống Trọ Ơi.
+                      </p>
+                      <small style={{ color: "#8a9a90" }}>Vui lòng kiểm tra lại tính chính xác của số điện thoại và thử lại.</small>
+                    </div>
+                  )}
+                </div>
               </div>
-              <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Không tìm thấy người dùng</h3>
-              <p style={{ color: "#65766c", fontSize: "14px", marginBottom: "4px" }}>
-                Không có tài khoản nào đăng ký số điện thoại <b>{searchPhone}</b> trên hệ thống Trọ Ơi.
-              </p>
-              <small style={{ color: "#8a9a90" }}>Vui lòng kiểm tra lại tính chính xác của số điện thoại và thử lại.</small>
-            </div>
+            </section>
           )}
-        </section>
+        </div>
       </div>
     </main>
   )
