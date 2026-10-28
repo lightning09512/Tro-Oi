@@ -181,6 +181,15 @@ function Home() {
 
   const promoCampaigns = useMemo(() => [
     {
+      id: "review-mascot-campaign",
+      tag: "Chiến dịch cộng đồng · Nhận quà liền tay",
+      image: "/images/banners/banner-review-mascot-promo.jpg",
+      title: "Review khu trọ bạn biết - Nhận ngay Voucher quà tặng & ăn uống cực xịn!",
+      description: "Chia sẻ trải nghiệm thực tế về phòng trọ, hàng quán, an ninh khu phố để nhận ngay voucher trà sữa, gà rán và rinh ưu đãi thuê trọ độc quyền trên Trọ Ơi.",
+      buttonText: "Viết review ngay",
+      link: "/dien-dan",
+    },
+    {
       id: "landlord-campaign",
       tag: "Chương trình dành cho chủ trọ",
       image: "/images/banners/banner-nhatot-style.jpg",
