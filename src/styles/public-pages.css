@@ -426,6 +426,22 @@
   border-radius: 10px;
   background: #f7faf7;
   transition: all 0.15s ease;
+  position: relative;
+}
+
+.hero-nhatot-searchbar .hero-location-field:hover,
+.hero-nhatot-searchbar .home-filter-field:hover {
+  background: #ffffff;
+  border-color: #9cb8a4;
+}
+
+.hero-nhatot-searchbar .hero-location-field:focus-within,
+.hero-nhatot-searchbar .hero-location-field:has(.is-open),
+.hero-nhatot-searchbar .home-filter-field:focus-within,
+.hero-nhatot-searchbar .home-filter-field:has(.is-open) {
+  border-color: #245f3b;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(36, 95, 59, 0.12);
 }
 
 .hero-nhatot-searchbar .hero-location-field > span,

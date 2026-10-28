@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Link } from "react-router"
 import {
   Button,
@@ -64,19 +65,66 @@ function HomeFilterDropdown({
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number
+    left: number
+    width: number
+    maxHeight: number
+  }>({ top: 0, left: 0, width: 220, maxHeight: 280 })
   const selectedOption = options.find((option) => option.value === value) ?? options[0]
+
+  useLayoutEffect(() => {
+    if (!open) return
+
+    const updatePosition = () => {
+      const anchor = rootRef.current?.closest<HTMLElement>(".home-filter-field") ?? rootRef.current
+      if (!anchor) return
+      const rect = anchor.getBoundingClientRect()
+      const width = Math.min(Math.max(rect.width, 220), window.innerWidth - 24)
+      const approxHeight = Math.min(280, options.length * 42 + 16)
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+
+      let top = rect.bottom + 6
+      if (spaceBelow < approxHeight && spaceAbove > approxHeight) {
+        top = Math.max(12, rect.top - approxHeight - 6)
+      }
+
+      const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))
+      const maxHeight = Math.min(280, window.innerHeight - 24)
+
+      setMenuPosition({
+        top,
+        left,
+        width,
+        maxHeight,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener("resize", updatePosition)
+    window.addEventListener("scroll", updatePosition, true)
+    return () => {
+      window.removeEventListener("resize", updatePosition)
+      window.removeEventListener("scroll", updatePosition, true)
+    }
+  }, [open, options.length])
 
   useEffect(() => {
     if (!open) return
     const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+      const target = event.target as Node
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return
       setOpen(false)
       triggerRef.current?.focus()
     }
-    const focusFrame = requestAnimationFrame(() => menuRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus())
+    const focusFrame = requestAnimationFrame(() =>
+      menuRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus()
+    )
     document.addEventListener("pointerdown", closeOnOutsidePointer)
     window.addEventListener("keydown", closeOnEscape)
     return () => {
@@ -96,7 +144,12 @@ function HomeFilterDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        onKeyDown={(event) => { if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); setOpen(true) } }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault()
+            setOpen(true)
+          }
+        }}
       >
         <div className="home-filter-value-group">
           {icon && <Icon name={icon} size={16} />}
@@ -106,51 +159,64 @@ function HomeFilterDropdown({
           <Icon name="chevronDown" size={15} />
         </span>
       </button>
-      {open && (
-        <div
-          ref={menuRef}
-          className="home-filter-menu"
-          role="listbox"
-          aria-label={label}
-          onKeyDown={(event) => {
-            if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return
-            const menuOptions = menuRef.current?.querySelectorAll<HTMLButtonElement>("[role=option]")
-            if (!menuOptions?.length) return
-            event.preventDefault()
-            const currentIndex = Array.from(menuOptions).indexOf(document.activeElement as HTMLButtonElement)
-            const direction = event.key === "ArrowDown" ? 1 : -1
-            const nextIndex = currentIndex < 0
-              ? (direction > 0 ? 0 : menuOptions.length - 1)
-              : (currentIndex + direction + menuOptions.length) % menuOptions.length
-            menuOptions[nextIndex]?.focus()
-          }}
-        >
-          {options.map((option) => {
-            const selected = option.value === value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={`home-filter-option${selected ? " is-selected" : ""}`}
-                onClick={() => {
-                  onChange(option.value)
-                  setOpen(false)
-                  triggerRef.current?.focus()
-                }}
-              >
-                <span>{option.label}</span>
-                {selected && (
-                  <span className="home-filter-check" aria-hidden="true">
-                    <Icon name="check" size={14} />
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className="home-filter-menu is-portal"
+            role="listbox"
+            aria-label={label}
+            style={{
+              position: "fixed",
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+              width: `${menuPosition.width}px`,
+              maxHeight: `${menuPosition.maxHeight}px`,
+              zIndex: 99999,
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return
+              const menuOptions = menuRef.current?.querySelectorAll<HTMLButtonElement>("[role=option]")
+              if (!menuOptions?.length) return
+              event.preventDefault()
+              const currentIndex = Array.from(menuOptions).indexOf(document.activeElement as HTMLButtonElement)
+              const direction = event.key === "ArrowDown" ? 1 : -1
+              const nextIndex =
+                currentIndex < 0
+                  ? direction > 0
+                    ? 0
+                    : menuOptions.length - 1
+                  : (currentIndex + direction + menuOptions.length) % menuOptions.length
+              menuOptions[nextIndex]?.focus()
+            }}
+          >
+            {options.map((option) => {
+              const selected = option.value === value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`home-filter-option${selected ? " is-selected" : ""}`}
+                  onClick={() => {
+                    onChange(option.value)
+                    setOpen(false)
+                    triggerRef.current?.focus()
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {selected && (
+                    <span className="home-filter-check" aria-hidden="true">
+                      <Icon name="check" size={14} />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   )
 }
