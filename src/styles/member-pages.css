@@ -89,7 +89,7 @@
 .forum-page .reaction-count { padding: 14px 22px 10px; color: #657168; font-size: 12px; }
 .forum-page .reaction-bar { padding: 6px 12px; margin: 0 10px; border-top: 1px solid #e7ede8; }
 .forum-page .reaction-bar > button { min-height: 44px; border-radius: 8px; font-size: 13px; }
-.forum-page .reaction-bar > button.liked { color: #245f3b; background: #eaf4ec; }
+.forum-page .reaction-bar > button.liked { color: #e11d48; background: #fff1f2; }
 .forum-page .fb-comments-section { background: #f8faf7; border-radius: 0 0 16px 16px; padding: 18px 22px; }
 .forum-page .fb-comment-compose-box { gap: 10px; }
 .forum-page .fb-input-row { min-height: 46px; border: 1px solid #dfe7e1; background: #fff; border-radius: 12px; }

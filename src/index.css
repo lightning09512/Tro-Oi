@@ -16158,13 +16158,13 @@ input[type="file"]::file-selector-button:hover {
 
 /* Forum Like & Heart Reactions */
 .reaction-bar button.liked {
-  color: #1877f2 !important;
-  background: #eff6ff !important;
+  color: #e11d48 !important;
+  background: #fff1f2 !important;
   font-weight: 700 !important;
 }
 .reaction-bar button.liked .icon {
-  fill: #1877f2 !important;
-  color: #1877f2 !important;
+  fill: #e11d48 !important;
+  color: #e11d48 !important;
 }
 .reaction-count .post-like-count {
   color: #e11d48 !important;

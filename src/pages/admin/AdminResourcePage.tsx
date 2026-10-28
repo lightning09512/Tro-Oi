@@ -59,7 +59,7 @@ export default function AdminResourcePage() {
   const rows: AdminRow[] = useMemo(() => {
     if (resource === "users") return users.map((item) => ({ id: item.id, title: item.name, detail: item.email, status: item.status, meta: `${item.role === "landlord" ? "Chủ trọ" : item.role === "admin" ? "Quản trị viên" : "Người thuê"} · ${item.phone}` }))
     if (resource === "listings") return listings.map((item) => ({ id: item.id, image: item.image, title: item.title, detail: item.location, status: item.status, meta: `${item.price}/tháng · ${item.area} · ${item.ownerName}` }))
-    if (resource === "forum") return posts.map((item) => ({ id: item.id, title: item.name, detail: item.content, status: item.status, meta: `${item.likes} lượt thích · ${item.commentsCount} bình luận` }))
+    if (resource === "forum") return posts.map((item) => ({ id: item.id, title: item.name, detail: item.content, status: item.status, meta: `${item.likes} lượt yêu thích · ${item.commentsCount} bình luận` }))
     if (resource === "categories") return categories.map((item) => ({ id: item.id, title: item.name, detail: item.type, status: item.status, meta: `Danh mục ${item.type.toLocaleLowerCase("vi")}` }))
     return reports.map((item) => ({ id: item.id, title: item.targetTitle, detail: `${item.targetType} · ${item.reason}`, status: item.status, meta: `${item.reporter} · ${item.description || "Không có mô tả thêm"}` }))
   }, [resource, users, listings, posts, categories, reports])
