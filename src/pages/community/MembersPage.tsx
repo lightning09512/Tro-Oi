@@ -334,68 +334,89 @@ export default function MembersPage() {
 
   return (
     <main className="page-bg fb-friends-hub-page">
-      <div className="container fb-friends-container">
-        {/* Top Hero Banner */}
-        <header className="fb-friends-hero">
-          <div className="fb-friends-hero-badge">
-            <Icon name="users" size={16} />
-            <span>Mạng xã hội Trọ Ơi • Bạn bè & Kết nối</span>
-          </div>
-          <div className="fb-friends-hero-content">
-            <div>
-              <h1 className="fb-friends-title">Bạn bè & Kết nối</h1>
-              <p className="fb-friends-subtitle">
-                Xem lời mời kết bạn, tìm kiếm người thuê trọ, chủ nhà hoặc tra cứu số điện thoại an toàn.
-              </p>
+      <div className="container fb-friends-layout">
+        {/* Facebook Style Friends Sidebar */}
+        <aside className="fb-friends-sidebar" aria-label="Menu Bạn bè">
+          <div className="fb-friends-sidebar-header">
+            <div className="fb-friends-header-row">
+              <h1 className="fb-friends-title">Bạn bè</h1>
+              <span className="fb-friends-header-icon" title="Bạn bè & Kết nối">
+                <Icon name="users" size={18} />
+              </span>
             </div>
+            <p className="fb-friends-subtitle">
+              Kết nối người thuê và chủ nhà
+            </p>
           </div>
 
-          {/* Navigation Tabs (Facebook Style Pills) */}
-          <nav className="fb-friends-nav-tabs" aria-label="Menu Bạn bè">
+          <nav className="fb-friends-nav-list" aria-label="Danh mục bạn bè">
             <button
               type="button"
-              className={`fb-nav-tab ${activeTab === "requests" ? "active" : ""}`}
+              className={`fb-friends-nav-item ${activeTab === "requests" ? "active" : ""}`}
               onClick={() => switchTab("requests")}
             >
-              <Icon name="chat" size={18} />
-              <span>Lời mời kết bạn</span>
+              <span className="fb-item-icon-circle">
+                <Icon name="chat" size={18} />
+              </span>
+              <span className="fb-item-label">Lời mời kết bạn</span>
               {requests.length > 0 && (
                 <span className="fb-nav-badge">{requests.length}</span>
               )}
+              <span className="fb-item-arrow"><Icon name="chevron" size={15} /></span>
             </button>
 
             <button
               type="button"
-              className={`fb-nav-tab ${activeTab === "suggestions" ? "active" : ""}`}
+              className={`fb-friends-nav-item ${activeTab === "suggestions" ? "active" : ""}`}
               onClick={() => switchTab("suggestions")}
             >
-              <Icon name="users" size={18} />
-              <span>Gợi ý kết bạn</span>
+              <span className="fb-item-icon-circle">
+                <Icon name="users" size={18} />
+              </span>
+              <span className="fb-item-label">Gợi ý</span>
               {visibleSuggestions.length > 0 && (
                 <span className="fb-nav-badge subtle">{visibleSuggestions.length}</span>
               )}
+              <span className="fb-item-arrow"><Icon name="chevron" size={15} /></span>
             </button>
 
             <button
               type="button"
-              className={`fb-nav-tab ${activeTab === "friends" ? "active" : ""}`}
+              className={`fb-friends-nav-item ${activeTab === "friends" ? "active" : ""}`}
               onClick={() => switchTab("friends")}
             >
-              <Icon name="check" size={18} />
-              <span>Tất cả bạn bè</span>
+              <span className="fb-item-icon-circle">
+                <Icon name="check" size={18} />
+              </span>
+              <span className="fb-item-label">Tất cả bạn bè</span>
               <span className="fb-nav-badge subtle">{friends.length}</span>
+              <span className="fb-item-arrow"><Icon name="chevron" size={15} /></span>
             </button>
 
             <button
               type="button"
-              className={`fb-nav-tab ${activeTab === "search" ? "active" : ""}`}
+              className={`fb-friends-nav-item ${activeTab === "search" ? "active" : ""}`}
               onClick={() => switchTab("search")}
             >
-              <Icon name="phone" size={18} />
-              <span>Tìm qua số điện thoại</span>
+              <span className="fb-item-icon-circle">
+                <Icon name="phone" size={18} />
+              </span>
+              <span className="fb-item-label">Tìm qua số điện thoại</span>
+              <span className="fb-item-arrow"><Icon name="chevron" size={15} /></span>
             </button>
           </nav>
-        </header>
+
+          <div className="fb-friends-sidebar-footer">
+            <button
+              type="button"
+              className="fb-back-forum-btn"
+              onClick={() => navigate("/dien-dan")}
+            >
+              <Icon name="home" size={16} />
+              <span>Vào diễn đàn thảo luận</span>
+            </button>
+          </div>
+        </aside>
 
         {/* Content Area Based on Active Tab */}
         <div className="fb-friends-main-content">
