@@ -753,73 +753,92 @@ export default function MembersPage() {
           {/* ================= TAB 4: TÌM QUA SỐ ĐIỆN THOẠI ================= */}
           {activeTab === "search" && (
             <section className="fb-tab-section">
-              <div className="fb-search-panel">
-                <div className="fb-search-panel-header">
-                  <span className="fb-phone-badge">
-                    <Icon name="phone" size={16} />
-                    <span>Tra cứu an toàn & bảo mật</span>
-                  </span>
-                  <h2>Tìm bạn qua số điện thoại</h2>
-                  <p>
-                    Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ nhà trọ và kết nối trực tiếp.
-                  </p>
-                  <div className="phone-privacy-box" style={{ maxWidth: "680px", margin: "16px auto 0" }}>
-                    <Icon name="shield" size={18} />
-                    <span>
-                      <b>Chính sách bảo mật:</b> Danh bạ không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
+              <div className="fb-tab-header">
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px", flexWrap: "wrap" }}>
+                    <h2 className="fb-section-title" style={{ margin: 0 }}>Tìm bạn qua số điện thoại</h2>
+                    <span className="fb-phone-badge">
+                      <Icon name="shield" size={13} />
+                      <span>Tra cứu an toàn</span>
                     </span>
                   </div>
+                  <p className="fb-section-desc">
+                    Nhập chính xác số điện thoại để tìm kiếm người thuê hoặc chủ nhà trọ và kết nối trực tiếp.
+                  </p>
                 </div>
+              </div>
 
-                {/* Search Form */}
-                <form className="members-search-wrapper" onSubmit={handleSearchPhone} style={{ maxWidth: "680px", margin: "24px auto 0" }}>
-                  <div className="members-search-bar">
-                    <span className="search-icon"><Icon name="phone" size={20} /></span>
-                    <input
-                      type="text"
-                      placeholder="Nhập số điện thoại (ví dụ: 0912345678, 0395...)..."
-                      value={searchPhone}
-                      onChange={(e) => setSearchPhone(e.target.value)}
-                      autoComplete="off"
-                      spellCheck={false}
-                      autoFocus
-                    />
-                    {searchPhone && (
-                      <button
-                        type="button"
-                        className="search-clear-btn"
-                        onClick={() => {
-                          setSearchPhone("")
-                          setSearchResults([])
-                          setHasSearched(false)
-                        }}
-                        aria-label="Xóa tìm kiếm"
-                      >
-                        <Icon name="close" size={16} />
-                      </button>
-                    )}
+              {/* Privacy alert banner */}
+              <div className="fb-phone-privacy-banner">
+                <Icon name="shield" size={16} />
+                <span>
+                  <b>Chính sách bảo mật:</b> Danh bạ không hiển thị công khai để bảo vệ quyền riêng tư. Bạn chỉ có thể tra cứu khi có số điện thoại của người cần tìm.
+                </span>
+              </div>
+
+              {/* Search Form */}
+              <form className="fb-phone-search-form" onSubmit={handleSearchPhone}>
+                <div className="fb-phone-search-input-wrap">
+                  <span className="fb-phone-search-icon" aria-hidden="true">
+                    <Icon name="phone" size={18} />
+                  </span>
+                  <input
+                    type="tel"
+                    className="fb-phone-search-input"
+                    placeholder="Nhập số điện thoại (ví dụ: 0912345678, 0395...)..."
+                    value={searchPhone}
+                    onChange={(e) => setSearchPhone(e.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                    autoFocus
+                  />
+                  {searchPhone && (
+                    <button
+                      type="button"
+                      className="fb-phone-clear-btn"
+                      onClick={() => {
+                        setSearchPhone("")
+                        setSearchResults([])
+                        setHasSearched(false)
+                      }}
+                      aria-label="Xóa tìm kiếm"
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="fb-phone-submit-btn"
+                  disabled={!searchPhone.trim() || searchLoading}
+                >
+                  <Icon name="search" size={16} />
+                  <span>{searchLoading ? "Đang tìm..." : "Tìm kiếm"}</span>
+                </button>
+              </form>
+
+              {/* Search Results Display */}
+              <div className="fb-search-results-area" style={{ maxWidth: "760px", margin: "0" }}>
+                {!hasSearched ? (
+                  <div className="fb-phone-guide-box">
+                    <div className="fb-phone-guide-icon">
+                      <Icon name="phone" size={24} />
+                    </div>
+                    <div className="fb-phone-guide-text">
+                      <h3>Nhập số điện thoại để tra cứu</h3>
+                      <p>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
+                    </div>
                   </div>
-                  <button type="submit" className="members-search-btn" disabled={!searchPhone.trim() || searchLoading}>
-                    {searchLoading ? "Đang tìm..." : "Tìm kiếm"}
-                  </button>
-                </form>
-
-                {/* Search Results Display */}
-                <div className="fb-search-results-area" style={{ marginTop: "32px", maxWidth: "680px", margin: "32px auto 0" }}>
-                  {!hasSearched ? (
-                    <div className="phone-page-empty">
-                      <div className="phone-empty-circle">
-                        <Icon name="phone" size={38} />
-                      </div>
-                      <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Nhập số điện thoại để tra cứu</h3>
-                      <p style={{ color: "#65766c", fontSize: "14px", margin: 0 }}>Hệ thống sẽ tra cứu tài khoản chính xác theo số điện thoại đã đăng ký.</p>
-                    </div>
-                  ) : searchLoading ? (
-                    <div className="phone-page-empty">
-                      <div className="forum-lazy-spinner" />
-                      <p style={{ marginTop: "16px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
-                    </div>
-                  ) : searchResults.length > 0 ? (
+                ) : searchLoading ? (
+                  <div className="fb-empty-state" style={{ maxWidth: "760px", margin: "0" }}>
+                    <div className="forum-lazy-spinner" />
+                    <p style={{ marginTop: "14px", color: "#54685c" }}>Đang tìm kiếm thông tin người dùng...</p>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="fb-phone-results-wrap">
+                    <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1e382b", marginBottom: "12px" }}>
+                      Kết quả tìm kiếm ({searchResults.length})
+                    </h3>
                     <div className="fb-cards-grid" style={{ gridTemplateColumns: "1fr" }}>
                       {searchResults.map((member) => {
                         const isFriend = friends.some((f) => f.id === member.id)
@@ -918,19 +937,21 @@ export default function MembersPage() {
                         )
                       })}
                     </div>
-                  ) : (
-                    <div className="phone-page-empty">
-                      <div className="phone-empty-circle" style={{ background: "#fef2f2", color: "#dc2626" }}>
-                        <Icon name="close" size={38} />
-                      </div>
-                      <h3 style={{ fontSize: "18px", color: "#243a2d", marginBottom: "6px" }}>Không tìm thấy người dùng</h3>
-                      <p style={{ color: "#65766c", fontSize: "14px", marginBottom: "4px" }}>
+                  </div>
+                ) : (
+                  <div className="fb-phone-guide-box fb-phone-not-found-box">
+                    <div className="fb-phone-guide-icon" style={{ background: "#fef2f2", color: "#dc2626" }}>
+                      <Icon name="close" size={24} />
+                    </div>
+                    <div className="fb-phone-guide-text">
+                      <h3 style={{ color: "#991b1b" }}>Không tìm thấy người dùng</h3>
+                      <p style={{ color: "#65766c", marginBottom: "4px" }}>
                         Không có tài khoản nào đăng ký số điện thoại <b>{searchPhone}</b> trên hệ thống Trọ Ơi.
                       </p>
                       <small style={{ color: "#8a9a90" }}>Vui lòng kiểm tra lại tính chính xác của số điện thoại và thử lại.</small>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </section>
           )}

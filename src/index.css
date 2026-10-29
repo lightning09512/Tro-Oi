@@ -16052,7 +16052,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .fb-search-panel-header {
-  text-align: center;
+  text-align: left;
 }
 
 .fb-phone-badge {
