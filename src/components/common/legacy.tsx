@@ -316,7 +316,7 @@ export function RoomCard({
           }`}
           aria-label={isTransfer ? "Tin chuyển nhượng phòng" : `Trạng thái tin: ${room.badge}`}
         >
-          {isTransfer ? "🔄 Chuyển nhượng" : room.badge}
+          {isTransfer ? "Chuyển nhượng" : room.badge}
         </span>
         {user?.role !== "admin" && <button
           className={saved ? "heart-btn saved" : "heart-btn"}

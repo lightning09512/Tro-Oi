@@ -420,7 +420,7 @@ export default function MessagesPage() {
                 <h3 className="profile-name">{selected.name}</h3>
                 <span className={`profile-role-pill ${isPassRoom ? "role-transfer" : ""}`}>
                   {isPassRoom
-                    ? "🔄 Người pass phòng"
+                    ? "Người pass phòng"
                     : selectedContact?.role === "landlord"
                     ? "Chủ trọ"
                     : selectedContact?.role === "renter"
@@ -502,7 +502,7 @@ export default function MessagesPage() {
                   <div className="spotlight-header">
                     <span className="spotlight-title">Phòng đang trao đổi</span>
                     {relatedRoom.type === "Chuyển nhượng" ? (
-                      <span className="spotlight-badge transfer">🔄 Chuyển nhượng</span>
+                      <span className="spotlight-badge transfer">Chuyển nhượng</span>
                     ) : (
                       <span className="spotlight-badge standard">Đang cho thuê</span>
                     )}
@@ -671,7 +671,7 @@ export default function MessagesPage() {
                 <div className="schedule-preview-box">
                   <small>Xem trước nội dung tin nhắn:</small>
                   <p>
-                    📅 <b>[LỜI HẸN XEM PHÒNG]</b> Em muốn hẹn xem phòng vào lúc <b>{scheduleTime}</b> ({scheduleDate.toLowerCase()}){scheduleNote ? `. Ghi chú: ${scheduleNote}` : ""}. Anh/chị có tiện giờ này không ạ?
+                    <b>[LỜI HẸN XEM PHÒNG]</b> Em muốn hẹn xem phòng vào lúc <b>{scheduleTime}</b> ({scheduleDate.toLowerCase()}){scheduleNote ? `. Ghi chú: ${scheduleNote}` : ""}. Anh/chị có tiện giờ này không ạ?
                   </p>
                 </div>
               </div>
@@ -685,7 +685,7 @@ export default function MessagesPage() {
                   onClick={async () => {
                     if (scheduling) return
                     setScheduling(true)
-                    const formattedMsg = `📅 [LỜI HẸN XEM PHÒNG] Em muốn hẹn xem phòng vào lúc ${scheduleTime} (${scheduleDate.toLowerCase()})${scheduleNote ? `. Ghi chú: ${scheduleNote}` : ""}. Anh/chị có tiện giờ này không ạ?`
+                    const formattedMsg = `[LỜI HẸN XEM PHÒNG] Em muốn hẹn xem phòng vào lúc ${scheduleTime} (${scheduleDate.toLowerCase()})${scheduleNote ? `. Ghi chú: ${scheduleNote}` : ""}. Anh/chị có tiện giờ này không ạ?`
                     try {
                       await sendMessage(selected.id, user?.id ?? "", formattedMsg)
                       setScheduleModalOpen(false)

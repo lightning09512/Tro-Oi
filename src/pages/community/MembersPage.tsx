@@ -476,14 +476,14 @@ export default function MembersPage() {
                           {item.name}
                         </Link>
                         <span className={`fb-user-role ${item.role}`}>
-                          {item.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                          {item.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"}
                         </span>
 
                         <div className="fb-user-meta">
                           {item.role === "landlord" ? (
-                            <span>🏠 {item.listingsCount || 1} phòng trọ cho thuê</span>
+                            <span>{item.listingsCount || 1} phòng trọ cho thuê</span>
                           ) : (
-                            <span>💬 {item.postsCount || 1} bài viết cộng đồng</span>
+                            <span>{item.postsCount || 1} bài viết cộng đồng</span>
                           )}
                         </div>
 
@@ -495,7 +495,6 @@ export default function MembersPage() {
                             disabled={actionLoadingId === item.id}
                             onClick={() => handleAcceptRequest(item)}
                           >
-                            <Icon name="check" size={16} />
                             <span>{actionLoadingId === item.id ? "Đang xử lý..." : "Xác nhận"}</span>
                           </button>
                           <button
@@ -566,21 +565,20 @@ export default function MembersPage() {
                             {item.name}
                           </Link>
                           <span className={`fb-user-role ${item.role}`}>
-                            {item.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                            {item.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"}
                           </span>
 
                           <div className="fb-user-meta">
                             {item.role === "landlord" ? (
-                              <span>🏠 {item.listingsCount || 1} phòng trọ đăng</span>
+                              <span>{item.listingsCount || 1} phòng trọ đăng</span>
                             ) : (
-                              <span>💬 {item.postsCount || 1} bài viết thảo luận</span>
+                              <span>{item.postsCount || 1} bài viết thảo luận</span>
                             )}
                           </div>
 
                           <div className="fb-user-actions">
                             {isSent ? (
                               <button type="button" className="fb-btn-sent" disabled>
-                                <Icon name="check" size={16} />
                                 <span>Đã gửi lời mời</span>
                               </button>
                             ) : (
@@ -591,7 +589,6 @@ export default function MembersPage() {
                                   disabled={actionLoadingId === item.id}
                                   onClick={() => handleSendRequest(item)}
                                 >
-                                  <Icon name="plus" size={16} />
                                   <span>Thêm bạn bè</span>
                                 </button>
                                 <button
@@ -685,12 +682,12 @@ export default function MembersPage() {
                           {friend.name}
                         </Link>
                         <span className={`fb-user-role ${friend.role}`}>
-                          {friend.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                          {friend.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"}
                         </span>
 
                         {friend.phone && (
                           <div className="fb-friend-phone-row">
-                            <span>📞 {friend.phone}</span>
+                            <span>{friend.phone}</span>
                             <button
                               type="button"
                               className="fb-phone-copy-btn"
@@ -860,13 +857,13 @@ export default function MembersPage() {
                                   {member.name}
                                 </Link>
                                 <span className={`fb-user-role ${member.role}`}>
-                                  {member.role === "landlord" ? "🏠 Chủ nhà trọ" : "👤 Người tìm phòng"}
+                                  {member.role === "landlord" ? "Chủ nhà trọ" : "Người tìm phòng"}
                                 </span>
                               </div>
 
                               {member.phone && (
                                 <div className="fb-friend-phone-row" style={{ marginTop: "6px" }}>
-                                  <span>📞 {member.phone}</span>
+                                  <span>{member.phone}</span>
                                   <button
                                     type="button"
                                     className="fb-phone-copy-btn"
@@ -880,9 +877,9 @@ export default function MembersPage() {
 
                               <div className="fb-user-meta" style={{ marginTop: "6px" }}>
                                 {member.role === "landlord" ? (
-                                  <span>🏠 {member.listingsCount || 0} phòng cho thuê</span>
+                                  <span>{member.listingsCount || 0} phòng cho thuê</span>
                                 ) : (
-                                  <span>💬 {member.postsCount || 0} bài viết diễn đàn</span>
+                                  <span>{member.postsCount || 0} bài viết diễn đàn</span>
                                 )}
                               </div>
                             </div>
@@ -908,7 +905,6 @@ export default function MembersPage() {
                                 </button>
                               ) : isSent ? (
                                 <button type="button" className="fb-btn-sent" disabled>
-                                  <Icon name="check" size={16} />
                                   <span>Đã gửi lời mời</span>
                                 </button>
                               ) : (
@@ -918,7 +914,6 @@ export default function MembersPage() {
                                   disabled={actionLoadingId === member.id}
                                   onClick={() => handleSendRequest(member)}
                                 >
-                                  <Icon name="plus" size={16} />
                                   <span>Thêm bạn bè</span>
                                 </button>
                               )}
