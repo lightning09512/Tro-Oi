@@ -184,7 +184,7 @@ input, textarea { caret-color: var(--teal-dark); }
 /* Bottom App Promo Banner (Nhà Tốt Style) */
 .site-footer-promo-band {
   width: 100%;
-  background: #ea580c;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #ea580c 100%);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -202,8 +202,7 @@ input, textarea { caret-color: var(--teal-dark); }
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
-  max-height: 420px;
+  object-fit: contain;
   transition: transform 0.25s ease;
 }
 
@@ -213,7 +212,7 @@ input, textarea { caret-color: var(--teal-dark); }
 
 @media (max-width: 640px) {
   .site-footer-promo-img {
-    max-height: 220px;
+    height: auto;
   }
 }
 

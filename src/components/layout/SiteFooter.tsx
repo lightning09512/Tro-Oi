@@ -84,6 +84,8 @@ export default function SiteFooter({ variant = "full" }: { variant?: "full" | "c
               alt="Cà phê miễn phí tặng bồ tèo có app! Trọ Ơi"
               className="site-footer-promo-img"
               loading="lazy"
+              width={1376}
+              height={768}
             />
           </div>
         </section>
