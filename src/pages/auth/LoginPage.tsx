@@ -3,9 +3,53 @@ import { NavLink, useLocation, useNavigate } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import AuthShell from "@/pages/auth/AuthShell"
 import useAuth from "@/hooks/useAuth"
+import { useToast } from "@/contexts/ToastContext"
 import type { UserRole } from "@/types/auth"
 import { authService } from "@/services/authService"
-import { isApiMode } from "@/services/apiClient"
+
+interface DemoAccount {
+  role: UserRole
+  roleLabel: string
+  name: string
+  email: string
+  phone: string
+  password: string
+  roleBadgeClass: string
+  purpose: string
+}
+
+const DEMO_ACCOUNTS: DemoAccount[] = [
+  {
+    role: "renter",
+    roleLabel: "Người thuê",
+    name: "Hoàng Trang",
+    email: "trang.nguyen@example.com",
+    phone: "0901 234 567",
+    password: authService.demoPassword,
+    roleBadgeClass: "demo-role-renter",
+    purpose: "Tìm phòng, lưu tin, nhắn tin",
+  },
+  {
+    role: "landlord",
+    roleLabel: "Chủ trọ",
+    name: "Minh Ngọc",
+    email: "minhngoc@example.com",
+    phone: "0987 654 321",
+    password: authService.demoPassword,
+    roleBadgeClass: "demo-role-landlord",
+    purpose: "Đăng tin cho thuê, quản lý phòng",
+  },
+  {
+    role: "admin",
+    roleLabel: "Quản trị viên",
+    name: "Quản trị viên",
+    email: "admin@phongtroplus.vn",
+    phone: "0909 000 001",
+    password: authService.demoPassword,
+    roleBadgeClass: "demo-role-admin",
+    purpose: "Quản trị hệ thống, duyệt tin",
+  },
+]
 
 export default function LoginPage({ admin = false }: { admin?: boolean }) {
   const [identifier, setIdentifier] = useState("")
@@ -15,13 +59,21 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
+  const { toast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const fillDemo = (demoEmail: string, _demoRole: UserRole) => {
-    setIdentifier(demoEmail)
-    setPassword(authService.demoPassword)
+  const handleSelectDemo = (acc: DemoAccount) => {
+    setIdentifier(acc.email)
+    setPassword(acc.password)
     setError("")
+    toast(`Đã điền tài khoản: ${acc.name} (${acc.roleLabel})`, "success")
+  }
+
+  const handleCopyPassword = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard?.writeText(authService.demoPassword)
+    toast(`Đã sao chép mật khẩu: ${authService.demoPassword}`, "success")
   }
 
   const submit = async (event: FormEvent) => {
@@ -76,9 +128,9 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             autoComplete="username"
-            placeholder="vidu@email.com"
+            placeholder="vidu@email.com hoặc số điện thoại"
           />
-          <small>Dùng thông tin bạn đã đăng ký.</small>
+          <small>Dùng thông tin bạn đã đăng ký hoặc chọn tài khoản mẫu bên dưới.</small>
         </label>
         <label className="form-field">
           <span>
@@ -118,72 +170,110 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
           </p>
         )}
         <Button disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
-        {!isApiMode && <div className="demo-credentials">
-          <div className="demo-credentials-header">
-            <strong>Tài khoản thử nghiệm</strong>
-            <small>Bấm vào tài khoản bên dưới để tự động điền nhanh:</small>
-          </div>
-          {admin ? (
-            <div className="demo-cred-buttons">
-              <button
-                type="button"
-                className={`demo-cred-btn ${identifier === "admin@phongtroplus.vn" ? "active" : ""}`}
-                onClick={() => fillDemo("admin@phongtroplus.vn", "admin")}
-                title="Bấm để điền tài khoản quản trị"
-              >
-                <span className="demo-cred-badge admin">Quản trị viên</span>
-                <span className="demo-cred-email">admin@phongtroplus.vn</span>
-              </button>
-            </div>
-          ) : (
-            <div className="demo-cred-buttons">
-              <button
-                type="button"
-                className={`demo-cred-btn ${identifier === "trang.nguyen@example.com" ? "active" : ""}`}
-                onClick={() => fillDemo("trang.nguyen@example.com", "renter")}
-                title="Bấm để điền tài khoản người thuê"
-              >
-                <span className="demo-cred-badge renter">Người thuê</span>
-                <span className="demo-cred-email">trang.nguyen@example.com</span>
-              </button>
-              <button
-                type="button"
-                className={`demo-cred-btn ${identifier === "minhngoc@example.com" ? "active" : ""}`}
-                onClick={() => fillDemo("minhngoc@example.com", "landlord")}
-                title="Bấm để điền tài khoản chủ trọ"
-              >
-                <span className="demo-cred-badge landlord">Chủ trọ</span>
-                <span className="demo-cred-email">minhngoc@example.com</span>
-              </button>
-              <button
-                type="button"
-                className={`demo-cred-btn ${identifier === "admin@phongtroplus.vn" ? "active" : ""}`}
-                onClick={() => fillDemo("admin@phongtroplus.vn", "admin")}
-                title="Bấm để điền tài khoản quản trị"
-              >
-                <span className="demo-cred-badge admin">Quản trị viên</span>
-                <span className="demo-cred-email">admin@phongtroplus.vn</span>
-              </button>
-            </div>
-          )}
-          <div className="demo-cred-footer">
-            <span>Mật khẩu: <code>{authService.demoPassword}</code></span>
-            {!admin ? (
-              <NavLink to="/admin/dang-nhap" className="demo-admin-link">
-                Cổng đăng nhập quản trị riêng &rarr;
-              </NavLink>
-            ) : (
-              <NavLink to="/dang-nhap" className="demo-admin-link">
-                &larr; Về trang đăng nhập thành viên
-              </NavLink>
-            )}
-          </div>
-        </div>}
+
         {!admin && (
           <p className="auth-switch">
             Chưa có tài khoản? <NavLink to="/dang-ky">Đăng ký ngay</NavLink>
           </p>
         )}
+
+        {/* BẢNG TÀI KHOẢN MẪU BÊN DƯỚI ĐĂNG NHẬP */}
+        <div className="demo-accounts-table-card">
+          <div className="demo-table-header">
+            <div className="demo-table-title-wrap">
+              <span className="demo-table-badge">Dành cho trải nghiệm</span>
+              <h3 className="demo-table-title">Bảng tài khoản mẫu</h3>
+            </div>
+            <p className="demo-table-desc">
+              Bấm vào bất kỳ dòng nào hoặc nút <b>Điền nhanh</b> để tự động nhập tài khoản & mật khẩu:
+            </p>
+          </div>
+
+          <div className="demo-table-responsive">
+            <table className="demo-accounts-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "28%" }}>Vai trò</th>
+                  <th style={{ width: "40%" }}>Tài khoản (Email / SĐT)</th>
+                  <th style={{ width: "17%" }}>Mật khẩu</th>
+                  <th style={{ width: "15%", textAlign: "right" }}>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DEMO_ACCOUNTS.map((acc) => {
+                  const isSelected = identifier === acc.email || identifier === acc.phone
+                  const isHighlighted = admin ? acc.role === "admin" : isSelected
+                  return (
+                    <tr
+                      key={acc.email}
+                      className={`demo-account-row ${isSelected ? "is-selected" : ""} ${isHighlighted ? "is-highlighted" : ""}`}
+                      onClick={() => handleSelectDemo(acc)}
+                      title={`Bấm để chọn tài khoản ${acc.roleLabel}`}
+                    >
+                      <td>
+                        <div className="demo-role-cell">
+                          <span className={`demo-role-badge ${acc.roleBadgeClass}`}>
+                            {acc.roleLabel}
+                          </span>
+                          <span className="demo-user-name">{acc.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="demo-cred-cell">
+                          <span className="demo-user-email">{acc.email}</span>
+                          <span className="demo-user-phone">{acc.phone}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="demo-password-cell">
+                          <code className="demo-code-text">{acc.password}</code>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          type="button"
+                          className={`demo-fill-btn ${isSelected ? "is-active" : ""}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSelectDemo(acc)
+                          }}
+                        >
+                          {isSelected ? "Đã điền ✓" : "Điền nhanh"}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="demo-table-footer">
+            <div className="demo-footer-info">
+              <span>Mật khẩu: <code className="demo-code-inline">{authService.demoPassword}</code></span>
+              <button
+                type="button"
+                className="demo-copy-pwd-btn"
+                onClick={handleCopyPassword}
+                title="Sao chép mật khẩu"
+              >
+                <Icon name="copy" size={13} />
+                <span>Sao chép</span>
+              </button>
+            </div>
+            <div className="demo-footer-link">
+              {!admin ? (
+                <NavLink to="/admin/dang-nhap" className="demo-admin-switch">
+                  Cổng đăng nhập Quản trị &rarr;
+                </NavLink>
+              ) : (
+                <NavLink to="/dang-nhap" className="demo-admin-switch">
+                  &larr; Về đăng nhập thành viên
+                </NavLink>
+              )}
+            </div>
+          </div>
+        </div>
       </form>
     </AuthShell>
   )
