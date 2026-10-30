@@ -45,12 +45,12 @@ const ADMIN_HEADER_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Theo dõi chỉ số tăng trưởng và xuất dữ liệu hệ thống",
   },
   "/admin/ho-so": {
-    title: "Quản trị hệ thống · Hồ sơ quản trị viên",
-    subtitle: "Quản lý thông tin định danh và cài đặt bảo mật tài khoản",
+    title: "",
+    subtitle: "",
   },
   "/admin/doi-mat-khau": {
-    title: "Quản trị hệ thống · Bảo mật tài khoản",
-    subtitle: "Cập nhật mật khẩu định kỳ để bảo vệ quyền quản trị",
+    title: "",
+    subtitle: "",
   },
   "/admin/thong-bao": {
     title: "Quản trị hệ thống · Thông báo",
@@ -97,8 +97,8 @@ export default function AdminLayout() {
       <section className="admin-main">
         <header className="admin-topbar">
           <div>
-            <h1>{headerMeta.title}</h1>
-            <p>{headerMeta.subtitle}</p>
+            {headerMeta.title ? <h1>{headerMeta.title}</h1> : null}
+            {headerMeta.subtitle ? <p>{headerMeta.subtitle}</p> : null}
           </div>
           <NavLink
             to="/"

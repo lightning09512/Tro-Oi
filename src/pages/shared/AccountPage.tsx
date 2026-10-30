@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type FormEvent } from "react"
-import { Link, NavLink } from "react-router"
+import { Link, NavLink, useLocation } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
 import useDialogFocus from "@/hooks/useDialogFocus"
@@ -16,7 +16,8 @@ export default function AccountPage({
   const { user, updateUser } = useAuth()
   const { favoriteIds } = useFavorites()
   const { listings } = usePlatform()
-  const isAdmin = user?.role === "admin"
+  const { pathname } = useLocation()
+  const isAdmin = user?.role === "admin" || pathname.startsWith("/admin")
   const profilePath = isAdmin ? "/admin/ho-so" : "/tai-khoan/ho-so"
   const passwordPath = isAdmin ? "/admin/doi-mat-khau" : "/tai-khoan/doi-mat-khau"
 
