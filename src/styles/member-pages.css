@@ -41,9 +41,18 @@
 
 /* Account, saved listings and reports */
 .account-page { padding: 42px 0 64px; background: #f5f8f5; }
-.account-page.account-page--admin { padding: 0; min-height: 0; }
+.account-page.account-page--admin { padding: 0 !important; min-height: 0 !important; width: 100% !important; }
 .account-page .account-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 28px; align-items: start; justify-content: stretch; }
-.account-page .account-layout--admin { width: 100%; max-width: 1180px; margin: 0; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; }
+.account-page .account-layout--admin {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 340px minmax(0, 1fr) !important;
+  gap: 28px !important;
+  align-items: start !important;
+  justify-content: stretch !important;
+}
 .account-page .account-avatar-camera-badge {
   position: absolute;
   right: 0;
@@ -58,6 +67,146 @@
   place-items: center;
   box-shadow: 0 2px 6px rgba(18, 45, 28, 0.22);
 }
+
+/* Security Box in Left Column for Admin */
+.account-page .admin-profile-security-box {
+  width: 100%;
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #f8faf8;
+  border: 1px solid #e1ebe3;
+  text-align: left;
+}
+.account-page .admin-security-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f3325;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e6eee8;
+  margin-bottom: 12px;
+}
+.account-page .admin-security-dl {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.account-page .admin-security-dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.account-page .admin-security-dl dt {
+  color: #637469;
+  font-weight: 500;
+}
+.account-page .admin-security-dl dd {
+  margin: 0;
+  color: #1f3325;
+  font-weight: 600;
+  text-align: right;
+}
+.account-page .admin-security-dl .status-active-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #245f3b !important;
+}
+.account-page .admin-security-dl .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2f7a4b;
+}
+.account-page .admin-security-checklist {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e6eee8;
+}
+.account-page .checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #495d50;
+}
+.account-page .checklist-item .check-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #eaf4ec;
+  color: #245f3b;
+  font-weight: 700;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Right Column Admin Stack */
+.account-page .account-admin-main-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+.account-page .account-card--admin {
+  width: 100% !important;
+  border: 1px solid #dfe7e1 !important;
+  border-radius: 16px !important;
+  padding: 30px 32px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+.account-page .account-heading-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #edf6ef;
+  color: #245f3b;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.account-page .account-admin-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.account-page .account-admin-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #dfe7e1;
+  background: #ffffff;
+  color: #4d5f53;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+.account-page .account-admin-nav-item:hover {
+  background: #edf5ee;
+  border-color: #245f3b;
+  color: #245f3b;
+}
+
 .account-page .account-summary-meta {
   width: 100%;
   margin: 4px 0 18px;

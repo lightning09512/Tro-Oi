@@ -17,31 +17,31 @@ const items = [
 
 const ADMIN_HEADER_META: Record<string, { title: string; subtitle: string }> = {
   "/admin": {
-    title: "Quản trị hệ thống",
-    subtitle: "Quản lý dữ liệu và hoạt động trên Trọ Ơi",
+    title: "",
+    subtitle: "",
   },
   "/admin/nguoi-dung": {
-    title: "Quản trị hệ thống · Người dùng",
+    title: "Quản lý người dùng",
     subtitle: "Quản lý tài khoản, vai trò và trạng thái hoạt động",
   },
   "/admin/tin-cho-thue": {
-    title: "Quản trị hệ thống · Tin cho thuê",
+    title: "Kiểm duyệt tin cho thuê",
     subtitle: "Kiểm duyệt và quản lý danh sách phòng trọ trên hệ thống",
   },
   "/admin/dien-dan": {
-    title: "Quản trị hệ thống · Diễn đàn",
+    title: "Quản lý diễn đàn",
     subtitle: "Kiểm duyệt bài viết và bình luận cộng đồng",
   },
   "/admin/danh-muc": {
-    title: "Quản trị hệ thống · Danh mục",
+    title: "Danh mục phòng trọ",
     subtitle: "Thiết lập phân loại phòng trọ và danh mục hệ thống",
   },
   "/admin/bao-cao": {
-    title: "Quản trị hệ thống · Báo cáo vi phạm",
+    title: "Báo cáo vi phạm",
     subtitle: "Tiếp nhận và xử lý phản ánh từ người dùng",
   },
   "/admin/thong-ke": {
-    title: "Quản trị hệ thống · Thống kê & báo cáo",
+    title: "Thống kê & báo cáo",
     subtitle: "Theo dõi chỉ số tăng trưởng và xuất dữ liệu hệ thống",
   },
   "/admin/ho-so": {
@@ -53,7 +53,7 @@ const ADMIN_HEADER_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: "",
   },
   "/admin/thong-bao": {
-    title: "Quản trị hệ thống · Thông báo",
+    title: "Thông báo hệ thống",
     subtitle: "Theo dõi các thông báo và biến động mới nhất",
   },
 }

@@ -201,3 +201,890 @@
 @media (prefers-reduced-motion: reduce) {
   .management-page *, .management-page *::before, .management-page *::after { animation: none !important; transition: none !important; }
 }
+
+
+/* ==========================================================================
+   Executive Operations Dashboard (.admin-dashboard-pro)
+   High-density Bento layout, real-time telemetry and operational tables
+   ========================================================================== */
+.admin-dashboard-pro {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 32px 64px;
+  box-sizing: border-box;
+}
+
+.admin-dashboard-pro .dashboard-pro-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard-pro .dashboard-header-main {
+  min-width: 0;
+}
+
+.admin-dashboard-pro .dashboard-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.admin-dashboard-pro .dashboard-header-title-row h1 {
+  font-size: 24px;
+  font-weight: 750;
+  color: #15241b;
+  letter-spacing: -0.025em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.admin-dashboard-pro .dashboard-header-sub {
+  color: #65756a;
+  font-size: 13.5px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.admin-dashboard-pro .dashboard-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-dashboard-pro .dashboard-status-pill.is-healthy {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.admin-dashboard-pro .dashboard-status-pill.is-warning {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.admin-dashboard-pro .dashboard-status-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.admin-dashboard-pro .dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-pro .dashboard-quick-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13.5px;
+  background: #245f3b;
+  color: #ffffff;
+  border: 0;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 1px 3px rgba(36, 95, 59, 0.2);
+}
+
+.admin-dashboard-pro .dashboard-quick-cta:hover {
+  background: #1b4b2e;
+  transform: translateY(-1px);
+}
+
+/* Bento KPI Grid */
+.admin-dashboard-pro .dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.admin-dashboard-pro .dashboard-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e1e9e3;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(18, 45, 28, 0.04);
+}
+
+.admin-dashboard-pro .dashboard-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: #bad3c2;
+  box-shadow: 0 8px 24px rgba(18, 45, 28, 0.08);
+}
+
+.admin-dashboard-pro .dashboard-kpi-card:focus-visible {
+  outline: 2px solid #245f3b;
+  outline-offset: 2px;
+}
+
+.admin-dashboard-pro .kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-dashboard-pro .kpi-icon-bubble {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.admin-dashboard-pro .kpi--users .kpi-icon-bubble {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.admin-dashboard-pro .kpi--listings .kpi-icon-bubble {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.admin-dashboard-pro .kpi--forum .kpi-icon-bubble {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.admin-dashboard-pro .kpi--safety .kpi-icon-bubble {
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.admin-dashboard-pro .kpi-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.admin-dashboard-pro .kpi-badge--emerald {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.admin-dashboard-pro .kpi-badge--purple {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.admin-dashboard-pro .kpi-badge--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.admin-dashboard-pro .kpi-badge--success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.admin-dashboard-pro .kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-dashboard-pro .kpi-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.admin-dashboard-pro .kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  margin: 2px 0;
+}
+
+.admin-dashboard-pro .kpi-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.admin-dashboard-pro .kpi-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width 400ms ease;
+}
+
+.admin-dashboard-pro .kpi-progress-fill.is-emerald {
+  background: #16a34a;
+}
+
+.admin-dashboard-pro .kpi-progress-fill.is-purple {
+  background: #7c3aed;
+}
+
+.admin-dashboard-pro .kpi-progress-fill.is-danger {
+  background: #dc2626;
+}
+
+.admin-dashboard-pro .kpi-progress-fill.is-teal {
+  background: #0d9488;
+}
+
+.admin-dashboard-pro .kpi-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.admin-dashboard-pro .kpi-footer b {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Main Two-Column Layout */
+.admin-dashboard-pro .dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(360px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.admin-dashboard-pro .dashboard-card {
+  background: #ffffff;
+  border: 1px solid #e1e9e3;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(18, 45, 28, 0.04);
+}
+
+.admin-dashboard-pro .dashboard-card:last-child {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-pro .dashboard-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f4f1;
+}
+
+.admin-dashboard-pro .dashboard-card-header h3 {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #15241b;
+  margin: 0 0 4px;
+  letter-spacing: -0.015em;
+}
+
+.admin-dashboard-pro .dashboard-card-header p {
+  font-size: 12.5px;
+  color: #65756a;
+  margin: 0;
+}
+
+.admin-dashboard-pro .dashboard-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #245f3b;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 150ms ease;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-pro .dashboard-link-btn:hover {
+  background: #edf5ee;
+}
+
+/* Healthy Queue Banner */
+.admin-dashboard-pro .dashboard-healthy-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-pro .healthy-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #dcfce7;
+  color: #15803d;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.admin-dashboard-pro .healthy-content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #14532d;
+  margin: 0 0 2px;
+}
+
+.admin-dashboard-pro .healthy-content p {
+  font-size: 12.5px;
+  color: #166534;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Pending Task Queue */
+.admin-dashboard-pro .dashboard-pending-count-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.admin-dashboard-pro .dashboard-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-dashboard-pro .dashboard-task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fcfdfc;
+  border: 1px solid #e5ede7;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-dashboard-pro .dashboard-task-item:hover {
+  background: #ffffff;
+  border-color: #245f3b;
+  box-shadow: 0 2px 8px rgba(36, 95, 59, 0.08);
+}
+
+.admin-dashboard-pro .task-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.admin-dashboard-pro .task-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-dashboard-pro .task-text-col strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dashboard-pro .task-text-col span {
+  font-size: 12px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dashboard-pro .task-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #245f3b;
+  background: #edf5ee;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Listings Table */
+.admin-dashboard-pro .dashboard-table-wrapper {
+  overflow-x: auto;
+  margin-inline: -4px;
+}
+
+.admin-dashboard-pro .dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.admin-dashboard-pro .dashboard-table th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  background: #f8faf8;
+  border-bottom: 1px solid #e2e8e3;
+  white-space: nowrap;
+}
+
+.admin-dashboard-pro .dashboard-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f4f1;
+  vertical-align: middle;
+}
+
+.admin-dashboard-pro .dashboard-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-dashboard-pro .dashboard-table tr:hover td {
+  background: #fafcfa;
+}
+
+.admin-dashboard-pro .room-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.admin-dashboard-pro .room-thumb {
+  width: 52px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e2e8f0;
+  flex: none;
+  border: 1px solid #e1e9e3;
+}
+
+.admin-dashboard-pro .room-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-dashboard-pro .room-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.admin-dashboard-pro .room-location {
+  font-size: 11.5px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-dashboard-pro .room-price-tag {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.admin-dashboard-pro .room-owner {
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.admin-dashboard-pro .room-views-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-dashboard-pro .room-views-col strong {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.admin-dashboard-pro .room-views-col small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.admin-dashboard-pro .room-status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.admin-dashboard-pro .room-status-badge.is-active {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.admin-dashboard-pro .room-status-badge.is-pending {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.admin-dashboard-pro .room-status-badge.is-rented {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.admin-dashboard-pro .room-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #d1ded5;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-dashboard-pro .room-detail-btn:hover {
+  border-color: #245f3b;
+  background: #f0fdf4;
+  color: #245f3b;
+}
+
+/* Telemetry & Breakdown */
+.admin-dashboard-pro .telemetry-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-dashboard-pro .telemetry-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.admin-dashboard-pro .telemetry-bar-stacked {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1f5f9;
+  gap: 2px;
+}
+
+.admin-dashboard-pro .bar-slice {
+  height: 100%;
+  transition: width 400ms ease;
+}
+
+.admin-dashboard-pro .bar-slice.is-emerald {
+  background: #10b981;
+}
+
+.admin-dashboard-pro .bar-slice.is-amber {
+  background: #f59e0b;
+}
+
+.admin-dashboard-pro .bar-slice.is-gray {
+  background: #94a3b8;
+}
+
+.admin-dashboard-pro .bar-slice.is-blue {
+  background: #3b82f6;
+}
+
+.admin-dashboard-pro .bar-slice.is-teal {
+  background: #0d9488;
+}
+
+.admin-dashboard-pro .telemetry-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.admin-dashboard-pro .telemetry-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.admin-dashboard-pro .legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.admin-dashboard-pro .legend-dot.is-emerald {
+  background: #10b981;
+}
+
+.admin-dashboard-pro .legend-dot.is-amber {
+  background: #f59e0b;
+}
+
+.admin-dashboard-pro .legend-dot.is-gray {
+  background: #94a3b8;
+}
+
+.admin-dashboard-pro .legend-dot.is-blue {
+  background: #3b82f6;
+}
+
+.admin-dashboard-pro .legend-dot.is-teal {
+  background: #0d9488;
+}
+
+.admin-dashboard-pro .telemetry-divider {
+  height: 1px;
+  background: #f0f4f1;
+  margin: 16px 0;
+}
+
+.admin-dashboard-pro .telemetry-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.admin-dashboard-pro .telemetry-stat-box {
+  background: #f8faf8;
+  border: 1px solid #e8efe9;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: left;
+}
+
+.admin-dashboard-pro .telemetry-stat-box small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.admin-dashboard-pro .telemetry-stat-box strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-dashboard-pro .telemetry-stat-box span {
+  display: block;
+  font-size: 10.5px;
+  color: #059669;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Recent Forum Posts */
+.admin-dashboard-pro .recent-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-dashboard-pro .recent-post-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f1;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-dashboard-pro .recent-post-row:hover {
+  border-color: #bad3c2;
+  background: #fbfdfb;
+}
+
+.admin-dashboard-pro .post-author-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-weight: 700;
+  font-size: 11px;
+  color: #334155;
+  overflow: hidden;
+}
+
+.admin-dashboard-pro .post-author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-dashboard-pro .post-content-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-dashboard-pro .post-author-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-dashboard-pro .post-author-line strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.admin-dashboard-pro .post-author-line time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.admin-dashboard-pro .post-snippet {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.admin-dashboard-pro .post-stats-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.admin-dashboard-pro .post-stats-pill span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1199px) {
+  .admin-dashboard-pro .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-dashboard-pro .dashboard-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-pro {
+    padding: 16px 14px 40px;
+  }
+  .admin-dashboard-pro .dashboard-pro-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .admin-dashboard-pro .dashboard-header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .admin-dashboard-pro .dashboard-header-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+  .admin-dashboard-pro .dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
