@@ -15,7 +15,7 @@ export default function AccountPage({
 }) {
   const { user, updateUser } = useAuth()
   const { favoriteIds } = useFavorites()
-  const { listings, posts, reports } = usePlatform()
+  const { listings } = usePlatform()
   const isAdmin = user?.role === "admin"
   const profilePath = isAdmin ? "/admin/ho-so" : "/tai-khoan/ho-so"
   const passwordPath = isAdmin ? "/admin/doi-mat-khau" : "/tai-khoan/doi-mat-khau"
@@ -24,10 +24,6 @@ export default function AccountPage({
   const currentRental = listings.find(
     (item) => item.status === "rented" && item.currentTenantId === user?.id,
   )
-  const pendingRoomsCount = listings.filter((item) => item.status === "pending").length
-  const pendingPostsCount = posts.filter((item) => item.status === "pending").length
-  const pendingReportsCount = reports.filter((item) => item.status === "pending").length
-  const totalPendingCount = pendingRoomsCount + pendingPostsCount + pendingReportsCount
 
   const [name, setName] = useState(user?.name ?? "")
   const [phone, setPhone] = useState(user?.phone ?? "")
@@ -200,7 +196,6 @@ export default function AccountPage({
     title: string
     detail: string
     icon: string
-    badge?: string
   }> =
     user?.role === "renter"
       ? [
@@ -272,41 +267,7 @@ export default function AccountPage({
               icon: "chat",
             },
           ]
-        : [
-            {
-              to: "/admin",
-              title: "Tổng quan quản trị",
-              detail:
-                totalPendingCount > 0
-                  ? `${totalPendingCount} mục đang chờ xử lý`
-                  : "Không có công việc tồn đọng",
-              icon: "chart",
-              badge: totalPendingCount > 0 ? `${totalPendingCount} chờ duyệt` : undefined,
-            },
-            {
-              to: "/admin/tin-cho-thue",
-              title: "Kiểm duyệt tin cho thuê",
-              detail: `${pendingRoomsCount} chờ duyệt · ${listings.length} tổng tin`,
-              icon: "building",
-              badge: pendingRoomsCount > 0 ? `${pendingRoomsCount}` : undefined,
-            },
-            {
-              to: "/admin/bao-cao",
-              title: "Báo cáo vi phạm",
-              detail:
-                pendingReportsCount > 0
-                  ? `${pendingReportsCount} báo cáo cần xem xét`
-                  : `${reports.length} báo cáo đã ghi nhận`,
-              icon: "shield",
-              badge: pendingReportsCount > 0 ? `${pendingReportsCount}` : undefined,
-            },
-            {
-              to: "/admin/doi-mat-khau",
-              title: "Bảo mật & mật khẩu",
-              detail: "Đổi mật khẩu đăng nhập quản trị",
-              icon: "lock",
-            },
-          ]
+        : []
 
   const RootTag = isAdmin ? "div" : "main"
 
@@ -386,16 +347,7 @@ export default function AccountPage({
               <Icon name="camera" size={14} /> Đổi ảnh đại diện
             </button>
 
-            {isAdmin ? (
-              <Link
-                to="/admin"
-                className="account-view-profile-link account-view-profile-link--secondary"
-                title="Quay về bảng điều khiển tổng quan hệ thống"
-              >
-                <Icon name="chart" size={15} />
-                <span>Về tổng quan hệ thống</span>
-              </Link>
-            ) : (
+            {!isAdmin && (
               <Link
                 to="/trang-ca-nhan"
                 className="account-view-profile-link account-view-profile-link--secondary"
@@ -594,15 +546,11 @@ export default function AccountPage({
             </div>
           </form>
 
-          {!passwordMode && (
+          {!passwordMode && !isAdmin && shortcuts.length > 0 && (
             <section className="account-shortcuts">
               <div className="account-shortcuts-head">
-                <h3>{isAdmin ? "Tình trạng vận hành & lối tắt nhanh" : "Lối tắt theo vai trò"}</h3>
-                <p>
-                  {isAdmin
-                    ? "Theo dõi nhanh các đầu việc đang chờ xử lý trên hệ thống."
-                    : "Truy cập nhanh các tính năng thường dùng theo tài khoản của bạn."}
-                </p>
+                <h3>Lối tắt theo vai trò</h3>
+                <p>Truy cập nhanh các tính năng thường dùng theo tài khoản của bạn.</p>
               </div>
               <div className="account-shortcuts-grid">
                 {shortcuts.map((item) => (
@@ -611,12 +559,7 @@ export default function AccountPage({
                       <Icon name={item.icon} />
                     </span>
                     <span className="favorites-shortcut-copy">
-                      <strong>
-                        {item.title}
-                        {item.badge && (
-                          <em className="account-shortcut-badge">{item.badge}</em>
-                        )}
-                      </strong>
+                      <strong>{item.title}</strong>
                       <small>{item.detail}</small>
                     </span>
                     <Icon name="chevron" />
