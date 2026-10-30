@@ -158,6 +158,12 @@ export function Icon({
       </>
     ),
     down: <path d="m6 9 6 6 6-6" />,
+    lock: (
+      <>
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </>
+    ),
     check: <path d="m5 12 4 4L19 6" />,
     close: <path d="m18 6-12 12M6 6l12 12" />,
     camera: (

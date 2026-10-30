@@ -161,6 +161,133 @@ input, textarea { caret-color: var(--teal-dark); }
 .admin-shell .admin-main > header h1 { font-size: 19px; }
 .admin-shell .admin-main > header p { font-size: 12px; color: var(--muted); }
 .admin-shell .admin-content { padding: 32px; }
+.admin-shell .admin-topbar { gap: 10px; }
+.admin-shell .admin-home-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #d5e3d8;
+  background: #f7faf8;
+  color: #245f3b;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+.admin-shell .admin-home-btn:hover {
+  background: #edf5ee;
+  border-color: #9fbea4;
+  color: #1b4d2e;
+}
+.admin-shell .admin-notif-btn {
+  position: relative;
+  border-radius: 999px;
+  border: 1px solid #d5e3d8;
+  color: #344b3a;
+  transition: all 150ms ease;
+}
+.admin-shell .admin-notif-btn:hover,
+.admin-shell .admin-notif-btn.is-active {
+  background: #edf5ee;
+  border-color: #245f3b;
+  color: #245f3b;
+}
+.admin-shell .admin-notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  background: #dc5b50;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+.admin-shell .admin-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  border: 1px solid #dfe7e1;
+  background: #fff;
+  color: #26382e;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+.admin-shell .admin-user-pill:hover {
+  background: #f4f8f4;
+  border-color: #b7d0bc;
+}
+.admin-shell .admin-user-pill.is-active {
+  background: #edf5ee;
+  border-color: #2f7a4b;
+  box-shadow: 0 0 0 2px rgba(47, 122, 75, 0.14);
+}
+.admin-shell .admin-user-pill .avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+.admin-shell .admin-user-pill-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  text-align: left;
+}
+.admin-shell .admin-user-pill-info strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f3325;
+  white-space: nowrap;
+}
+.admin-shell .admin-user-pill-info small {
+  font-size: 11px;
+  color: #617469;
+  white-space: nowrap;
+}
+.admin-shell .admin-logout {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid #ead5d4;
+  background: #fff;
+  color: #a0413c;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+.admin-shell .admin-logout:hover {
+  background: #fff4f3;
+  border-color: #dcaba8;
+  color: #872f2b;
+}
+@media (max-width: 960px) {
+  .admin-shell .admin-user-pill-info,
+  .admin-shell .admin-home-btn span {
+    display: none;
+  }
+  .admin-shell .admin-user-pill {
+    padding: 3px;
+  }
+  .admin-shell .admin-home-btn {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+}
 .site-footer { background: #193e2d; }
 .site-footer .footer-brand p, .site-footer .footer-links a { color: #d6e3d9; }
 .notification-popover { max-height: min(640px, calc(100dvh - 104px)); border-radius: 16px; box-shadow: var(--ui-elevation); border: none; }

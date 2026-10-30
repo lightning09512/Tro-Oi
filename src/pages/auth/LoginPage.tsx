@@ -51,6 +51,37 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
   },
 ]
 
+function resolvePostLoginPath(role: UserRole, requested?: string): string {
+  if (role === "admin") {
+    if (
+      requested &&
+      requested.startsWith("/admin") &&
+      requested !== "/admin/ho-so" &&
+      requested !== "/admin/doi-mat-khau" &&
+      requested !== "/admin/dang-nhap"
+    ) {
+      return requested
+    }
+    return "/admin"
+  }
+  if (requested) {
+    if (requested.startsWith("/admin")) {
+      return role === "landlord" ? "/chu-tro/thong-ke" : "/"
+    }
+    if (role === "renter" && requested.startsWith("/chu-tro")) {
+      return "/"
+    }
+    if (
+      requested !== "/tai-khoan/ho-so" &&
+      requested !== "/tai-khoan/doi-mat-khau" &&
+      requested !== "/dang-nhap"
+    ) {
+      return requested
+    }
+  }
+  return role === "landlord" ? "/chu-tro/thong-ke" : "/"
+}
+
 export default function LoginPage({ admin = false }: { admin?: boolean }) {
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
@@ -93,15 +124,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
         role: admin ? "admin" : undefined,
       })
       const requested = (location.state as { from?: string } | null)?.from
-      navigate(
-        requested ??
-          (user.role === "admin"
-            ? "/admin"
-            : user.role === "landlord"
-              ? "/chu-tro/thong-ke"
-              : "/"),
-        { replace: true },
-      )
+      navigate(resolvePostLoginPath(user.role, requested), { replace: true })
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể đăng nhập. Vui lòng thử lại.")
     } finally {

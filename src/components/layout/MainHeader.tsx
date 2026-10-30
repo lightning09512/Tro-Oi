@@ -98,7 +98,7 @@ export default function MainHeader() {
     if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi tài khoản này?")) return
     logout()
     setAvatarOpen(false)
-    navigate("/dang-nhap")
+    navigate("/dang-nhap", { replace: true, state: null })
   }
 
   const actionClass = "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-[#dfe7e0] bg-white px-4 text-[14px] font-semibold text-[#344b3a] transition-colors hover:border-[#bfd4c2] hover:bg-[#f4f8f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#34794a]"
