@@ -783,35 +783,35 @@
 .home-partner-cta-card {
   background: #ffffff;
   border-radius: 16px;
-  border: 1px solid #dfe7e1;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
-  padding: 24px 32px 26px;
+  border: 1px solid #fed7aa;
+  box-shadow: 0 4px 20px -2px rgba(227, 104, 37, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  padding: 22px 32px 22px;
   margin-top: 18px;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .home-partner-cta-card:hover {
-  border-color: #cbdcd0;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.08);
+  border-color: #fdba74;
+  box-shadow: 0 8px 26px rgba(227, 104, 37, 0.12);
 }
 
 .home-partner-cta-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .home-partner-cta-title {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 700;
-  color: #0f172a;
+  color: #111827;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   letter-spacing: -0.2px;
 }
 
 .home-partner-cta-highlight {
-  color: #e36825;
+  color: #ff5722;
 }
 
 .partner-verified-shield {
@@ -824,108 +824,108 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .home-partner-benefit-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .home-partner-benefit-icon-wrap {
-  width: 68px;
-  height: 68px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: #fff3e8;
+  background: #fff2e7;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #ffe2cf;
+  box-shadow: inset 0 0 0 1px rgba(255, 112, 33, 0.08);
 }
 
 .home-partner-badge-pill {
-  background: #e36825;
+  background: #ff5722;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 3.5px 7px;
+  border-radius: 4.5px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   letter-spacing: 0.2px;
-  box-shadow: 0 2px 6px rgba(227, 104, 37, 0.25);
+  box-shadow: 0 1px 3px rgba(255, 87, 34, 0.35);
+  line-height: 1.2;
 }
 
 .home-partner-benefit-content h4 {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: #111827;
   margin: 0 0 4px 0;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
 }
 
 .home-partner-benefit-content p {
   font-size: 13px;
-  color: #64748b;
+  color: #6b7280;
   margin: 0;
   line-height: 1.4;
+  white-space: nowrap;
 }
 
 .home-partner-cta-btn-wrap {
   text-align: center;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .home-partner-learn-btn {
   background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #1e293b;
-  font-size: 14px;
+  border: 1px solid #d1d5db;
+  color: #1f2937;
+  font-size: 13.5px;
   font-weight: 600;
-  padding: 8px 32px;
+  padding: 7px 28px;
   border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .home-partner-learn-btn:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 /* Listings Banner Bar */
 .home-partner-listings-banner {
-  background: #fff6ee;
+  background: #fff8f1;
   border: 1px solid #fed7aa;
-  border-radius: 14px;
-  padding: 14px 22px;
-  margin: 18px 0 22px;
+  border-radius: 12px;
+  padding: 10px 18px;
+  margin: 14px 0 18px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 }
 
 .home-partner-listings-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
+  gap: 6px;
+  font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: #1f2937;
   margin: 0;
-}
-
-.home-partner-listings-title strong {
-  color: #e36825;
 }
 
 .home-partner-info-btn {
@@ -936,34 +936,36 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   transition: color 0.15s ease;
 }
 
 .home-partner-info-btn:hover {
-  color: #e36825;
+  color: #ff5722;
 }
 
 .home-partner-verified-tags {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .home-partner-verified-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
+  gap: 7px;
+  font-size: 13px;
   font-weight: 500;
-  color: #334155;
+  color: #374151;
+  white-space: nowrap;
 }
 
 .home-partner-check-dot {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
-  background: #e36825;
+  background: #ff5722;
   display: inline-flex;
   align-items: center;
   justify-content: center;

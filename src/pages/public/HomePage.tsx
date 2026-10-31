@@ -598,22 +598,38 @@ function Home() {
           <div className="home-partner-cta-header">
             <h2 className="home-partner-cta-title">
               <span>Trở thành <strong className="home-partner-cta-highlight">Đối tác Trọ Ơi</strong></span>
-              <svg className="partner-verified-shield" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-label="Xác thực Đối tác">
-                <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z" fill="#e36825"/>
-                <path d="M9.5 12l2 2 4.5-4.5" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg className="partner-verified-shield" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Xác thực Đối tác">
+                <path d="M12 2L4 5.5v6c0 5 3.4 9.7 8 10.5 4.6-.8 8-5.5 8-10.5v-6L12 2z" fill="#ff5722"/>
+                <path d="M9 12l2 2 4-4" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </h2>
           </div>
 
           <div className="home-partner-benefits-grid">
+            {/* 1. Nhãn Đối Tác */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <div className="home-partner-badge-pill">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
-                  </svg>
-                  <span>Đối Tác</span>
-                </div>
+                <svg width="58" height="58" viewBox="0 0 58 58" fill="none" aria-hidden="true">
+                  <rect x="6.5" y="17.5" width="45" height="23" rx="5" fill="#ff5722" />
+                  <g transform="translate(10.5, 21.5)">
+                    <path
+                      d="M4.5 1.5C2.8 1.5 1.5 2.8 1.5 4.5C1.5 7 4.5 11 4.5 11C4.5 11 7.5 7 7.5 4.5C7.5 2.8 6.2 1.5 4.5 1.5Z"
+                      fill="#ffffff"
+                    />
+                    <circle cx="4.5" cy="4.5" r="1.4" fill="#ff5722" />
+                  </g>
+                  <text
+                    x="21"
+                    y="33"
+                    fill="#ffffff"
+                    fontSize="9.5"
+                    fontWeight="700"
+                    fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                    letterSpacing="0.2"
+                  >
+                    Đối Tác
+                  </text>
+                </svg>
               </div>
               <div className="home-partner-benefit-content">
                 <h4>Nhãn Đối Tác</h4>
@@ -621,12 +637,27 @@ function Home() {
               </div>
             </div>
 
+            {/* 2. Tin đăng tiếp cận */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e36825" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 3v18h18" />
-                  <path d="M18.5 8.5L13.5 13.5L9.5 9.5L3.5 15.5" />
-                  <polyline points="14 8.5 18.5 8.5 18.5 13" />
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                  <rect x="5" y="18" width="5.5" height="10" rx="1.8" fill="#ff7a29" />
+                  <rect x="13.5" y="13" width="5.5" height="15" rx="1.8" fill="#ff6e1a" />
+                  <rect x="22" y="7" width="5.5" height="21" rx="1.8" fill="#ff5722" />
+                  <path
+                    d="M5 14L13 7.5L19 10.5L27 3"
+                    stroke="#ff5722"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M22 3H27V8"
+                    stroke="#ff5722"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </div>
               <div className="home-partner-benefit-content">
@@ -635,18 +666,21 @@ function Home() {
               </div>
             </div>
 
+            {/* 3. Tài Khoản Doanh Nghiệp */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e36825" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="3" y="4" width="11" height="17" rx="1.5" />
-                  <line x1="7" y1="8" x2="7.01" y2="8" strokeWidth="2.5" />
-                  <line x1="10" y1="8" x2="10.01" y2="8" strokeWidth="2.5" />
-                  <line x1="7" y1="12" x2="7.01" y2="12" strokeWidth="2.5" />
-                  <line x1="10" y1="12" x2="10.01" y2="12" strokeWidth="2.5" />
-                  <line x1="7" y1="16" x2="7.01" y2="16" strokeWidth="2.5" />
-                  <line x1="10" y1="16" x2="10.01" y2="16" strokeWidth="2.5" />
-                  <circle cx="18" cy="12" r="3" />
-                  <path d="M14.5 19a4 4 0 0 1 7 0" />
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+                  <rect x="4" y="5" width="16" height="22" rx="2.5" fill="#ff6e1a" />
+                  <circle cx="8.5" cy="10" r="1.3" fill="#ffffff" />
+                  <circle cx="15.5" cy="10" r="1.3" fill="#ffffff" />
+                  <circle cx="8.5" cy="15" r="1.3" fill="#ffffff" />
+                  <circle cx="15.5" cy="15" r="1.3" fill="#ffffff" />
+                  <circle cx="8.5" cy="20" r="1.3" fill="#ffffff" />
+                  <circle cx="15.5" cy="20" r="1.3" fill="#ffffff" />
+                  <circle cx="23" cy="21" r="6.5" fill="#ffffff" />
+                  <circle cx="23" cy="21" r="5.5" fill="#ff5722" />
+                  <circle cx="23" cy="19.2" r="1.8" fill="#ffffff" />
+                  <path d="M19.8 24.5c.3-1.6 1.7-2.3 3.2-2.3s2.9.7 3.2 2.3" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
                 </svg>
               </div>
               <div className="home-partner-benefit-content">
@@ -670,10 +704,15 @@ function Home() {
 
       <section className="home-browse-section" id="home-room-list">
         <div className="container quick-section">
-          {/* Tin đăng từ Đối Tác Trọ Ơi Banner Bar */}
+          <nav className="chips" aria-label="Tìm theo loại phòng">{roomTypes.map((item, i) => <button key={item} className="chip" onClick={() => navigate(buildSearchUrl(item))}>
+            <Icon name={["building", "home", "users", "building", "home"][i] ?? "building"} size={18}/>{item}<small className="chip-count">{roomTypeCounts.get(item) ?? 0}</small>
+          </button>)}</nav>
+          <SectionTitle title="Tìm nơi ở phù hợp với bạn" action="Xem tất cả phòng" onAction={() => navigate("/tim-phong")}/>
+
+          {/* Tin đăng từ Đối Tác Trọ Ơi Banner Bar (Placing directly above room cards) */}
           <div className="home-partner-listings-banner">
             <h3 className="home-partner-listings-title">
-              <span>Tin đăng từ <strong>Đối Tác Trọ Ơi</strong></span>
+              <span>Tin đăng từ Đối Tác Trọ Ơi</span>
               <button
                 type="button"
                 className="home-partner-info-btn"
@@ -681,13 +720,13 @@ function Home() {
                 title="Thông tin chương trình đối tác"
                 onClick={() => setPartnerModalOpen(true)}
               >
-                <Icon name="info" size={17} />
+                <Icon name="info" size={16} />
               </button>
             </h3>
             <div className="home-partner-verified-tags">
               <div className="home-partner-verified-tag">
                 <span className="home-partner-check-dot" aria-hidden="true">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </span>
@@ -695,7 +734,7 @@ function Home() {
               </div>
               <div className="home-partner-verified-tag">
                 <span className="home-partner-check-dot" aria-hidden="true">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </span>
@@ -703,11 +742,6 @@ function Home() {
               </div>
             </div>
           </div>
-
-          <nav className="chips" aria-label="Tìm theo loại phòng">{roomTypes.map((item, i) => <button key={item} className="chip" onClick={() => navigate(buildSearchUrl(item))}>
-            <Icon name={["building", "home", "users", "building", "home"][i] ?? "building"} size={18}/>{item}<small className="chip-count">{roomTypeCounts.get(item) ?? 0}</small>
-          </button>)}</nav>
-          <SectionTitle title="Tìm nơi ở phù hợp với bạn" action="Xem tất cả phòng" onAction={() => navigate("/tim-phong")}/>
           {connectionState === "loading" && !availableRooms.length ? <RoomCardSkeletonGrid count={8}/> : availableRooms.length ? <div className="room-grid">{availableRooms.slice(0, 8).map((room) => <RoomCard key={room.id} room={room} onClick={() => navigate(`/phong/${room.id}`)}/>)}</div> : <div className="public-empty-state"><Icon name="building" size={28}/><h3>{connectionState === "error" ? "Chưa tải được danh sách phòng" : "Chưa có phòng đang hiển thị"}</h3><p>{connectionState === "error" ? "Kiểm tra kết nối và thử tải lại trang để xem các tin mới nhất." : "Bạn có thể quay lại sau hoặc tham gia diễn đàn để chia sẻ nhu cầu tìm phòng."}</p><Button variant="outline" onClick={() => connectionState === "error" ? window.location.reload() : navigate("/dien-dan")}>{connectionState === "error" ? "Tải lại trang" : "Vào diễn đàn"}</Button></div>}
         </div>
       </section>
