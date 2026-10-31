@@ -609,27 +609,13 @@ function Home() {
             {/* 1. Nhãn Đối Tác */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <svg width="58" height="58" viewBox="0 0 58 58" fill="none" aria-hidden="true">
-                  <rect x="6.5" y="17.5" width="45" height="23" rx="5" fill="#ff5722" />
-                  <g transform="translate(10.5, 21.5)">
-                    <path
-                      d="M4.5 1.5C2.8 1.5 1.5 2.8 1.5 4.5C1.5 7 4.5 11 4.5 11C4.5 11 7.5 7 7.5 4.5C7.5 2.8 6.2 1.5 4.5 1.5Z"
-                      fill="#ffffff"
-                    />
-                    <circle cx="4.5" cy="4.5" r="1.4" fill="#ff5722" />
-                  </g>
-                  <text
-                    x="21"
-                    y="33"
-                    fill="#ffffff"
-                    fontSize="9.5"
-                    fontWeight="700"
-                    fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                    letterSpacing="0.2"
-                  >
-                    Đối Tác
-                  </text>
-                </svg>
+                <div className="home-partner-badge-pill">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+                    <path d="M12 2L4 5.5v6c0 5 3.4 9.7 8 10.5 4.6-.8 8-5.5 8-10.5v-6L12 2z" fill="#ffffff" />
+                    <path d="M9 12l2 2 4-4" stroke="#ff5722" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>Đối Tác</span>
+                </div>
               </div>
               <div className="home-partner-benefit-content">
                 <h4>Nhãn Đối Tác</h4>
@@ -640,24 +626,24 @@ function Home() {
             {/* 2. Tin đăng tiếp cận */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                  <rect x="5" y="18" width="5.5" height="10" rx="1.8" fill="#ff7a29" />
-                  <rect x="13.5" y="13" width="5.5" height="15" rx="1.8" fill="#ff6e1a" />
-                  <rect x="22" y="7" width="5.5" height="21" rx="1.8" fill="#ff5722" />
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
                   <path
-                    d="M5 14L13 7.5L19 10.5L27 3"
-                    stroke="#ff5722"
-                    strokeWidth="2.5"
+                    d="M6 16L13.5 9.5L19.5 12.5L28 4.5"
+                    stroke="#ffa173"
+                    strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
-                    d="M22 3H27V8"
-                    stroke="#ff5722"
-                    strokeWidth="2.5"
+                    d="M22 4.5H28V10.5"
+                    stroke="#ffa173"
+                    strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
+                  <rect x="5.5" y="19" width="6" height="11" rx="2.5" fill="#ff6e1a" />
+                  <rect x="14" y="13.5" width="6" height="16.5" rx="2.5" fill="#ff6e1a" />
+                  <rect x="22.5" y="8" width="6" height="22" rx="2.5" fill="#ff6e1a" />
                 </svg>
               </div>
               <div className="home-partner-benefit-content">
@@ -669,18 +655,19 @@ function Home() {
             {/* 3. Tài Khoản Doanh Nghiệp */}
             <div className="home-partner-benefit-item">
               <div className="home-partner-benefit-icon-wrap">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                  <rect x="4" y="5" width="16" height="22" rx="2.5" fill="#ff6e1a" />
-                  <circle cx="8.5" cy="10" r="1.3" fill="#ffffff" />
-                  <circle cx="15.5" cy="10" r="1.3" fill="#ffffff" />
-                  <circle cx="8.5" cy="15" r="1.3" fill="#ffffff" />
-                  <circle cx="15.5" cy="15" r="1.3" fill="#ffffff" />
-                  <circle cx="8.5" cy="20" r="1.3" fill="#ffffff" />
-                  <circle cx="15.5" cy="20" r="1.3" fill="#ffffff" />
-                  <circle cx="23" cy="21" r="6.5" fill="#ffffff" />
-                  <circle cx="23" cy="21" r="5.5" fill="#ff5722" />
-                  <circle cx="23" cy="19.2" r="1.8" fill="#ffffff" />
-                  <path d="M19.8 24.5c.3-1.6 1.7-2.3 3.2-2.3s2.9.7 3.2 2.3" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                  <rect x="5" y="6" width="16" height="23" rx="3" fill="#ff6e1a" />
+                  <rect x="8.5" y="9.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="14" y="9.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="8.5" y="14" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="14" y="14" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="8.5" y="18.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="14" y="18.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
+                  <rect x="10.5" y="24" width="5" height="5" rx="1" fill="#ffffff" />
+                  <circle cx="24.5" cy="22.5" r="7.5" fill="#ffffff" />
+                  <circle cx="24.5" cy="22.5" r="6.2" fill="#ff6e1a" />
+                  <circle cx="24.5" cy="20.5" r="2" fill="#ffffff" />
+                  <path d="M20.8 26c.4-1.8 1.9-2.5 3.7-2.5s3.3.7 3.7 2.5" stroke="#ffffff" strokeWidth="1.3" strokeLinecap="round" fill="none" />
                 </svg>
               </div>
               <div className="home-partner-benefit-content">
