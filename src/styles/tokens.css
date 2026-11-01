@@ -1,0 +1,261 @@
+/* ============================================================
+   TRỌ ƠI DESIGN TOKENS (PRODUCTION DESIGN SYSTEM)
+   Extracted from Tasteskill v2 & UI/UX Pro Max Intelligence
+   ============================================================ */
+
+:root {
+  /* Brand Primary Colors */
+  --brand-50: #f0fdf4;
+  --brand-100: #eaf4ec;
+  --brand-200: #c6e7cf;
+  --brand-300: #93d2a5;
+  --brand-500: #2f7a4b;
+  --brand-600: #245f3b;
+  --brand-700: #1b492d;
+  --brand-800: #153a24;
+  --brand-900: #112d1c;
+
+  /* Warm Accent Colors (Proptech Action Orange) */
+  --accent-50: #fff8f1;
+  --accent-100: #fff2e7;
+  --accent-200: #fed7aa;
+  --accent-300: #fdba74;
+  --accent-400: #fb923c;
+  --accent-500: #ff5722;
+  --accent-600: #ea580c;
+  --accent-700: #c2410c;
+
+  /* Semantic State Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Surface & Canvas Grounds */
+  --surface-base: #ffffff;
+  --surface-canvas: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --surface-subtle: #f8fbf9;
+
+  /* Typography Colors */
+  --ink-primary: #111827;
+  --ink-secondary: #334155;
+  --ink-muted: #64748b;
+  --ink-subtle: #94a3b8;
+  --ink-inverted: #ffffff;
+
+  /* Border & Dividers */
+  --border-subtle: #f1f5f9;
+  --border-base: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-brand: #c6e7cf;
+  --border-accent: #fed7aa;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-pill: 9999px;
+
+  /* Intentional Elevation & Shadows (Never used on resting flat surfaces) */
+  --shadow-flat: none;
+  --shadow-hover: 0 4px 14px -2px rgba(15, 23, 42, 0.08);
+  --shadow-floating: 0 10px 25px -4px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+
+  /* Touch Target Minimum (Apple HIG & Material 3) */
+  --touch-target-min: 44px;
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+}
+
+/* Reduced Motion Override (A11y Priority) */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   UI PRIMITIVES STYLES (ATOMIC COMPONENTS)
+   ============================================================ */
+
+/* UI Input Component */
+.ui-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.ui-input-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-primary);
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-input-required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.ui-input-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-md);
+  background: var(--surface-base);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  min-height: var(--touch-target-min);
+  padding: 0 12px;
+}
+
+.ui-input-box:focus-within {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px rgba(47, 122, 75, 0.15);
+}
+
+.ui-input-box.has-error {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.ui-input-field {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--ink-primary);
+  outline: none;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.ui-input-field::placeholder {
+  color: var(--ink-subtle);
+}
+
+.ui-input-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+}
+
+.ui-input-icon.left {
+  margin-right: 8px;
+}
+
+.ui-input-icon.right {
+  margin-left: 8px;
+}
+
+.ui-input-message {
+  font-size: 12.5px;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.ui-input-message.error {
+  color: var(--color-danger);
+}
+
+.ui-input-message.helper {
+  color: var(--ink-muted);
+}
+
+/* UI Skeleton Loader (Zero CLS) */
+.ui-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 25%,
+    #e2e8f0 50%,
+    var(--surface-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: ui-skeleton-pulse 1.6s ease-in-out infinite;
+  display: block;
+}
+
+@keyframes ui-skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* UI Tabs Component */
+.ui-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ui-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-tabs-pills {
+  padding: 4px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-pill);
+}
+
+.ui-tabs-pills .ui-tab-btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  transition: all var(--duration-fast) ease;
+  white-space: nowrap;
+}
+
+.ui-tabs-pills .ui-tab-btn:hover {
+  color: var(--ink-primary);
+}
+
+.ui-tabs-pills .ui-tab-btn.is-active {
+  background: var(--surface-base);
+  color: var(--brand-600);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.ui-tab-count {
+  font-size: 11.5px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--border-base);
+  color: var(--ink-secondary);
+}
+
+.ui-tab-count.is-active {
+  background: var(--brand-100);
+  color: var(--brand-600);
+}

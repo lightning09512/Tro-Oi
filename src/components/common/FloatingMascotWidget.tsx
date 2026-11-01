@@ -5,14 +5,14 @@ import BrandMark from "@/components/common/BrandMark"
 
 export default function FloatingMascotWidget() {
   const navigate = useNavigate()
-  const [isDismissed, setIsDismissed] = useState(false)
+  const [isDismissed, setIsDismissed] = useState(true)
   const [showAppModal, setShowAppModal] = useState(false)
 
   return (
     <>
       {/* Floating Sticker & Comic Callout Widget */}
       <aside
-        className="fixed bottom-20 right-3.5 z-40 flex flex-col items-end pointer-events-none select-none sm:bottom-24 sm:right-6"
+        className="fixed bottom-6 right-4 z-40 flex flex-col items-end pointer-events-none select-none sm:bottom-8 sm:right-6"
         aria-label="Khuyến mãi & Chia sẻ cộng đồng"
       >
         <div className="pointer-events-auto flex flex-col items-end">
@@ -20,25 +20,25 @@ export default function FloatingMascotWidget() {
           <button
             type="button"
             onClick={() => setShowAppModal(true)}
-            className="group relative cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-108 active:scale-95 focus:outline-none"
+            className="group relative cursor-pointer border-0 bg-transparent p-0 transition-transform duration-300 hover:scale-105 active:scale-95 focus:outline-none"
             title="Tải app Trọ Ơi nhận quà"
             aria-label="Tải app Trọ Ơi nhận quà"
           >
             <img
               src="/images/banners/mascot-app-floating-sticker.jpg"
               alt="Tải app Trọ Ơi nhận quà"
-              className="size-20 sm:size-24 rounded-2xl object-contain drop-shadow-xl"
+              className="size-13 sm:size-14 rounded-2xl object-contain drop-shadow-lg"
             />
             {/* Pulsing indicator ring */}
-            <span className="absolute -top-1 -right-1 flex size-3.5">
+            <span className="absolute -top-1 -right-1 flex size-3">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#e36825] opacity-75" />
-              <span className="relative inline-flex size-3.5 rounded-full bg-[#e36825]" />
+              <span className="relative inline-flex size-3 rounded-full bg-[#e36825]" />
             </span>
           </button>
 
           {/* 2. Comic Speech Bubble Callout (Nhà Tốt Style) */}
-          {!isDismissed ? (
-            <div className="relative -mt-1 w-48 sm:w-54 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {!isDismissed && (
+            <div className="relative mt-2 w-48 sm:w-52 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Close (X) button */}
               <button
                 type="button"
@@ -61,32 +61,19 @@ export default function FloatingMascotWidget() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") navigate("/dien-dan")
                 }}
-                className="group relative cursor-pointer rounded-2xl border-[2.5px] border-[#1e293b] bg-[#fbb034] p-2.5 shadow-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-orange-500/20 active:translate-y-0"
+                className="group relative cursor-pointer rounded-2xl border-[2px] border-[#1e293b] bg-[#fbb034] p-2.5 shadow-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <h4 className="text-center text-[12px] font-black uppercase tracking-tight text-[#1e293b] leading-tight mb-2">
+                <h4 className="text-center text-[11px] font-black uppercase tracking-tight text-[#1e293b] leading-tight mb-1.5">
                   RẢNH KHU NÀO?<br />CHIA SẺ LIỀN TAY!
                 </h4>
 
-                <div className="rounded-xl border-2 border-[#1e293b] bg-white px-2.5 py-1.5 text-center shadow-inner transition-colors group-hover:bg-[#fffdfa]">
-                  <p className="text-[11.5px] font-bold text-[#1e293b] leading-tight m-0">
+                <div className="rounded-xl border border-[#1e293b] bg-white px-2 py-1 text-center shadow-inner transition-colors group-hover:bg-[#fffdfa]">
+                  <p className="text-[11px] font-bold text-[#1e293b] leading-tight m-0">
                     Để lại <span className="text-[#ea580c]">review</span><br />khu bạn biết nhé!
                   </p>
                 </div>
-
-                {/* Speech bubble comic tail */}
-                <div className="absolute -bottom-2 right-8 size-3.5 rotate-45 border-b-[2.5px] border-r-[2.5px] border-[#1e293b] bg-[#fbb034]" />
               </div>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsDismissed(false)}
-              className="mt-1 inline-flex items-center gap-1 rounded-full border border-[#dfe7e1] bg-white/95 px-2.5 py-1 text-[10.5px] font-bold text-[#ea580c] shadow-md backdrop-blur-sm transition hover:scale-105"
-              title="Mở lại gợi ý review"
-            >
-              <span>Viết review</span>
-              <Icon name="chevron" size={12} />
-            </button>
           )}
         </div>
       </aside>

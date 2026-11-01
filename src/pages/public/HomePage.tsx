@@ -1,3 +1,4 @@
+import { PartnerCard, PartnerBanner, PartnerModal } from "@/components/domain/partner"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { Link } from "react-router"
@@ -594,99 +595,7 @@ function Home() {
         </div>
 
         {/* Trở thành Đối tác Trọ Ơi (Nhà Tốt Style) CTA Card */}
-        <div className="home-partner-cta-card">
-          <div className="home-partner-cta-header">
-            <h2 className="home-partner-cta-title">
-              <span>Trở thành <strong className="home-partner-cta-highlight">Đối tác Trọ Ơi</strong></span>
-              <svg className="partner-verified-shield" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Xác thực Đối tác">
-                <path d="M12 2L4 5.5v6c0 5 3.4 9.7 8 10.5 4.6-.8 8-5.5 8-10.5v-6L12 2z" fill="#ff5722"/>
-                <path d="M9 12l2 2 4-4" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </h2>
-          </div>
-
-          <div className="home-partner-benefits-grid">
-            {/* 1. Nhãn Đối Tác */}
-            <div className="home-partner-benefit-item">
-              <div className="home-partner-benefit-icon-wrap">
-                <div className="home-partner-badge-pill">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-                    <path d="M12 2L4 5.5v6c0 5 3.4 9.7 8 10.5 4.6-.8 8-5.5 8-10.5v-6L12 2z" fill="#ffffff" />
-                    <path d="M9 12l2 2 4-4" stroke="#ff5722" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>Đối Tác</span>
-                </div>
-              </div>
-              <div className="home-partner-benefit-content">
-                <h4>Nhãn Đối Tác</h4>
-                <p>Tăng 40% hiệu quả tin đăng</p>
-              </div>
-            </div>
-
-            {/* 2. Tin đăng tiếp cận */}
-            <div className="home-partner-benefit-item">
-              <div className="home-partner-benefit-icon-wrap">
-                <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-                  <path
-                    d="M6 16L13.5 9.5L19.5 12.5L28 4.5"
-                    stroke="#ffa173"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M22 4.5H28V10.5"
-                    stroke="#ffa173"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <rect x="5.5" y="19" width="6" height="11" rx="2.5" fill="#ff6e1a" />
-                  <rect x="14" y="13.5" width="6" height="16.5" rx="2.5" fill="#ff6e1a" />
-                  <rect x="22.5" y="8" width="6" height="22" rx="2.5" fill="#ff6e1a" />
-                </svg>
-              </div>
-              <div className="home-partner-benefit-content">
-                <h4>Tin đăng tiếp cận</h4>
-                <p>Hơn 40 triệu người mua tiềm năng</p>
-              </div>
-            </div>
-
-            {/* 3. Tài Khoản Doanh Nghiệp */}
-            <div className="home-partner-benefit-item">
-              <div className="home-partner-benefit-icon-wrap">
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-                  <rect x="5" y="6" width="16" height="23" rx="3" fill="#ff6e1a" />
-                  <rect x="8.5" y="9.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="14" y="9.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="8.5" y="14" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="14" y="14" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="8.5" y="18.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="14" y="18.5" width="3.5" height="2.5" rx="1" fill="#ffffff" />
-                  <rect x="10.5" y="24" width="5" height="5" rx="1" fill="#ffffff" />
-                  <circle cx="24.5" cy="22.5" r="7.5" fill="#ffffff" />
-                  <circle cx="24.5" cy="22.5" r="6.2" fill="#ff6e1a" />
-                  <circle cx="24.5" cy="20.5" r="2" fill="#ffffff" />
-                  <path d="M20.8 26c.4-1.8 1.9-2.5 3.7-2.5s3.3.7 3.7 2.5" stroke="#ffffff" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                </svg>
-              </div>
-              <div className="home-partner-benefit-content">
-                <h4>Tài Khoản Doanh Nghiệp</h4>
-                <p>Giúp tăng hiệu quả quản lý</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="home-partner-cta-btn-wrap">
-            <button
-              type="button"
-              className="home-partner-learn-btn"
-              onClick={() => setPartnerModalOpen(true)}
-            >
-              Tìm hiểu chương trình
-            </button>
-          </div>
-        </div>
+        <PartnerCard onOpenModal={() => setPartnerModalOpen(true)} />
       </section>
 
       <section className="home-browse-section" id="home-room-list">
@@ -696,39 +605,8 @@ function Home() {
           </button>)}</nav>
           <SectionTitle title="Tìm nơi ở phù hợp với bạn" action="Xem tất cả phòng" onAction={() => navigate("/tim-phong")}/>
 
-          {/* Tin đăng từ Đối Tác Trọ Ơi Banner Bar (Placing directly above room cards) */}
-          <div className="home-partner-listings-banner">
-            <h3 className="home-partner-listings-title">
-              <span>Tin đăng từ Đối Tác Trọ Ơi</span>
-              <button
-                type="button"
-                className="home-partner-info-btn"
-                aria-label="Thông tin đối tác"
-                title="Thông tin chương trình đối tác"
-                onClick={() => setPartnerModalOpen(true)}
-              >
-                <Icon name="info" size={16} />
-              </button>
-            </h3>
-            <div className="home-partner-verified-tags">
-              <div className="home-partner-verified-tag">
-                <span className="home-partner-check-dot" aria-hidden="true">
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </span>
-                <span>Thông tin BĐS chính xác</span>
-              </div>
-              <div className="home-partner-verified-tag">
-                <span className="home-partner-check-dot" aria-hidden="true">
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </span>
-                <span>Môi giới được xác minh</span>
-              </div>
-            </div>
-          </div>
+          {/* Tin đăng từ Đối Tác Trọ Ơi Banner Bar */}
+          <PartnerBanner onOpenModal={() => setPartnerModalOpen(true)} />
           {connectionState === "loading" && !availableRooms.length ? <RoomCardSkeletonGrid count={8}/> : availableRooms.length ? <div className="room-grid">{availableRooms.slice(0, 8).map((room) => <RoomCard key={room.id} room={room} onClick={() => navigate(`/phong/${room.id}`)}/>)}</div> : <div className="public-empty-state"><Icon name="building" size={28}/><h3>{connectionState === "error" ? "Chưa tải được danh sách phòng" : "Chưa có phòng đang hiển thị"}</h3><p>{connectionState === "error" ? "Kiểm tra kết nối và thử tải lại trang để xem các tin mới nhất." : "Bạn có thể quay lại sau hoặc tham gia diễn đàn để chia sẻ nhu cầu tìm phòng."}</p><Button variant="outline" onClick={() => connectionState === "error" ? window.location.reload() : navigate("/dien-dan")}>{connectionState === "error" ? "Tải lại trang" : "Vào diễn đàn"}</Button></div>}
         </div>
       </section>
@@ -845,101 +723,14 @@ function Home() {
       </section>
 
       {/* Partner Program Modal */}
-      {partnerModalOpen && (
-        <div
-          className="partner-modal-backdrop"
-          onClick={() => setPartnerModalOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="partner-dialog-title"
-        >
-          <div
-            className="partner-modal-container"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="partner-modal-header">
-              <div className="partner-modal-title-box">
-                <span className="partner-modal-badge">Chương trình độc quyền</span>
-                <h3 id="partner-dialog-title">Trở thành Đối tác Trọ Ơi</h3>
-                <p>Nâng tầm uy tín và tăng tốc độ tìm kiếm khách thuê phòng hiệu quả nhất</p>
-              </div>
-              <button
-                type="button"
-                className="partner-modal-close"
-                onClick={() => setPartnerModalOpen(false)}
-                aria-label="Đóng cửa sổ"
-              >
-                <Icon name="close" size={16} />
-              </button>
-            </div>
-
-            <div className="partner-modal-body">
-              <div className="partner-modal-perk-card">
-                <div className="partner-modal-perk-icon">
-                  <div className="home-partner-badge-pill">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
-                    </svg>
-                    <span>Đối Tác</span>
-                  </div>
-                </div>
-                <div>
-                  <strong>Huy hiệu Đối Tác chính thức</strong>
-                  <p>Mỗi tin đăng của bạn đều được gắn huy hiệu xác thực cam nổi bật, thu hút ánh nhìn và tăng hơn 40% tỉ lệ người thuê bấm vào xem chi tiết.</p>
-                </div>
-              </div>
-
-              <div className="partner-modal-perk-card">
-                <div className="partner-modal-perk-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e36825" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3v18h18" />
-                    <path d="M18.5 8.5L13.5 13.5L9.5 9.5L3.5 15.5" />
-                    <polyline points="14 8.5 18.5 8.5 18.5 13" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>Độ phủ tiếp cận vượt trội</strong>
-                  <p>Ưu tiên hiển thị trên trang chủ và danh sách tìm kiếm hàng đầu khu vực. Tiếp cận trực tiếp hàng chục ngàn sinh viên và người đi làm mỗi ngày.</p>
-                </div>
-              </div>
-
-              <div className="partner-modal-perk-card">
-                <div className="partner-modal-perk-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e36825" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="11" height="17" rx="1.5" />
-                    <line x1="7" y1="8" x2="7.01" y2="8" strokeWidth="2.5" />
-                    <line x1="10" y1="8" x2="10.01" y2="8" strokeWidth="2.5" />
-                    <circle cx="18" cy="12" r="3" />
-                    <path d="M14.5 19a4 4 0 0 1 7 0" />
-                  </svg>
-                </div>
-                <div>
-                  <strong>Bộ công cụ quản lý chuyên nghiệp</strong>
-                  <p>Bảng điều khiển trực quan giúp bạn theo dõi lượt xem, quản lý danh sách phòng trống, tiếp nhận yêu cầu hẹn xem phòng và chat trực tiếp với khách.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="partner-modal-footer">
-              <Button
-                variant="outline"
-                onClick={() => setPartnerModalOpen(false)}
-              >
-                Đóng
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setPartnerModalOpen(false)
-                  navigate(landlordProgramUrl)
-                }}
-              >
-                Tham gia Đối tác ngay
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PartnerModal
+        isOpen={partnerModalOpen}
+        onClose={() => setPartnerModalOpen(false)}
+        onJoin={() => {
+          setPartnerModalOpen(false)
+          navigate(landlordProgramUrl)
+        }}
+      />
     </main>
   )
 }

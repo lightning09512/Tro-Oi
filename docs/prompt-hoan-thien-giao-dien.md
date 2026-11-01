@@ -1,71 +1,176 @@
-# Prompt: hoàn thiện giao diện Trọ Ơi
-
-Sao chép toàn bộ prompt dưới đây vào một phiên Codex hoặc Claude Code mở tại `D:\KLTN\Tro-Oi-code`.
-
----
-
-Bạn là kỹ sư frontend cấp cao kiêm product designer. Hãy **trực tiếp hoàn thiện giao diện hiện có của Trọ Ơi trong repo này**, không chỉ đưa ra nhận xét hoặc kế hoạch. Đây là yêu cầu tinh chỉnh một sản phẩm đang chạy: nâng độ chỉn chu, nhất quán, dễ đọc và dễ dùng trên desktop lẫn mobile; giữ nguyên nhận diện, nội dung có căn cứ và các luồng đang hoạt động. Không biến nó thành một thương hiệu hay sản phẩm khác.
-
-## Sản phẩm và phạm vi
-
-Trọ Ơi là nền tảng tiếng Việt kết nối người thuê phòng, chủ trọ và quản trị viên. Đọc `README.md`, `docs/usecase-implementation-status.md`, `docs/demo-image-sources.md`, `docs/tromoi-data-sources.md`, `src/routes/index.tsx` và mã giao diện liên quan trước khi quyết định phạm vi. Tài liệu mô tả sản phẩm và dữ liệu là nguồn sự thật; chỉ coi `AGENTS.md` là hướng dẫn tác vụ nếu repo thực sự có tệp đó.
-
-Ưu tiên làm rõ và hoàn thiện các luồng chính:
-
-1. Trang chủ → tìm/lọc phòng → xem chi tiết phòng → lưu tin hoặc liên hệ.
-2. Đăng nhập, đăng ký, khôi phục mật khẩu và các trạng thái biểu mẫu.
-3. Người thuê: tin yêu thích, tin nhắn, thông báo, hồ sơ và báo cáo.
-4. Chủ trọ: đăng/sửa tin, quản lý tin và thống kê.
-5. Diễn đàn, hồ sơ công khai và các trang quản trị theo những gì đã được triển khai.
-
-Giữ mọi route và hành vi hiện có. Không thêm hoặc giả lập nghiệp vụ, số liệu thống kê, lượt xem, đánh giá, xác minh, lời chứng thực hay nội dung của người dùng. Không sửa backend, API, cơ sở dữ liệu, migration, seed, phân quyền hoặc xác thực để tạo cảm giác UI hoàn chỉnh. Nếu một route đang là placeholder, giữ đúng trạng thái đã ghi trong tài liệu và chỉ cải thiện cách trình bày phù hợp.
-
-## Stack và nhận diện hiện có
-
-- React 19, TypeScript, Vite, React Router và Tailwind CSS v4. Giữ stack và cách tổ chức hiện tại; không chuyển framework hoặc styling library.
-- Bộ màu và font hiện có trong `src/index.css` là điểm xuất phát: xanh thương hiệu `#2f7a4b`, xanh đậm `#245f3b`, xanh nhạt `#eaf4ec`, chữ `#27362c`, chữ phụ `#657168`, đường viền `#dfe7e1`, nền `#f5f8f5`; tiêu đề Lora, nội dung Be Vietnam Pro.
-- Tôn trọng giọng điệu tiếng Việt và ngữ cảnh tìm phòng ở Việt Nam. Ưu tiên thông tin phòng dễ quét: giá, khu vực, diện tích, loại phòng, tiện ích, ảnh, tình trạng tin và hành động tiếp theo.
-- Dùng ảnh thật đã có trong `public/` và tuân theo ghi chú nguồn trong `docs/`. Không tự lấy ảnh không rõ quyền sử dụng hoặc tạo ảnh giả làm ảnh tin đăng thật.
-
-## Dùng các skill và repo thiết kế đúng chỗ
-
-Các công cụ có vai trò khác nhau; chọn đúng công cụ thay vì thêm tất cả làm dependency:
-
-- Dùng [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) để tra cứu có mục tiêu về UX tìm/lọc tin, marketplace và React. Vì dự án đã có nhận diện, không lấy kết quả làm lý do tự thay toàn bộ màu hoặc font.
-- Dùng [Taste Skill](https://github.com/Leonxlnx/taste-skill) để xem giao diện thật trước/sau trong trình duyệt ở các kích thước responsive. Tuân thủ quy trình riêng cho trang chủ/trang nội dung và cho màn hình ứng dụng như danh sách, bộ lọc, dashboard, trang quản trị, biểu mẫu.
-- Dùng [Impeccable](https://github.com/pbakaus/impeccable) theo hướng refinement: đọc context, critique/audit khi phù hợp, và đọc `craft-floor.md` ngay trước khi sửa UI. Repo hiện chưa có `PRODUCT.md` hoặc `DESIGN.md`; dùng README, routes, code và assets làm căn cứ. Không chạy `impeccable init` hay thay visual world vì việc đó cần user xác nhận product truth trước.
-- Dùng [Skills for Designers and Engineers](https://github.com/emilkowalski/skills) cho chi tiết tương tác và motion khi thực sự giúp thao tác rõ hơn; ưu tiên trạng thái focus/hover/loading/error và chuyển động nhẹ, có `prefers-reduced-motion`.
-- Dùng [Google DESIGN.md](https://github.com/google-labs-code/design.md) để ghi nhận design tokens hiện có/đã chốt trong `DESIGN.md` và lint nếu CLI đã có hoặc việc thêm dev dependency là phù hợp. Không tạo hệ token chung chung hoặc thay nhận diện để làm vừa mẫu.
-- Dùng [Awesome DESIGN.md](https://github.com/VoltAgent/awesome-design-md) làm tài liệu tham khảo, không sao chép nguyên design system của thương hiệu khác.
-- Chỉ dùng [React Bits](https://github.com/DavidHDev/react-bits) hoặc [Canvas UI](https://github.com/DavidHDev/canvas-ui) nếu đã xác định một component cụ thể cần thiết. Repo đích hiện chưa có `components.json`; kiểm tra dependency và API trước, chỉ cấu hình registry/cài đúng component được chọn, không chép hàng loạt component hoặc thêm hiệu ứng WebGL cho phần tử trang trí.
-- Chỉ cân nhắc [Hallmark](https://github.com/nutlope/hallmark) cho critique/audit theo đúng workflow của skill; không tự chạy full redesign hoặc dùng workflow trả phí khi chưa đáp ứng bước hỏi người dùng.
-- GSAP chỉ được thêm nếu có yêu cầu motion cụ thể mà CSS không đáp ứng; không cài runtime chỉ vì đã có [GSAP Skills](https://github.com/greensock/gsap-skills). [Scroll World](https://github.com/oso95/scroll-world) và video tạo sinh không thuộc phạm vi mặc định.
-- [Open Design](https://github.com/nexu-io/open-design) chỉ dùng nếu MCP hiện tại đã kết nối và có ích cho prototype; không đăng nhập, gửi khóa API hoặc dùng credits trả phí.
-- Không ép bất kỳ thư viện hoặc hiệu ứng nào vào mọi màn hình. Tính phù hợp với sản phẩm quan trọng hơn số lượng công cụ được gọi.
-
-## Cách làm
-
-1. Chạy `git status --short` và xem diff trước khi sửa. Repo đang có thay đổi người dùng chưa commit ở nhiều tệp dữ liệu, backend và frontend, trong đó có `src/pages/public/RoomDetailPage.tsx`. Giữ nguyên các thay đổi ấy; không checkout/reset, không stage/commit, không ghi đè phần diff. Nếu cần sửa một tệp đã thay đổi, đọc diff và giữ toàn bộ logic cùng dữ liệu mới.
-2. Lập bản đồ layout dùng chung, token, component, route và trạng thái hiện có. Tập trung vào `src/index.css`, `src/components/layout/`, `src/pages/`, các component thẻ phòng, form, navigation và ảnh thật. Không sửa `.env` hoặc in nội dung secret ra terminal/chat.
-3. Chụp/ghi nhận trạng thái hiện tại trong trình duyệt trước khi thay đổi. Dùng dev server của **repo này**, không nhầm với preview của project khác. Nếu API/database không sẵn sàng, dùng chế độ demo phù hợp mà không chỉnh `.env`, không chạy migration và không sửa dữ liệu.
-4. Chọn một hướng tinh chỉnh có chủ đích nhưng giữ nhận diện xanh ấm hiện tại. Tạo thứ bậc rõ giữa tiêu đề, nội dung và giá; tăng khả năng quét ảnh/tin; thống nhất chiều rộng, khoảng cách, radius, border, kiểu nút và trạng thái tương tác. Tránh card lặp vô nghĩa, gradient/glow trang trí, icon emoji, nhãn viết hoa tracking, lạm dụng bóng đổ và các mẫu SaaS đại trà.
-5. Làm responsive từ mobile lên desktop. Kiểm tra ít nhất 375px, 768px và 1440px; không có tràn ngang, nội dung bị che, ảnh méo hoặc thao tác chỉ dùng được khi hover. Giữ điều hướng mobile và các khu vực chạm dễ dùng.
-6. Sửa giao diện theo từng lớp có tác động lớn: khung trang và navigation; trang chủ/tìm kiếm/thẻ phòng; chi tiết phòng và liên hệ; form/trạng thái; sau đó là các màn hình người thuê, chủ trọ, diễn đàn và quản trị. Dùng semantic HTML, label, focus ring nhìn thấy được, tên truy cập cho icon-button, tương phản WCAG AA và thông báo lỗi gần trường nhập.
-7. Không thay đổi nội dung thực tế để làm đẹp. Không bỏ chức năng, link, state, validation, loading, empty, error, responsive behavior hoặc accessibility. Không cài package nếu CSS và component hiện có đã giải quyết tốt.
-8. Chạy build hiện có (`pnpm build`) và kiểm tra các route/thao tác ảnh hưởng. Chụp lại giao diện sau khi sửa ở cùng các kích thước với ảnh trước, so sánh và sửa các lỗi nhìn thấy. Sau lượt sửa cuối, chạy detector của Impeccable trên đúng các UI target đã đổi; báo rõ nếu không thể chạy browser hoặc detector.
-
-## Tiêu chí hoàn thành
-
-- Các trang chính trông như cùng một sản phẩm nhưng mỗi trang ưu tiên đúng công việc của người dùng; không phải chỉ thay màu.
-- Luồng tìm phòng, mở tin, lưu tin/liên hệ, biểu mẫu và điều hướng hoạt động như trước.
-- Giá, địa điểm, diện tích, ảnh và trạng thái tin đọc rõ trên màn hình nhỏ; dữ liệu vẫn đến từ nguồn hiện có.
-- Không tràn ngang ở 375px; không mất nội dung hay control tại tablet/desktop; focus, contrast, lỗi và reduced-motion được xử lý.
-- Build thành công; nêu những lệnh và kiểm tra thực sự đã chạy, các tệp giao diện đã sửa và vấn đề còn lại. Không tuyên bố đã kiểm tra nếu chưa kiểm tra.
-
-Hãy bắt đầu bằng việc kiểm tra git status/diff và xem giao diện hiện tại, sau đó triển khai trực tiếp trong repo.
+# MASTER PROMPT: HOÀN THIỆN TOÀN DIỆN GIAO DIỆN & KIẾN TRÚC TRỌ ƠI
+> **Được chắt lọc từ bộ kỹ năng chuyên gia:** `design-taste-frontend` (Tasteskill v2 - Anti-AI Slop), `ui-ux-pro-max`, `design-system`, `emil-design-eng`, `ui-styling` và `apple-design`.
+> **Mục tiêu:** Nâng tầm toàn bộ giao diện dự án **Trọ Ơi** đạt chuẩn Proptech thương mại hàng đầu (Nhà Tốt / Batdongsan / Airbnb), thẩm mỹ cao, xóa bỏ hoàn toàn dấu vết "AI Slop", và tái cấu trúc mã nguồn theo chuẩn Clean Architecture logic nhất.
 
 ---
 
-## Ghi chú khi tạo prompt
+```markdown
+Bạn là Kỹ sư Frontend Trưởng (Lead Frontend Engineer) kiêm Chuyên gia Thiết kế Sản phẩm Cấp cao (Principal Product Designer). Hãy trực tiếp tiến hành tinh chỉnh, hoàn thiện và tái cấu trúc toàn diện giao diện trang web **Trọ Ơi** trong repository này (`D:\KLTN\Tro-Oi-code`).
 
-Prompt này coi yêu cầu là **tinh chỉnh và hoàn thiện giao diện hiện tại**, không phải đổi thương hiệu. Repo đích không có `AGENTS.md`, `PRODUCT.md`, `DESIGN.md` hoặc `components.json` ở root tại thời điểm tạo prompt; các thay đổi chưa commit hiện có cần được bảo toàn.
+Yêu cầu cốt lõi: Nâng giao diện lên cấp độ sản phẩm thương mại cao cấp, hiện đại, đậm chất bản địa Việt Nam, loại bỏ triệt để các vết tích "AI Slop" (giao diện đại trà, vô hồn do AI tạo), đồng thời bố trí tổ chức file và component theo kiến trúc sạch sẽ, mạch lạc và dễ bảo trì nhất.
+
+---
+
+## PHẦN 1: BẢN CHẤT SẢN PHẨM & TÔN CHỈ THIẾT KẾ (PRODUCT TRUTH)
+
+1. **Sản phẩm:** "Trọ Ơi" là nền tảng Proptech kết nối 3 đối tượng: Người thuê phòng (đặc biệt sinh viên & người đi làm), Chủ nhà trọ và Quản trị viên (Admin).
+2. **Ngữ cảnh Việt Nam:** Người tìm phòng ở Việt Nam cần thông tin thực tế, quét mắt cực nhanh:
+   - **Ưu tiên số 1:** Giá thuê (triệu/tháng), Tiền cọc, Giá điện/nước rõ ràng.
+   - **Ưu tiên số 2:** Vị trí chính xác (gần trường ĐH nào, hẻm xe hơi hay xe máy, có ngập nước không).
+   - **Ưu tiên số 3:** Ảnh chụp thực tế căn phòng, tình trạng nội thất (có gác, máy lạnh, ban công không), tin đã xác thực hay chưa.
+   - **Hành động cốt lõi:** Bấm gọi điện ngay, nhắn tin trao đổi trực tiếp, hẹn lịch xem phòng, hoặc tìm bạn cùng phòng/pass phòng trên diễn đàn.
+3. **Bộ nhận diện chuẩn:**
+   - **Màu chủ đạo (Primary Green):** `#245f3b` (Forest Green - tin cậy, vững chãi), `#2f7a4b` (Brand Green), `#eaf4ec` (Soft Mint Tint).
+   - **Màu điểm nhấn (Warm Accent):** `#ff5722` / `#ff6e1a` (Warm Proptech Orange - kích thích hành động, nổi bật nhãn Đối Tác & CTA), `#fff2e7` (Peach Cream Background), `#fed7aa` (Soft Amber Border).
+   - **Màu bề mặt & trung tính:** `#ffffff` (Card surface), `#f8fafc` / `#f5f8f5` (Canvas ground), `#111827` (Text ink đậm), `#64748b` (Text phụ).
+   - **Typography:** Tiêu đề trang trọng, ấm cúng dùng `Lora` hoặc `Be Vietnam Pro` đậm nét; nội dung và thông số kỹ thuật dùng `Be Vietnam Pro` rõ ràng, dễ đọc trên mọi thiết bị.
+
+---
+
+## PHẦN 2: BỘ QUY TẮC "ANTI-AI SLOP" (BẢO VỆ CHẤT LƯỢNG NGHỆ THUẬT)
+*(Chiết xuất trực tiếp từ triết lý Tasteskill v2 & 247 website đạt giải Awwwards/One Page Love)*
+
+AI khi sinh giao diện thường rơi vào bẫy "mẫu số chung" lặp đi lặp lại. Tuyệt đối **LOẠI BỎ** 10 thói quen xấu của AI Slop:
+
+| # | Thói quen xấu của AI Slop (CẤM) | Giải pháp thiết kế cao cấp thay thế |
+|---|----------------------------------|-------------------------------------|
+| 1 | **Eyebrows & Chip badges tràn lan:** Gắn nhãn nhỏ xíu viết hoa phía trên mọi tiêu đề ("NEW", "FEATURE"). | Đưa thông tin vào chính tiêu đề hoặc câu mô tả đầu tiên. Bỏ hẳn các nhãn thừa. |
+| 2 | **Icon cards rập khuôn:** Hàng loạt thẻ giống hệt nhau, trên đỉnh là một icon nằm trong ô vuông bo góc tô màu nhạt. | Đa dạng hóa bố cục theo vai trò: thẻ phòng hiển thị ảnh lớn, bảng thống kê hiển thị số liệu thực, tính năng giải thích bằng ảnh minh họa trực quan. |
+| 3 | **Gradient tím/hồng vô nghĩa hoặc vệt mờ trôi nổi (Glow Blobs).** | Dùng mảng màu phẳng thực tế, màu nền ấm nhẹ nhàng, hoặc ảnh chụp thật của phòng ốc/khu phố. |
+| 4 | **Emoji làm icon:** Dùng biểu tượng cảm xúc điện thoại (🏠, 📍, 📞) làm icon giao diện nhìn nghiệp dư, rẻ tiền. | Dùng 100% vector SVG sắc nét, đồng bộ nét vẽ (`stroke-width: 1.75-2px`), kích thước chuẩn (16px, 20px, 24px). |
+| 5 | **Đổ bóng mờ mịt khắp nơi (Shadow Overuse):** Card nào ở trạng thái tĩnh cũng đổ bóng đậm. | Bề mặt phẳng (flat surface) ngăn cách bằng 1 bước màu nhẹ hoặc viền mảnh `1px solid #dfe7e1`. Bóng đổ **CHỈ** xuất hiện khi phần tử nổi thật: Modal, Dropdown menu, Toast, hoặc khi Hover thẻ. |
+| 6 | **Số thứ tự vô vị (Index Numbering):** Ghi `01 / 02 / 03` hoặc `Step 1, Step 2` vô nghĩa. | Thể hiện thứ tự bằng tiến trình tự nhiên, bố cục dòng chảy thời gian hoặc thẻ `<ol>` có ý nghĩa. |
+| 7 | **Chữ Monospace tùy tiện:** Dùng font code cho nhãn phụ, ngày tháng. | Dùng font thường (`Be Vietnam Pro`), dùng font dạng `tabular-nums` khi cần gióng thẳng hàng cột số tiền. |
+| 8 | **Glassmorphism quá đà:** Nền kính mờ (`backdrop-blur`) đè lên nhau gây nhòe và khó đọc. | Dùng thanh điều hướng phẳng rõ nét, nền trắng đặc hoặc mờ nhẹ có chủ đích trên ảnh banner. |
+| 9 | **Tiêu đề quá dài:** Headline bị rớt thành 4-5 dòng lộn xộn. | Mọi tiêu đề lớn khống chế tối đa **2 dòng** ở mọi kích thước màn hình. |
+| 10| **Fake Dashboard & Grey Bars:** Dùng các thanh xám giả lập hoặc số liệu bịa đặt. | Hiển thị số liệu thật của sản phẩm: số phòng đang mở, lượt tương tác, đánh dấu trạng thái "Phòng trống" / "Đã cho thuê". |
+
+---
+
+## PHẦN 3: TÁI CẤU TRÚC THƯ MỤC & FILE CODE LOGIC NHẤT (CLEAN ARCHITECTURE)
+
+Sắp xếp và chuẩn hóa lại cấu trúc `src/` theo mô hình Feature-Driven kết hợp Atomic UI:
+
+```
+src/
+├── components/
+│   ├── ui/                         # Các primitive component dùng chung toàn dự án
+│   │   ├── Button.tsx              # Nút bấm (primary, outline, ghost, danger, kích thước sm/md/lg)
+│   │   ├── Input.tsx & Textarea.tsx# Form controls có focus ring, helper text, error message
+│   │   ├── Badge.tsx               # Huy hiệu trạng thái (active, pending, verified, partner)
+│   │   ├── Modal.tsx               # Dialog chuẩn trap focus, phím ESC, backdrop blur nhẹ
+│   │   ├── Dropdown.tsx            # Menu thả xuống với portal chống bị tràn viền (overflow clipping)
+│   │   ├── Tabs.tsx                # Tab chuyển đổi ngữ cảnh mượt mà
+│   │   ├── Icon.tsx                # Hệ thống Icon SVG đồng bộ nét và kích thước
+│   │   └── Skeleton.tsx            # Khung xương loading chống giật bố cục (CLS = 0)
+│   ├── domain/                     # Component gắn liền với nghiệp vụ Trọ Ơi
+│   │   ├── room/                   # Thẻ phòng (RoomCard), Lưới phòng, Bộ lọc phòng (RoomFilterBar)
+│   │   ├── partner/                # Card Đối Tác Trọ Ơi, Dải banner tin đăng đối tác, Modal quyền lợi
+│   │   ├── forum/                  # Card bài viết diễn đàn, Khung bình luận, Like/Share
+│   │   ├── chat/                   # Hộp chat, Danh sách hội thoại, Bong bóng tin nhắn
+│   │   └── landlord/               # Bảng quản lý phòng, Thẻ thống kê doanh thu/lượt xem
+│   └── layout/                     # Khung trang bao bọc
+│       ├── MainHeader.tsx          # Thanh điều hướng trên cùng (Logo, Search nhanh, Menu, User profile)
+│       ├── SiteFooter.tsx          # Chân trang đầy đủ thông tin pháp lý, bản quyền, liên hệ
+│       ├── BottomNav.tsx           # Thanh điều hướng đáy màn hình cho Mobile (Home, Tìm kiếm, Đăng tin, Chat, Tôi)
+│       └── AdminLayout.tsx         # Khung quản trị riêng biệt với sidebar chuyên nghiệp
+├── contexts/                       # Quản lý state toàn cục (Auth, Platform, Toast, Favorites)
+├── hooks/                          # Custom hooks tái sử dụng (useAuth, useDebounce, useMediaQuery...)
+├── pages/                          # Các trang theo từng phân hệ rõ ràng:
+│   ├── public/                     # HomePage, SearchPage, RoomDetailPage
+│   ├── auth/                       # LoginPage, RegisterPage, PasswordRecoveryPage
+│   ├── community/                  # ForumPage, MembersPage
+│   ├── renter/                     # MessagesPage, FavoritesPage, NotificationsPage
+│   ├── landlord/                   # MyListingsPage, ListingEditorPage, LandlordStatsPage
+│   └── admin/                      # AdminDashboardPage, AdminResourcePage, AdminStatsPage
+├── styles/                         # Quy hoạch CSS có hệ thống:
+│   ├── tokens.css                  # Biến màu sắc, khoảng cách, font, shadow, radius tập trung
+│   ├── reset.css & typography.css  # Chuẩn hóa hiển thị chữ và khung trang
+│   └── [feature].css / CSS Modules # Tránh spaghetti code hoặc file CSS đơn lẻ phình to 40KB
+├── types/                          # TypeScript definitions chặt chẽ (Room, User, Post, Message...)
+└── utils/                          # Helper functions (formatCurrency, formatRelativeTime, validation...)
+```
+
+---
+
+## PHẦN 4: KẾ HOẠCH TINH CHỈNH CHI TIẾT TỪNG MÀN HÌNH CHÍNH
+
+### 1. Trang Chủ (`src/pages/public/HomePage.tsx`)
+- **Hero Banner:** Kết hợp hình ảnh 3D proptech ấm áp với form tìm kiếm thông minh: Từ khóa, Tỉnh/Thành, Mức giá, Diện tích. Form tìm kiếm nổi bật, dropdown mở bằng portal không bị che khuất.
+- **Khối Tiện Ích & Danh Mục Nhanh:** 4 thẻ định hướng (Cho thuê phòng, Tìm ở ghép, Căn hộ mini, Xác thực 100%) bo tròn tinh tế, hover phản hồi nhẹ.
+- **Thẻ "Trở thành Đối tác Trọ Ơi" (Nhà Tốt Style):**
+  - Đảm bảo 3 icon vector sắc nét: Huy hiệu `[🛡️ Đối Tác]` gọn gàng không tràn chữ; Biểu đồ cột 3D cam tăng trưởng; Tòa nhà văn phòng kèm avatar chuyên nghiệp.
+  - Căn giữa cân đối, padding tinh gọn, nút "Tìm hiểu chương trình" pill button thanh lịch mở Modal chi tiết.
+- **Dải Banner "Tin đăng từ Đối Tác Trọ Ơi":** Nằm ngay phía trên danh sách phòng, màu kem đào dịu mắt, 2 dấu tích cam xác minh: `✔ Thông tin BĐS chính xác` và `✔ Môi giới được xác minh`.
+- **Lưới Phòng Trọ Nổi Bật:** Thẻ phòng (`RoomCard`) đạt chuẩn:
+  - Tỷ lệ ảnh 4:3 hoặc 16:9 sắc nét, gắn badge giá tiền nổi bật góc ảnh.
+  - Thông tin quét nhanh: Giá thuê (màu xanh lá/cam đậm to rõ), Diện tích ($m^2$), Quận/Huyện, ngày đăng.
+  - Nút tim lưu tin yêu thích có phản hồi tức thì (optimistic update).
+- **Banner Khuyến Mãi / Diễn Đàn:** Carousel tự động chuyển mượt mà, có nút chuyển trang và chấm định vị chuẩn.
+
+### 2. Trang Tìm Kiếm & Bản Đồ (`src/pages/public/SearchPage.tsx`)
+- **Bố cục Split-Screen (hoặc Toggle Map trên Mobile):** Cột danh sách phòng bên trái cuộn độc lập, bản đồ vệ tinh/khu vực bên phải với các marker hiển thị giá tiền trực tiếp.
+- **Thanh lọc đa năng (Filter Bar):**
+  - Lọc theo khoảng giá (slider hoặc chips nhanh: <3tr, 3-5tr, 5-8tr, >8tr).
+  - Lọc tiện ích: Gác lửng, Vệ sinh riêng, Máy lạnh, Giờ giấc tự do, Chỗ để xe, Không chung chủ.
+  - Sắp xếp: Tin mới nhất, Giá tăng dần, Giá giảm dần, Diện tích.
+- **Trạng thái kết quả:** Hiển thị rõ tổng số kết quả tìm thấy (`Ví dụ: "Tìm thấy 128 phòng trọ tại TP. Hồ Chí Minh"`). Xử lý Empty State trực quan kèm nút "Xóa tất cả bộ lọc".
+
+### 3. Trang Chi Tiết Phòng (`src/pages/public/RoomDetailPage.tsx`)
+- **Thư viện ảnh (Photo Gallery):** Hiển thị theo lưới 5 ảnh phong cách Airbnb (1 ảnh lớn bên trái, 4 ảnh nhỏ bên phải), có nút "Xem tất cả ảnh" mở lightbox toàn màn hình.
+- **Thông số vàng (Quick Facts Bar):**
+  - Giá thuê lớn nổi bật (`triệu/tháng`), Tiền cọc, Phí dịch vụ (Điện, Nước, Internet, Giữ xe).
+  - Diện tích, Tầng, Loại phòng, Ngày bắt đầu ở được.
+- **Khu vực liên hệ Chủ Trọ (Sticky Contact Card):**
+  - Trên desktop: Card cố định bên phải với avatar chủ trọ, nhãn xác thực, số điện thoại, nút gọi điện, nút chat và nút "Hẹn xem phòng".
+  - Trên mobile: Thanh Sticky Bar ở đáy màn hình với 2 nút CTA chính: `📞 Gọi ngay` và `💬 Nhắn tin`.
+- **Bản đồ tiện ích xung quanh:** Đánh dấu khoảng cách tới trạm xe buýt, trường đại học, siêu thị gần nhất.
+
+### 4. Diễn Đàn & Tìm Ở Ghép (`src/pages/community/ForumPage.tsx` & `MembersPage.tsx`)
+- **Phân loại bài viết rõ ràng:** Tab lọc theo chuyên mục: `Tất cả`, `Tìm người ở ghép`, `Pass / Chuyển nhượng phòng`, `Review khu trọ`, `Kinh nghiệm thuê phòng`.
+- **Card bài viết cộng đồng:**
+  - Avatar tác giả hoạt hình/thân thiện (tránh ảnh nhạy cảm), tên tác giả, nhãn vai trò (Người thuê / Chủ trọ).
+  - Nội dung bài viết ngắn gọn kèm ảnh minh họa thực tế; tương tác Like, Comment, Chia sẻ mượt mà.
+- **Trang Bạn bè / Thành viên:** Danh sách thẻ bạn bè thiết kế phẳng, gọn gàng, thanh tìm kiếm theo số điện thoại hoặc tên nhanh chóng, nút gửi lời mời kết bạn có phản hồi ngay.
+
+### 5. Hệ Thống Chat Thời Gian Thực (`src/pages/renter/MessagesPage.tsx`)
+- **Bố cục 2 cột chuẩn tin nhắn:** Cột danh sách hội thoại bên trái (tìm kiếm, avatar, tin nhắn cuối, thời gian, số tin chưa đọc) và khung chat bên phải.
+- **Khung chat:** Bong bóng tin nhắn phân biệt rõ ràng giữa Người gửi (Xanh/Cam thương hiệu) và Người nhận (Xám nhạt). Có hiển thị trạng thái đã xem, gửi kèm ảnh phòng trọ và link tin đăng đang trao đổi.
+
+### 6. Quản Lý Chủ Trọ & Quản Trị Hệ Thống (`src/pages/landlord/` & `src/pages/admin/`)
+- **Bảng danh sách tin đăng:** Quản lý rõ ràng trạng thái: `Đang hiển thị`, `Đang duyệt`, `Hết phòng / Ẩn`, `Bị từ chối`.
+- **Form Đăng / Sửa tin (`ListingEditorPage.tsx`):** Trình biên soạn nhiều bước khoa học (Thông tin cơ bản → Giá & Chi phí → Tiện ích → Tải ảnh phòng → Xác nhận), có xem trước thời gian thực (Live Preview).
+- **Dashboard Thống kê:** Số liệu KPI lớn, rõ ràng; biểu đồ lượt xem và tin nhắn trực quan không thừa thãi; bảng báo cáo vi phạm có thao tác xử lý một chạm.
+
+---
+
+## PHẦN 5: CHUẨN MỰC TƯƠNG TÁC (MICRO-INTERACTIONS) & KHẢ NĂNG TRUY CẬP (A11Y)
+*(Áp dụng triết lý Emil Kowalski & UI/UX Pro Max)*
+
+1. **Touch Targets trên Mobile:** Tất cả nút bấm, link icon, ô tick chọn phải có vùng chạm tối thiểu **$44 \times 44\text{ px}$**. Khoảng cách giữa các phần tử bấm được tối thiểu $8\text{ px}$.
+2. **Loại bỏ hiện tượng nhảy giao diện (Zero Layout Shift - CLS < 0.1):** Mọi khung ảnh phải có `aspect-ratio` dự trữ trước khi ảnh tải xong; các danh sách phải có Skeleton loader giữ đúng chiều cao.
+3. **Phản hồi tương tác (Micro-feedback):**
+   - Nút bấm: Hiệu ứng active `transform: scale(0.98)` nhẹ nhàng.
+   - Thẻ tin: Hover chuyển dịch nhẹ `translateY(-2px)` kèm tăng độ đổ bóng dịu mắt.
+   - Loading Button: Tự động khóa thao tác khi đang gửi dữ liệu, hiển thị con quay (spinner) xoay mượt.
+4. **Khả năng truy cập (WCAG 2.2 AA):**
+   - Độ tương phản chữ và nền tối thiểu **$4.5:1$** cho nội dung chính, **$3:1$** cho chữ lớn.
+   - Mọi nút bấm chỉ có icon (icon-only button) bắt buộc phải có thuộc tính `aria-label` mô tả rõ công dụng.
+   - Đảm bảo hiển thị viền focus (`focus-visible`) khi dùng bàn phím duyệt trang.
+   - Tôn trọng người dùng bật chế độ giảm chuyển động (`@media (prefers-reduced-motion: reduce)`).
+
+---
+
+## PHẦN 6: QUY TRÌNH THỰC HIỆN BẢO TOÀN DỮ LIỆU & KIỂM TRA
+
+1. **Bảo toàn dữ liệu & nghiệp vụ:**
+   - Tuyệt đối không xóa hoặc làm gián đoạn các luồng API kết nối PostgreSQL / Backend hiện tại.
+   - Giữ nguyên các chức năng cốt lõi: đăng nhập, phân quyền Role (renter, landlord, admin), đăng tin, đặt lịch, bình luận, chat.
+2. **Kiểm tra Responsive liên tục:**
+   - Kiểm tra hiển thị chuẩn xác ở 3 mốc độ rộng: **Mobile 375px/390px**, **Tablet 768px**, và **Desktop 1440px**. Không để phát sinh thanh cuộn ngang ngoài ý muốn (`overflow-x: hidden`).
+3. **Quy trình Build & Đẩy mã nguồn:**
+   - Chạy `pnpm build` để đảm bảo TypeScript không có bất kỳ lỗi cú pháp, kiểu dữ liệu hay build lỗi nào.
+   - Đưa ra bản tóm tắt các cải tiến giao diện trước và sau khi hoàn thiện, kiểm tra trên trình duyệt trước khi kết thúc.
+
+Hãy bắt đầu ngay bằng việc khảo sát `src/styles/` và các trang chính, sau đó triển khai từng module một cách dứt khoát, chuyên nghiệp và chuẩn mực nhất.
+```
