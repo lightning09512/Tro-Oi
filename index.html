@@ -47,24 +47,6 @@
         el.innerHTML += '<h3>[LỖI PROMISE CHƯA XỬ LÝ]:</h3>' +
           '<pre style="background:#fff;padding:12px;border:1px solid #f87171;border-radius:6px;overflow:auto;">' + (e.reason && e.reason.stack ? e.reason.stack : String(e.reason)) + '</pre><hr/>';
       });
-
-      // 3. Fallback kiểm tra sau 3.5 giây nếu React chưa render
-      window.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          var root = document.getElementById('root');
-          if (root && root.children.length === 0 && !document.getElementById('debug-error-box')) {
-            var warn = document.createElement('div');
-            warn.id = 'debug-stuck-box';
-            warn.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:sans-serif;padding:24px;z-index:99999;';
-            warn.innerHTML = '<div style="max-width:500px;background:#fff;padding:32px;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);text-align:center;">' +
-              '<h2 style="color:#245f3b;margin:0 0 12px;">Trọ Ơi — Đang đồng bộ phiên bản mới</h2>' +
-              '<p style="color:#64748b;margin:0 0 20px;line-height:1.5;">Trình duyệt của bạn đang lưu phiên cache cũ. Hãy bấm nút bên dưới để xóa dữ liệu tạm và làm mới ngay:</p>' +
-              '<button onclick="localStorage.clear();sessionStorage.clear();window.location.reload(true);" style="background:#245f3b;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:15px;">Xóa cache & Làm mới ngay</button>' +
-              '</div>';
-            document.body.appendChild(warn);
-          }
-        }, 3000);
-      });
     </script>
   </head>
   <body>
