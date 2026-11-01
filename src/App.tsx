@@ -5,18 +5,21 @@ import { PlatformProvider } from "@/contexts/PlatformContext"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { router } from "@/routes"
 import PlatformStatusBanner from "@/components/layout/PlatformStatusBanner"
+import ErrorBoundary from "@/components/common/ErrorBoundary"
 
 export default function App() {
   return (
-    <AuthProvider>
-      <PlatformProvider>
-        <PlatformStatusBanner />
-        <ToastProvider>
-          <FavoritesProvider>
-            <RouterProvider router={router} />
-          </FavoritesProvider>
-        </ToastProvider>
-      </PlatformProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PlatformProvider>
+          <PlatformStatusBanner />
+          <ToastProvider>
+            <FavoritesProvider>
+              <RouterProvider router={router} />
+            </FavoritesProvider>
+          </ToastProvider>
+        </PlatformProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
