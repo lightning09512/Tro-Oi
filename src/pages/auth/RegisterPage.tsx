@@ -219,7 +219,7 @@ export default function RegisterPage() {
           </p>
         )}
         <div className="full-field">
-          <Button disabled={loading || sendingCode}>{loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</Button>
+          <Button type="submit" disabled={loading || sendingCode}>{loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</Button>
         </div>
         <p className="auth-switch full-field">
           Đã có tài khoản? <NavLink to="/dang-nhap">Đăng nhập</NavLink>

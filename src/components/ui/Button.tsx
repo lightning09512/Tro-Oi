@@ -19,7 +19,7 @@ export function Button({
   isLoading = false,
   disabled = false,
   className = "",
-  type = "button",
+  type = "submit",
   ...props
 }: ButtonProps) {
   const sizeClasses = {

@@ -192,7 +192,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
             {error}
           </p>
         )}
-        <Button disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
+        <Button type="submit" disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
 
         {!admin && (
           <p className="auth-switch">
