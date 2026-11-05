@@ -23,6 +23,15 @@ function PersonAvatar({
   return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : initials}{active && <i/>}</span>
 }
 
+interface FriendUser {
+  id: string
+  name: string
+  initials: string
+  avatarUrl?: string
+  phone?: string
+  role?: string
+}
+
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -30,7 +39,11 @@ export default function MessagesPage() {
   const { toast } = useToast()
   const { messages, listings, users, reviews, sendMessage, startConversation, markConversationRead, toggleConversationMute, refreshMessages } = usePlatform()
   const [search, setSearch] = useState("")
-  const [onlyUnread, setOnlyUnread] = useState(false)
+  const [filterTab, setFilterTab] = useState<"all" | "unread" | "spam">("all")
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [friends, setFriends] = useState<FriendUser[]>([])
+  const [, setLoadingFriends] = useState(false)
   const [mobileChat, setMobileChat] = useState(false)
   const [message, setMessage] = useState("")
   const [messageError, setMessageError] = useState("")
@@ -55,10 +68,175 @@ export default function MessagesPage() {
   useDialogFocus(scheduleDialogRef, () => setScheduleModalOpen(false), scheduleModalOpen)
   useDialogFocus(contactDialogRef, () => setSelectContact(false), selectContact)
 
+  // Close 3-dots menu when clicking outside
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [menuOpen])
+
+  // Load friends from API or fallback to mock
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    const loadFriends = async () => {
+      setLoadingFriends(true)
+      try {
+        if (isApiMode) {
+          const res = await apiRequest<{ items: FriendUser[] }>("friends")
+          if (active) setFriends(res.items || [])
+        } else {
+          const otherUsers = users.filter((u) => u.id !== user.id && u.status === "active" && u.role !== "admin")
+          if (active) {
+            setFriends(
+              otherUsers.slice(0, 3).map((u) => ({
+                id: u.id,
+                name: u.name,
+                initials: u.initials,
+                avatarUrl: u.avatarUrl,
+                phone: u.phone,
+                role: u.role,
+              }))
+            )
+          }
+        }
+      } catch {
+        if (active) {
+          const otherUsers = users.filter((u) => u.id !== user.id && u.status === "active" && u.role !== "admin")
+          setFriends(
+            otherUsers.slice(0, 3).map((u) => ({
+              id: u.id,
+              name: u.name,
+              initials: u.initials,
+              avatarUrl: u.avatarUrl,
+              phone: u.phone,
+              role: u.role,
+            }))
+          )
+        }
+      } finally {
+        if (active) setLoadingFriends(false)
+      }
+    }
+    void loadFriends()
+    return () => {
+      active = false
+    }
+  }, [user, users])
+
   const selectedId = params.get("conversation") ?? ""
   const accountMessages = useMemo(() => messages.filter((item) => item.accountId === user?.id), [messages, user?.id])
-  const visible = useMemo(() => accountMessages.filter((item) => (!search || `${item.name} ${item.text}`.toLocaleLowerCase("vi").includes(search.toLocaleLowerCase("vi"))) && (!onlyUnread || item.unread)), [accountMessages, search, onlyUnread])
-  const selected = accountMessages.find((item) => item.id === selectedId) ?? visible[0]
+
+  // Friends who do not yet have an active conversation
+  const friendsWithoutConversation = useMemo(() => {
+    return friends.filter((f) => !accountMessages.some((m) => m.userId === f.id))
+  }, [friends, accountMessages])
+
+  // Compute conversation & friend items for Chat sidebar
+  const conversationItems = useMemo(() => {
+    let list: Array<{
+      id: string
+      conversationId?: string
+      userId: string
+      name: string
+      avatar: string
+      avatarUrl?: string
+      active?: boolean
+      text: string
+      time: string
+      unread?: boolean
+      phone?: string
+      isFriend?: boolean
+      friendData?: FriendUser
+    }> = []
+
+    if (filterTab === "all") {
+      // 1. Existing conversations
+      const convList = accountMessages.map((item) => ({
+        id: item.id,
+        conversationId: item.id,
+        userId: item.userId,
+        name: item.name,
+        avatar: item.avatar,
+        avatarUrl: item.avatarUrl ?? users.find((member) => member.id === item.userId)?.avatarUrl,
+        active: item.active,
+        text: item.text,
+        time: item.time,
+        unread: item.unread,
+        phone: users.find((m) => m.id === item.userId)?.phone,
+        isFriend: friends.some((f) => f.id === item.userId),
+      }))
+
+      // 2. Friends who do not have an existing conversation yet (ready to message)
+      const friendList = friendsWithoutConversation.map((f) => ({
+        id: `friend-${f.id}`,
+        userId: f.id,
+        name: f.name,
+        avatar: f.initials,
+        avatarUrl: f.avatarUrl ?? users.find((member) => member.id === f.id)?.avatarUrl,
+        active: true,
+        text: "Bạn bè · Nhấn để trò chuyện",
+        time: "Bạn bè",
+        unread: false,
+        phone: f.phone,
+        isFriend: true,
+        friendData: f,
+      }))
+
+      list = [...convList, ...friendList]
+    } else if (filterTab === "unread") {
+      list = accountMessages
+        .filter((item) => item.unread)
+        .map((item) => ({
+          id: item.id,
+          conversationId: item.id,
+          userId: item.userId,
+          name: item.name,
+          avatar: item.avatar,
+          avatarUrl: item.avatarUrl ?? users.find((member) => member.id === item.userId)?.avatarUrl,
+          active: item.active,
+          text: item.text,
+          time: item.time,
+          unread: item.unread,
+          phone: users.find((m) => m.id === item.userId)?.phone,
+          isFriend: friends.some((f) => f.id === item.userId),
+        }))
+    } else if (filterTab === "spam") {
+      list = accountMessages
+        .filter((item) => item.muted)
+        .map((item) => ({
+          id: item.id,
+          conversationId: item.id,
+          userId: item.userId,
+          name: item.name,
+          avatar: item.avatar,
+          avatarUrl: item.avatarUrl ?? users.find((member) => member.id === item.userId)?.avatarUrl,
+          active: item.active,
+          text: item.text,
+          time: item.time,
+          unread: item.unread,
+          phone: users.find((m) => m.id === item.userId)?.phone,
+          isFriend: friends.some((f) => f.id === item.userId),
+        }))
+    }
+
+    // Filter by search when >= 3 characters (or if search has text)
+    if (!search.trim() || search.trim().length < 3) return list
+    const q = search.trim().toLowerCase()
+    return list.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.text.toLowerCase().includes(q) ||
+        (item.phone && item.phone.toLowerCase().includes(q))
+    )
+  }, [filterTab, accountMessages, friends, friendsWithoutConversation, users, search])
+
+  const selected = accountMessages.find((item) => item.id === selectedId) ?? (selectedId ? undefined : accountMessages[0])
   const relatedRoom = listings.find((item) => item.id === selected?.roomId)
   const selectedContact = users.find((item) => item.id === selected?.userId)
   const availableContacts = users.filter((item) => item.status === "active" && item.id !== user?.id && item.role !== "admin")
@@ -130,6 +308,24 @@ export default function MessagesPage() {
     }
   }
 
+  const handleSelectItem = async (item: typeof conversationItems[0]) => {
+    if (item.conversationId) {
+      setParams((current) => ({ ...Object.fromEntries(current), conversation: item.conversationId! }))
+      setMobileChat(true)
+      return
+    }
+    const friend = item.friendData || friends.find((f) => f.id === item.userId)
+    if (!friend) return
+    const room = listings.find((l) => l.ownerId === friend.id && l.status === "active")
+    await startChat({
+      name: friend.name,
+      initials: friend.initials,
+      avatarUrl: friend.avatarUrl,
+      id: friend.id,
+      roomId: room?.id ?? "",
+    })
+  }
+
   const handlePhoneSearch = async (event?: FormEvent) => {
     if (event) event.preventDefault()
     const q = phoneQuery.trim()
@@ -167,72 +363,202 @@ export default function MessagesPage() {
 
   return (
     <main className="messages-page">
-      <div className={`${selected ? "container messenger" : "container messenger is-empty"} ${showDetails ? "has-details" : "no-details"}`}>
+      <div className={`${selected ? "container messenger" : "container messenger is-empty"} ${selected && showDetails ? "has-details" : "no-details"}`}>
         <aside className={mobileChat ? "conversation-list hidden-mobile" : "conversation-list"}>
-          <div className="message-title">
-            <div>
-              
-              <h1>Tin nhắn</h1>
-            </div>
-            <button aria-label="Tìm bạn qua số điện thoại" title="Tìm bạn qua số điện thoại" onClick={openPhoneSearch}>
-              <Icon name="plus" />
-            </button>
-          </div>
-          <button
-            type="button"
-            className="find-contact-quick-btn"
-            onClick={openPhoneSearch}
-          >
-            <Icon name="phone" size={16} />
-            <span>Tìm bạn qua số điện thoại</span>
-          </button>
-          <label className="message-search">
-            <Icon name="search" />
-            <input
-              className="message-search-field"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm cuộc trò chuyện"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {search && <button type="button" aria-label="Xóa tìm kiếm" onClick={() => setSearch("")}><Icon name="close" size={16}/></button>}
-          </label>
-          <div className="message-tabs">
-            <button className={!onlyUnread ? "active" : ""} onClick={() => setOnlyUnread(false)}>Tất cả</button>
-            <button className={onlyUnread ? "active" : ""} onClick={() => setOnlyUnread(true)}>Chưa đọc</button>
-          </div>
-          {visible.map((item) => (
-            <button
-              className={selected?.id === item.id ? "conversation active" : "conversation"}
-              key={item.id}
-              onClick={() => { setParams({ conversation: item.id }); setMobileChat(true) }}
-            >
-              <PersonAvatar initials={item.avatar} avatarUrl={item.avatarUrl ?? users.find((member) => member.id === item.userId)?.avatarUrl} active={item.active} />
-              <div>
-                <strong>{item.name}</strong>
-                <span>{item.text}</span>
+          {/* Header Title: Chat */}
+          <div className="chat-sidebar-head">
+            <h1 className="chat-sidebar-title">Chat</h1>
+
+            {/* Search Input Row with 3 vertical dots */}
+            <div className="chat-search-row">
+              <div className="chat-search-box">
+                <Icon name="search" size={17} />
+                <input
+                  className="chat-search-input"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Nhập 3 ký tự để bắt đầu tìm kiếm"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    className="chat-search-clear"
+                    onClick={() => setSearch("")}
+                    aria-label="Xóa tìm kiếm"
+                  >
+                    <Icon name="close" size={14} />
+                  </button>
+                )}
               </div>
-              <small>{item.time}</small>
-              {item.unread && <i className="message-unread-dot" />}
+
+              {/* 3-dots Menu Button */}
+              <div className="chat-menu-wrapper" ref={menuRef}>
+                <button
+                  type="button"
+                  className="chat-dots-btn"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-label="Tùy chọn khác"
+                  title="Tùy chọn khác"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="5" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="12" cy="19" r="2" />
+                  </svg>
+                </button>
+
+                {menuOpen && (
+                  <div className="chat-dropdown-menu">
+                    <button
+                      type="button"
+                      className="chat-dropdown-item"
+                      onClick={async () => {
+                        setMenuOpen(false)
+                        try {
+                          await Promise.all(
+                            accountMessages
+                              .filter((m) => m.unread)
+                              .map((m) => markConversationRead(m.id, user?.id ?? ""))
+                          )
+                          toast("Đã đánh dấu tất cả là đã đọc", "success")
+                        } catch {
+                          toast("Không thể cập nhật trạng thái.", "error")
+                        }
+                      }}
+                    >
+                      <Icon name="chat" size={15} />
+                      <span>Đánh dấu tất cả đã đọc</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="chat-dropdown-item"
+                      onClick={() => {
+                        setMenuOpen(false)
+                        openPhoneSearch()
+                      }}
+                    >
+                      <Icon name="phone" size={15} />
+                      <span>Tìm bạn qua số điện thoại</span>
+                    </button>
+                    <Link
+                      to="/ban-be"
+                      className="chat-dropdown-item"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <Icon name="users" size={15} />
+                      <span>Danh sách bạn bè</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="chat-header-divider" />
+
+          {/* Filter Pills: Tất cả, Chưa đọc, Tin rác / Bỏ qua */}
+          <div className="chat-filter-pills">
+            <button
+              type="button"
+              className={`chat-pill ${filterTab === "all" ? "active" : ""}`}
+              onClick={() => setFilterTab("all")}
+            >
+              Tất cả
             </button>
-          ))}
-          {visible.length > 0 && accountMessages.length <= 2 && !search && !onlyUnread && (
-            <div className="mx-2 mt-5 rounded-xl border border-line bg-page p-4">
-              <strong className="block text-sm text-ink">Tiếp tục tìm phòng</strong>
-              <p className="mt-1 text-sm leading-relaxed text-muted">Mở tin cho thuê để hỏi thêm về phòng và hẹn lịch xem.</p>
-              <Link to="/tim-phong" className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-brand-dark hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
-                Xem tin cho thuê <Icon name="chevron" size={16} />
-              </Link>
-            </div>
-          )}
-          {!visible.length && (
-            <div className="conversation-empty">
-              <strong>{onlyUnread ? "Không có tin nhắn chưa đọc" : search ? "Không tìm thấy cuộc trò chuyện" : "Chưa có cuộc trò chuyện"}</strong>
-              <p>{onlyUnread ? "Các cuộc trò chuyện mới sẽ xuất hiện ở đây." : search ? "Thử tìm bằng tên người liên hệ hoặc nội dung tin nhắn." : "Chọn một người để bắt đầu trao đổi về phòng trọ."}</p>
-              {!onlyUnread && !search && <Button onClick={() => setSelectContact(true)}>Bắt đầu trò chuyện</Button>}
-            </div>
-          )}
+            <button
+              type="button"
+              className={`chat-pill ${filterTab === "unread" ? "active" : ""}`}
+              onClick={() => setFilterTab("unread")}
+            >
+              Chưa đọc
+            </button>
+            <button
+              type="button"
+              className={`chat-pill ${filterTab === "spam" ? "active" : ""}`}
+              onClick={() => setFilterTab("spam")}
+            >
+              Tin rác / Bỏ qua
+            </button>
+          </div>
+
+          {/* Items List */}
+          <div className="chat-items-list">
+            {conversationItems.map((item) => {
+              const isSelected = selected?.id === item.conversationId
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`chat-item-row ${isSelected ? "is-selected" : ""} ${item.unread ? "is-unread" : ""}`}
+                  onClick={() => void handleSelectItem(item)}
+                >
+                  <div className="chat-avatar-wrap">
+                    <PersonAvatar
+                      initials={item.avatar}
+                      avatarUrl={item.avatarUrl}
+                      active={item.active}
+                    />
+                  </div>
+                  <div className="chat-item-info">
+                    <div className="chat-item-title-row">
+                      <strong className="chat-item-name">{item.name}</strong>
+                      <time className="chat-item-time">{item.time}</time>
+                    </div>
+                    <div className="chat-item-sub-row">
+                      <span className="chat-item-snippet">{item.text}</span>
+                      {item.unread && <span className="chat-unread-dot" />}
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+
+            {/* Empty State */}
+            {conversationItems.length === 0 && (
+              <div className="chat-empty-sidebar">
+                <div className="chat-empty-sidebar-icon">
+                  {search && search.trim().length >= 3 ? (
+                    <Icon name="search" size={24} />
+                  ) : filterTab === "unread" ? (
+                    <Icon name="chat" size={24} />
+                  ) : filterTab === "spam" ? (
+                    <Icon name="bell" size={24} />
+                  ) : (
+                    <Icon name="chat" size={24} />
+                  )}
+                </div>
+                <strong className="chat-empty-sidebar-title">
+                  {search && search.trim().length >= 3
+                    ? "Không tìm thấy kết quả"
+                    : filterTab === "unread"
+                    ? "Không có tin nhắn chưa đọc"
+                    : filterTab === "spam"
+                    ? "Không có tin rác / bỏ qua"
+                    : "Chưa có cuộc trò chuyện"}
+                </strong>
+                <p className="chat-empty-sidebar-desc">
+                  {search && search.trim().length >= 3
+                    ? `Không tìm thấy cuộc trò chuyện nào khớp với "${search}".`
+                    : filterTab === "unread"
+                    ? "Tất cả cuộc trò chuyện của bạn đã được đọc."
+                    : filterTab === "spam"
+                    ? "Các cuộc trò chuyện bạn tắt thông báo hoặc bỏ qua sẽ xuất hiện ở đây."
+                    : "Các cuộc trò chuyện và bạn bè của bạn sẽ xuất hiện tại đây."}
+                </p>
+                {search && search.trim().length >= 3 && (
+                  <button
+                    type="button"
+                    className="chat-empty-action-btn"
+                    onClick={() => setSearch("")}
+                  >
+                    Xóa tìm kiếm
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </aside>
 
         {selected ? (
@@ -339,17 +665,24 @@ export default function MessagesPage() {
                 <div className="chat-quick-actions" aria-label="Gợi ý tin nhắn">
                   {(relatedRoom
                     ? [
-                        "Dạ phòng này còn trống không ạ?",
-                        "Chiều nay em qua xem phòng được không ạ?",
-                        "Chi phí điện nước và gửi xe thế nào ạ?",
+                        "Phòng còn không ạ?",
+                        "Khi nào xem phòng được ạ?",
+                        "Điện nước tính sao ạ?",
                       ]
                     : [
-                        "Dạ em chào anh/chị ạ!",
-                        "Cho mình xin thêm thông tin phòng với nhé!",
-                        "Phòng này giờ giấc tự do không bạn?",
+                        "Chào bạn!",
+                        "Cho mình hỏi về phòng",
+                        "Giờ giấc thế nào ạ?",
                       ]
                   ).map((reply) => (
-                    <button type="button" key={reply} onClick={() => setMessage(reply)}>
+                    <button
+                      type="button"
+                      key={reply}
+                      onClick={() => {
+                        setMessage(reply)
+                        document.getElementById("message-entry")?.focus()
+                      }}
+                    >
                       {reply}
                     </button>
                   ))}
@@ -382,10 +715,21 @@ export default function MessagesPage() {
           </section>
         ) : (
           <section className="chat-window chat-empty">
-            <span className="placeholder-icon"><Icon name="chat" size={32} /></span>
-            <h2>Tin nhắn của bạn</h2>
-            <p>Hỏi thêm về giá, tiện ích hoặc hẹn xem phòng với người đăng tin. Mọi cuộc trao đổi được lưu an toàn tại đây.</p>
-            <Button onClick={() => setSelectContact(true)}>Bắt đầu trò chuyện</Button>
+            <div className="chat-empty-content">
+              <span className="placeholder-icon"><Icon name="chat" size={36} /></span>
+              <h2>Tin nhắn của bạn</h2>
+              <p>Chọn một người bạn hoặc cuộc trò chuyện ở danh sách bên trái để bắt đầu trao đổi tiện ích, giá cả hoặc hẹn xem phòng trọ.</p>
+              <div className="chat-empty-actions" style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "16px" }}>
+                <button type="button" className="zalo-btn-primary" onClick={openPhoneSearch}>
+                  <Icon name="phone" size={15} />
+                  <span>Tìm bạn qua số điện thoại</span>
+                </button>
+                <Link to="/ban-be" className="zalo-btn-secondary">
+                  <Icon name="users" size={15} />
+                  <span>Xem danh sách bạn bè</span>
+                </Link>
+              </div>
+            </div>
           </section>
         )}
 

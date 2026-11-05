@@ -1151,7 +1151,7 @@ export default function ForumPage() {
                 onClick={() => (user ? setComposerOpen(true) : login())}
               >
                 {user
-                  ? `${user.name} ơi, bạn đang nghĩ gì thế?`
+                  ? `${user.name.split(" ")[0] || user.name} ơi, bạn đang nghĩ gì thế?`
                   : "Đăng nhập để chia sẻ với cộng đồng..."}
               </button>
             </div>
@@ -1250,38 +1250,12 @@ export default function ForumPage() {
                   <div className="fb-composer-input-area">
                     <textarea
                       autoFocus
-                      rows={image || showDropzone ? 3 : 5}
+                      rows={image || showDropzone ? 3 : 4}
                       value={draft}
                       onChange={(event) => setDraft(event.target.value)}
-                      placeholder={`${user?.name || "Bạn"} ơi, bạn đang nghĩ gì thế? Chia sẻ kinh nghiệm thuê trọ, tìm bạn ghép hoặc pass phòng...`}
+                      placeholder={`${user?.name ? user.name.split(" ")[0] : "Bạn"} ơi, bạn đang nghĩ gì thế?`}
                       className="fb-composer-textarea"
                     />
-
-                    <div className="fb-quick-tags">
-                      {[
-                        "#timtro",
-                        "#passphong",
-                        "#tim_o_ghep",
-                        "#kinh_nghiem",
-                      ].map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className="fb-quick-tag-chip"
-                          onClick={() =>
-                            setDraft((prev) =>
-                              prev.includes(tag)
-                                ? prev
-                                : prev
-                                  ? `${prev} ${tag}`
-                                  : tag,
-                            )
-                          }
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
                   </div>
 
                   {image && (

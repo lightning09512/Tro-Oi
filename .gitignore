@@ -26,3 +26,5 @@ logs/
 /.opencode-skills/
 
 .taste-skill/
+.postman/
+postman/
