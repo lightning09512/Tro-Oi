@@ -18,7 +18,7 @@ function FooterGroupContent({ group }: { group: FooterGroup }) {
   return <div className="footer-project-info">{group.details?.map((detail) => <p key={detail}>{detail}</p>)}</div>
 }
 
-export default function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" }) {
+export default function SiteFooter({ variant = "full", hidePromoBanner = false }: { variant?: "full" | "compact"; hidePromoBanner?: boolean }) {
   const { user } = useAuth()
   const [showAppModal, setShowAppModal] = useState(false)
 
@@ -69,7 +69,7 @@ export default function SiteFooter({ variant = "full" }: { variant?: "full" | "c
 
   return (
     <>
-      {variant === "full" && (
+      {variant === "full" && !hidePromoBanner && (
         <section
           className="site-footer-promo-band"
           onClick={() => setShowAppModal(true)}
