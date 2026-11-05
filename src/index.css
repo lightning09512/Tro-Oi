@@ -8592,6 +8592,8 @@ a,
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
+  aspect-ratio: 1 / 1;
 }
 
 .chat-msg-row {

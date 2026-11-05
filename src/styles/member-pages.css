@@ -519,6 +519,58 @@
 .forum-page .fb-comment-text { font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
 .forum-page .fb-action-btn { min-height: 32px; padding-inline: 6px; }
 .forum-page .fb-feed-composer { padding: 20px; margin-bottom: 22px; }
+.forum-page .fb-composer-top-row { display: flex !important; align-items: center !important; gap: 12px !important; }
+.forum-page .fb-composer-avatar-wrap {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  aspect-ratio: 1 / 1 !important;
+  flex: 0 0 40px !important;
+  flex-shrink: 0 !important;
+}
+.forum-page .avatar {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  max-width: 40px !important;
+  max-height: 40px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.forum-page .avatar.fb-avatar-sm {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+}
+.forum-page .avatar img,
+.forum-page .user-avatar-image {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 50% !important;
+  display: block !important;
+  flex-shrink: 0 !important;
+}
 .forum-page .fb-composer-input-pill { height: auto; min-height: 46px; border-radius: 12px; line-height: 1.5; text-align: left; }
 .forum-page .forum-right {
   display: flex !important;
