@@ -1,7 +1,6 @@
 import { Router } from "express"
 import bcrypt from "bcryptjs"
 import crypto from "node:crypto"
-import nodemailer from "nodemailer"
 import { z } from "zod"
 import { pool } from "../config/db.js"
 import { requireAuth } from "../middleware/auth.js"
@@ -58,9 +57,13 @@ router.post("/register/request-code", async (req, res) => {
   }
 
   if (delivery?.delivered) {
-    res.json({ message: "Mã xác minh đã được gửi tới email của bạn. Mã có hiệu lực trong 15 phút." })
+    res.json({
+      delivered: true,
+      message: "Mã xác minh đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư đến (cả mục Spam/Thư rác). Mã có hiệu lực trong 15 phút.",
+    })
   } else {
     res.json({
+      delivered: false,
       message: `Mã xác minh Trọ Ơi của bạn là: ${code} (Lưu ý: Máy chủ đám mây đang hạn chế gửi thư ra ngoài)`,
       devCode: code,
     })
@@ -164,7 +167,7 @@ router.post("/change-password", requireAuth, async (req, res) => {
 
 router.post("/password-reset/request", async (req, res) => {
   const input = z.object({ identifier: z.string().trim().min(3) }).parse(req.body)
-  if (!process.env.SMTP_HOST || !process.env.SMTP_FROM) return res.status(503).json({ error: "Chưa cấu hình dịch vụ email để gửi mã đặt lại mật khẩu.", code: "EMAIL_NOT_CONFIGURED" })
+  if (!isEmailConfigured()) return res.status(503).json({ error: "Chưa cấu hình dịch vụ email để gửi mã đặt lại mật khẩu.", code: "EMAIL_NOT_CONFIGURED" })
   const { rows } = await pool.query("SELECT id,email FROM users WHERE lower(email)=lower($1) OR regexp_replace(phone, '[[:space:]]', '', 'g')=$2 LIMIT 1", [input.identifier, input.identifier.replace(/\s/g, "")])
   if (!rows[0]) return res.json({ message: "Nếu thông tin khớp tài khoản, mã xác nhận sẽ được gửi qua email đã đăng ký." })
   const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0")
@@ -188,9 +191,13 @@ router.post("/password-reset/request", async (req, res) => {
     delivery = { delivered: false, fallback: true, code }
   }
   if (delivery?.delivered) {
-    res.json({ message: "Mã xác nhận đã được gửi đến email đã đăng ký." })
+    res.json({
+      delivered: true,
+      message: "Mã xác nhận đã được gửi đến email đã đăng ký. Vui lòng kiểm tra hộp thư đến (cả mục Spam/Thư rác).",
+    })
   } else {
     res.json({
+      delivered: false,
       message: `Mã đặt lại mật khẩu của bạn là: ${code} (Lưu ý: Máy chủ đám mây đang hạn chế gửi thư ra ngoài)`,
       devCode: code,
     })

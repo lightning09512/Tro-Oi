@@ -27,6 +27,11 @@ export default function PasswordRecoveryPage({ reset = false }: { reset?: boolea
       try {
         const sentCode = await authService.requestPasswordReset(identifier)
         setDemoCode(sentCode)
+        if (sentCode) {
+          sessionStorage.setItem("trooi_recovery_devcode", sentCode)
+        } else {
+          sessionStorage.removeItem("trooi_recovery_devcode")
+        }
         navigate(`/dat-lai-mat-khau?identifier=${encodeURIComponent(identifier.trim())}`)
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : "Không thể gửi hướng dẫn khôi phục.")
@@ -40,6 +45,7 @@ export default function PasswordRecoveryPage({ reset = false }: { reset?: boolea
     setStatus("loading")
     try {
       await authService.resetPassword(identifier, code, password)
+      sessionStorage.removeItem("trooi_recovery_devcode")
       setStatus("success")
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể đặt lại mật khẩu.")
@@ -51,7 +57,28 @@ export default function PasswordRecoveryPage({ reset = false }: { reset?: boolea
     <form className="auth-form" onSubmit={submit} noValidate>
       {!reset ? <label className="form-field"><span>Email hoặc số điện thoại <b>*</b></span><input value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder="Thông tin đã đăng ký"/><small>{isApiMode ? "Mã xác nhận sẽ được gửi tới email đã đăng ký." : "Trong bản demo, mã xác nhận sẽ hiển thị ở bước tiếp theo."}</small></label> : <>
         <label className="form-field"><span>Email hoặc số điện thoại</span><input value={identifier} onChange={(event) => setIdentifier(event.target.value)} required/></label>
-        <label className="form-field"><span>Mã xác nhận <b>*</b></span><input inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="6 chữ số"/>{!isApiMode && (demoCode ? <small>Mã demo: {demoCode}</small> : <small>Mã demo: 123456</small>)}</label>
+        <label className="form-field">
+          <span>Mã xác nhận <b>*</b></span>
+          <input inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} placeholder="6 chữ số"/>
+          {(() => {
+            const devCode = demoCode || sessionStorage.getItem("trooi_recovery_devcode") || ""
+            if (devCode) {
+              return (
+                <small style={{ color: "#d97706" }}>
+                  Mã kiểm thử (do máy chủ chưa mở SMTP): <strong>{devCode}</strong>{" "}
+                  <button
+                    type="button"
+                    onClick={() => setCode(devCode)}
+                    style={{ background: "none", border: "none", color: "#16a34a", textDecoration: "underline", cursor: "pointer", padding: 0, fontSize: "inherit", fontWeight: 600 }}
+                  >
+                    Điền nhanh
+                  </button>
+                </small>
+              )
+            }
+            return <small>Mã 6 chữ số đã được gửi tới email của bạn (vui lòng kiểm tra cả mục Spam/Thư rác).</small>
+          })()}
+        </label>
         <label className="form-field"><span>Mật khẩu mới <b>*</b></span><div className="password-input"><input type={show ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Ít nhất 8 ký tự"/><button type="button" onClick={() => setShow((current) => !current)} aria-label="Hiện hoặc ẩn mật khẩu"><Icon name="eye" size={18}/></button></div></label>
         <label className="form-field"><span>Xác nhận mật khẩu <b>*</b></span><input type="password" value={confirm} onChange={(event) => setConfirm(event.target.value)} placeholder="Nhập lại mật khẩu mới"/></label>
       </>}

@@ -46,7 +46,12 @@ export default function RegisterPage() {
     try {
       const demoCode = await requestRegistrationCode(email)
       setCodeSentEmail(email)
-      setNotice(demoCode ? "Mã demo: " + demoCode : "Mã xác minh đã được gửi tới " + email + ".")
+      if (demoCode) {
+        setNotice("Mã xác minh kiểm thử (do máy chủ chưa mở SMTP): " + demoCode)
+        setVerificationCode(demoCode)
+      } else {
+        setNotice("Mã xác minh đã được gửi tới " + email + ". Vui lòng kiểm tra hộp thư đến (cả mục Spam/Thư rác).")
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Không thể gửi mã xác minh. Vui lòng thử lại.")
     } finally {
