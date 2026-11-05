@@ -32,6 +32,161 @@ import { resolveLocationCoordinates } from "@/utils/mapCoordinates"
 
 const RoomMap = lazy(() => import("@/components/maps/RoomMap"))
 
+
+function NhaTotListingCard({
+  item,
+  index,
+  saved,
+  onToggleFavorite,
+  onClick,
+}: {
+  item: any
+  index: number
+  saved: boolean
+  onToggleFavorite: (id: string, e: React.MouseEvent) => void
+  onClick: () => void
+}) {
+  const timeLabels = [
+    "8 ngày trước",
+    "15 giờ trước",
+    "21 giờ trước",
+    "Hôm qua",
+    "2 ngày trước",
+    "3 ngày trước",
+  ]
+  const timeLabel =
+    item.badge === "Nổi bật" || item.badge === "Giá tốt"
+      ? "Tin nổi bật"
+      : timeLabels[index % timeLabels.length]
+  const isHot = timeLabel === "Tin nổi bật"
+  const photoCount = item.gallery?.length ? item.gallery.length + 1 : 6
+  const isPartner =
+    item.badge === "Đối Tác" ||
+    item.badge === "Chính chủ" ||
+    item.badge === "Xác thực"
+
+  const specs =
+    item.type === "Chung cư"
+      ? "1 PN · Chung cư"
+      : item.type === "Căn hộ dịch vụ"
+        ? "1 PN · Căn hộ dịch vụ"
+        : item.type === "Chuyển nhượng"
+          ? "Phòng trọ · Chuyển nhượng"
+          : "1 PN · Phòng trọ"
+
+  const locParts = item.location.split(",").map((s: string) => s.trim())
+  const shortLoc =
+    locParts.length > 2
+      ? `${locParts[locParts.length - 2]}`
+      : item.location
+
+  return (
+    <article className="nhatot-listing-card" onClick={onClick}>
+      <div className="nhatot-card-thumb-wrap">
+        <img
+          src={item.image || "/images/room-placeholder.svg"}
+          alt={item.title}
+          className="nhatot-card-thumb-img"
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.onerror = null
+            e.currentTarget.src = "/images/room-placeholder.svg"
+          }}
+        />
+        <span className={`nhatot-card-badge-time ${isHot ? "is-hot" : ""}`}>
+          {timeLabel}
+        </span>
+        <span className="nhatot-card-badge-photos">
+          <Icon name="camera" size={11} /> {photoCount}
+        </span>
+        <button
+          type="button"
+          className={`nhatot-card-heart-btn ${saved ? "is-saved" : ""}`}
+          aria-label={saved ? "Bỏ lưu tin" : "Lưu tin"}
+          onClick={(e) => onToggleFavorite(item.id, e)}
+        >
+          <Icon name="heart" size={16} />
+        </button>
+      </div>
+
+      <div className="nhatot-card-content">
+        <h3 className="nhatot-card-title">
+          {isPartner && (
+            <span className="nhatot-partner-tag">
+              <Icon name="shield" size={10} /> Đối Tác
+            </span>
+          )}
+          {item.title}
+        </h3>
+        <div className="nhatot-card-specs">{specs}</div>
+        <div className="nhatot-card-price-area">
+          <strong className="nhatot-card-price">{item.price}/tháng</strong>
+          <span className="nhatot-card-area">{item.area || "35 m²"}</span>
+        </div>
+        <div className="nhatot-card-location">
+          <Icon name="pin" size={12} />
+          <span>{shortLoc}</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function NhaTotListingSlider({
+  items,
+  isFavorite,
+  onToggleFavorite,
+  onSelect,
+}: {
+  items: any[]
+  isFavorite: (id: string) => boolean
+  onToggleFavorite: (id: string, e: React.MouseEvent) => void
+  onSelect: (id: string) => void
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (direction: "left" | "right") => {
+    if (!trackRef.current) return
+    const offset = direction === "left" ? -460 : 460
+    trackRef.current.scrollBy({ left: offset, behavior: "smooth" })
+  }
+
+  return (
+    <div className="nhatot-carousel-wrap">
+      <button
+        type="button"
+        className="nhatot-carousel-nav-btn prev"
+        onClick={() => scroll("left")}
+        aria-label="Xem tin trước"
+      >
+        <Icon name="chevron" size={16} style={{ transform: "rotate(180deg)" }} />
+      </button>
+
+      <div className="nhatot-carousel-track" ref={trackRef}>
+        {items.map((item, idx) => (
+          <NhaTotListingCard
+            key={item.id}
+            item={item}
+            index={idx}
+            saved={isFavorite(item.id)}
+            onToggleFavorite={onToggleFavorite}
+            onClick={() => onSelect(item.id)}
+          />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="nhatot-carousel-nav-btn next"
+        onClick={() => scroll("right")}
+        aria-label="Xem tin tiếp theo"
+      >
+        <Icon name="chevron" size={16} />
+      </button>
+    </div>
+  )
+}
+
 export default function RoomDetailPage() {
   const navigate = useNavigate()
 
@@ -175,7 +330,7 @@ export default function RoomDetailPage() {
         (left, right) => right.score - left.score || left.index - right.index,
       )
 
-      .slice(0, 4)
+      .slice(0, 10)
 
       .map(({ listing }) => listing)
   }, [listings, room])
@@ -193,6 +348,71 @@ export default function RoomDetailPage() {
     : []
 
   const activeGalleryPhoto = galleryPhotos[galleryIndex] ?? galleryPhotos[0]
+
+  const rawLocationParts = room ? room.location.split(",").map((p) => p.trim()) : []
+  const displayDistrict = rawLocationParts.length > 1 ? rawLocationParts[rawLocationParts.length - 2] : "khu vực"
+
+  const ownerOtherListings = useMemo(() => {
+    if (!room) return []
+    const fromOwner = listings.filter(
+      (l) =>
+        l.status === "active" &&
+        l.id !== room.id &&
+        ((room.ownerId && l.ownerId === room.ownerId) ||
+          (room.ownerName && l.ownerName === room.ownerName)),
+    )
+    if (fromOwner.length >= 3) return fromOwner.slice(0, 10)
+    const others = listings.filter(
+      (l) =>
+        l.status === "active" &&
+        l.id !== room.id &&
+        !fromOwner.some((o) => o.id === l.id),
+    )
+    return [...fromOwner, ...others].slice(0, 10)
+  }, [listings, room])
+
+  const topBrokers = useMemo(() => {
+    if (!room) return []
+    const map = new Map<string, { id: string; name: string; avatarUrl?: string; count: number }>()
+    listings.filter((l) => l.status === "active").forEach((l) => {
+      const ownerKey = l.ownerId || l.ownerName || "Chủ phòng"
+      const existing = map.get(ownerKey)
+      const avatar = l.ownerAvatarUrl || users?.find((u) => u.id === l.ownerId)?.avatarUrl
+      if (existing) {
+        existing.count += 1
+      } else {
+        map.set(ownerKey, {
+          id: l.ownerId || "",
+          name: l.ownerName || "Chủ phòng uy tín",
+          avatarUrl: avatar,
+          count: 1,
+        })
+      }
+    })
+
+    const list = Array.from(map.values()).sort((a, b) => b.count - a.count)
+    const seedDefaults = [
+      { id: "user-broker-01", name: "Hồ Phan Huy Châu", avatarUrl: "/images/avatars/demo-owner-01.jpg", count: 17 },
+      { id: "user-broker-02", name: "BĐS Kim Ngọc", avatarUrl: "/images/avatars/demo-owner-02.jpg", count: 3 },
+      { id: "user-broker-03", name: "Nguyễn Trọng Tuấn", avatarUrl: "/images/avatars/demo-tenant-01.jpg", count: 1 },
+    ]
+    const merged = [...list, ...seedDefaults.filter((d) => !list.some((item) => item.name === d.name))]
+    return merged.slice(0, 4)
+  }, [listings, users, room])
+
+  const handleToggleFavorite = async (listingId: string, event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!user) {
+      navigate("/dang-nhap", { state: { from: window.location.pathname } })
+      return
+    }
+    try {
+      await toggleFavorite(listingId)
+      toast(isFavorite(listingId) ? "Đã bỏ lưu phòng" : "Đã lưu phòng", "success")
+    } catch {
+      toast("Không thể cập nhật danh sách yêu thích", "error")
+    }
+  }
 
   useEffect(() => {
     if (room?.id) void incrementListingViews(room.id).catch(() => undefined)
@@ -547,43 +767,10 @@ export default function RoomDetailPage() {
             <section className="room-detail-panel room-features-panel">
               <div className="room-detail-panel-heading">
                 <div>
-                  <h2>Đặc điểm phòng</h2>
+                  <h2>Tiện ích phòng</h2>
                 </div>
               </div>
-              <dl className="room-detail-attributes">
-                <div>
-                  <dt>
-                    <Icon name="building" size={15} />
-                    Loại hình
-                  </dt>
-                  <dd>{room.type}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Icon name="map" size={15} />
-                    Diện tích
-                  </dt>
-                  <dd>{room.area || "Chưa cập nhật"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Icon name="shield" size={15} />
-                    Tiền cọc
-                  </dt>
-                  <dd>{room.deposit || "Trao đổi khi liên hệ"}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Icon name="home" size={15} />
-                    Tình trạng
-                  </dt>
-                  <dd>
-                    {room.status === "rented" ? "Đã cho thuê" : "Đang hiển thị"}
-                  </dd>
-                </div>
-              </dl>
-              <div className="room-amenities-block">
-                <h3>Tiện ích phòng</h3>
+              <div className="room-amenities-block" style={{ borderTop: "none", marginTop: 0, paddingTop: 0 }}>
                 {room.amenities.length ? (
                   <div className="room-amenities-list">
                     {room.amenities.map((item) => (
@@ -1015,42 +1202,94 @@ export default function RoomDetailPage() {
             </div>
           </aside>
         </div>
-        <section
-          className="similar-listings-section"
-          aria-labelledby="similar-listings-title"
-        >
-          <div className="similar-listings-heading">
-            <div>
-              <h2 id="similar-listings-title">Tin đăng tương tự</h2>
-              <p>
-                Các phòng đang hiển thị có khu vực, loại phòng hoặc mức giá gần
-                với tin này.
-              </p>
-            </div>
-            <Link to="/tim-phong">
-              Xem tất cả phòng <Icon name="chevron" size={16} />
+        {/* SECTION 1: Tin đăng tương tự */}
+        <section className="nhatot-detail-section" aria-labelledby="similar-listings-title">
+          <h2 id="similar-listings-title" className="nhatot-detail-section-title">
+            Tin đăng tương tự
+          </h2>
+          <NhaTotListingSlider
+            items={similarListings}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+            onSelect={(selectedId) => navigate(`/phong/${selectedId}`)}
+          />
+          <div className="nhatot-view-more-container">
+            <Link to="/tim-phong" className="nhatot-view-more-btn">
+              Xem thêm
             </Link>
           </div>
-          {similarListings.length ? (
-            <div className="similar-listings-grid">
-              {similarListings.map((listing) => (
-                <RoomCard
-                  key={listing.id}
-                  room={listing}
-                  onClick={() => navigate("/phong/" + listing.id)}
+        </section>
+
+        {/* SECTION 2: Tin rao khác của người đăng */}
+        <section className="nhatot-detail-section" aria-labelledby="owner-listings-title">
+          <h2 id="owner-listings-title" className="nhatot-detail-section-title">
+            Tin rao khác của {ownerDisplayName}
+          </h2>
+          <NhaTotListingSlider
+            items={ownerOtherListings}
+            isFavorite={isFavorite}
+            onToggleFavorite={handleToggleFavorite}
+            onSelect={(selectedId) => navigate(`/phong/${selectedId}`)}
+          />
+          <div className="nhatot-view-more-container">
+            <Link
+              to={`/tim-phong${room.ownerId ? `?owner=${room.ownerId}` : ""}`}
+              className="nhatot-view-more-btn"
+            >
+              Xem thêm
+            </Link>
+          </div>
+        </section>
+
+        {/* SECTION 3: Top môi giới hoạt động tại khu vực */}
+        <section className="nhatot-detail-section" aria-labelledby="top-brokers-title">
+          <div className="nhatot-top-brokers-head">
+            <span className="nhatot-trophy-icon" aria-hidden="true">
+              <svg viewBox="0 0 36 36" fill="none" className="size-full">
+                <path d="M10 6H26V15C26 19.4183 22.4183 23 18 23C13.5817 23 10 19.4183 10 15V6Z" fill="#FACC15" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M10 9H5C4.44772 9 4 9.44772 4 10C4 13.3137 6.68629 16 10 16V9Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M26 9H31C31.5523 9 32 9.44772 32 10C32 13.3137 29.3137 16 26 16V9Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                <path d="M18 23V29" stroke="#CA8A04" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M12 31H24" stroke="#CA8A04" strokeWidth="3" strokeLinecap="round"/>
+                <circle cx="18" cy="13" r="3" fill="#EAB308"/>
+              </svg>
+            </span>
+            <div>
+              <h2 id="top-brokers-title">Top môi giới hoạt động tại {displayDistrict}</h2>
+              <p>Kết nối với môi giới có tin đăng phù hợp với bạn</p>
+            </div>
+          </div>
+
+          <div className="nhatot-brokers-list">
+            {topBrokers.map((broker) => (
+              <Link
+                key={broker.id + broker.name}
+                to={broker.id ? `/nguoi-dung/${broker.id}` : "/tim-phong"}
+                className="nhatot-broker-item"
+              >
+                <img
+                  className="nhatot-broker-avatar"
+                  src={broker.avatarUrl || "/images/avatars/demo-owner-01.jpg"}
+                  alt={broker.name}
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = "/images/avatars/demo-owner-01.jpg"
+                  }}
                 />
-              ))}
-            </div>
-          ) : (
-            <div className="similar-listings-empty">
-              <Icon name="building" size={22} />
-              <span>
-                Chưa có tin đang hiển thị để gợi ý. Hãy xem tất cả phòng để khám
-                phá thêm.
-              </span>
-              <Link to="/tim-phong">Tìm phòng</Link>
-            </div>
-          )}
+                <div>
+                  <strong className="nhatot-broker-name">{broker.name}</strong>
+                  <span className="nhatot-broker-count">{broker.count} tin đăng phù hợp</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="nhatot-view-more-container">
+            <Link to="/tim-phong" className="nhatot-view-more-btn">
+              Xem thêm
+            </Link>
+          </div>
         </section>
         {lightboxOpen && (
           <div
