@@ -189,7 +189,7 @@ function Filters({
 }
 
 export default function SearchPage() {
-  const { listings, categories } = usePlatform()
+  const { listings, categories, users } = usePlatform()
   const roomTypes = categories
     .filter((item) => item.type === "Loại phòng" && item.status === "active" && item.name !== "Chuyển nhượng")
     .map((item) => item.name)
@@ -217,6 +217,34 @@ export default function SearchPage() {
   const longitude = Number(searchParams.get("lng"))
   const requestedRadiusKm = Number(searchParams.get("radiusKm"))
   const radiusKm = Number.isFinite(requestedRadiusKm) && requestedRadiusKm >= 1 && requestedRadiusKm <= 100 ? requestedRadiusKm : 20
+  const topBrokers = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; avatarUrl?: string; count: number }>()
+    listings.filter((l) => l.status === "active").forEach((l) => {
+      const ownerKey = l.ownerId || l.ownerName || "Chủ phòng"
+      const existing = map.get(ownerKey)
+      const avatar = l.ownerAvatarUrl || users?.find((u) => u.id === l.ownerId)?.avatarUrl
+      if (existing) {
+        existing.count += 1
+      } else {
+        map.set(ownerKey, {
+          id: l.ownerId || "",
+          name: l.ownerName || "Chủ phòng uy tín",
+          avatarUrl: avatar,
+          count: 1,
+        })
+      }
+    })
+
+    const list = Array.from(map.values()).sort((a, b) => b.count - a.count)
+    const seedDefaults = [
+      { id: "user-broker-01", name: "Hồ Phan Huy Châu", avatarUrl: "/images/avatars/demo-owner-01.jpg", count: 17 },
+      { id: "user-broker-02", name: "BĐS Kim Ngọc", avatarUrl: "/images/avatars/demo-owner-02.jpg", count: 3 },
+      { id: "user-broker-03", name: "Nguyễn Trọng Tuấn", avatarUrl: "/images/avatars/demo-tenant-01.jpg", count: 1 },
+    ]
+    const merged = [...list, ...seedDefaults.filter((d) => !list.some((item) => item.name === d.name))]
+    return merged.slice(0, 4)
+  }, [listings, users])
+
   const isNearSearch =
     searchParams.has("lat") &&
     searchParams.has("lng") &&
@@ -496,6 +524,63 @@ export default function SearchPage() {
             )}
             {loadingRooms && matchingRooms.length > 0 && <p className="result-count-note">Đang tải thêm tin phòng…</p>}
             {isApiMode && remoteRooms.length < remoteTotal && !loadingRooms && <div className="search-load-more"><Button variant="outline" onClick={() => setRemotePage((page) => page + 1)}>Xem thêm phòng</Button></div>}
+
+            {/* Top môi giới hoạt động tại khu vực */}
+            <section className="nhatot-detail-section search-top-brokers-section" aria-labelledby="search-top-brokers-title" style={{ marginTop: '24px' }}>
+              <div className="nhatot-top-brokers-head">
+                <span className="nhatot-trophy-icon" aria-hidden="true">
+                  <svg viewBox="0 0 36 36" fill="none" className="size-full">
+                    <path d="M10 6H26V15C26 19.4183 22.4183 23 18 23C13.5817 23 10 19.4183 10 15V6Z" fill="#FACC15" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                    <path d="M10 9H5C4.44772 9 4 9.44772 4 10C4 13.3137 6.68629 16 10 16V9Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                    <path d="M26 9H31C31.5523 9 32 9.44772 32 10C32 13.3137 29.3137 16 26 16V9Z" fill="#FEF08A" stroke="#CA8A04" strokeWidth="2" strokeLinejoin="round"/>
+                    <path d="M18 23V29" stroke="#CA8A04" strokeWidth="2.5" strokeLinecap="round"/>
+                    <path d="M12 31H24" stroke="#CA8A04" strokeWidth="3" strokeLinecap="round"/>
+                    <circle cx="18" cy="13" r="3" fill="#EAB308"/>
+                  </svg>
+                </span>
+                <div>
+                  <h2 id="search-top-brokers-title">Top môi giới hoạt động tại {locationLabel === "toàn quốc" ? "khu vực tìm kiếm" : locationLabel}</h2>
+                  <p>Kết nối với môi giới có tin đăng phù hợp với bạn</p>
+                </div>
+              </div>
+
+              <div className="nhatot-brokers-list">
+                {topBrokers.map((broker) => (
+                  <Link
+                    key={broker.id + broker.name}
+                    to={broker.id ? `/nguoi-dung/${broker.id}` : "/tim-phong"}
+                    className="nhatot-broker-item"
+                  >
+                    <img
+                      className="nhatot-broker-avatar"
+                      src={broker.avatarUrl || "/images/avatars/demo-owner-01.jpg"}
+                      alt={broker.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = "/images/avatars/demo-owner-01.jpg"
+                      }}
+                    />
+                    <div>
+                      <strong className="nhatot-broker-name">{broker.name}</strong>
+                      <span className="nhatot-broker-count">{broker.count} tin đăng phù hợp</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="nhatot-view-more-container">
+                <button
+                  type="button"
+                  className="nhatot-view-more-btn"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" })
+                  }}
+                >
+                  Xem thêm
+                </button>
+              </div>
+            </section>
           </section>
         </div>
       </div>

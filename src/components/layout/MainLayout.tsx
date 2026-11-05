@@ -12,13 +12,14 @@ export default function MainLayout() {
   const isPublicContent = pathname === "/" || pathname === "/tim-phong" || pathname.startsWith("/phong/") || pathname === "/dien-dan" || pathname.startsWith("/bai-viet/")
   const isForum = pathname === "/dien-dan" || pathname.startsWith("/bai-viet/")
   const isRoomDetail = pathname.startsWith("/phong/")
+  const isSearch = pathname === "/tim-phong"
 
   return (
     <>
       <MainHeader />
       <div id="main-content" className="content-route" tabIndex={-1}><Outlet /></div>
       {isPublicContent && <FloatingMascotWidget />}
-      {!isFocusedWorkspace && <SiteFooter variant={isPublicContent ? "full" : "compact"} hidePromoBanner={isForum || isRoomDetail} />}
+      {!isFocusedWorkspace && <SiteFooter variant={isPublicContent ? "full" : "compact"} hidePromoBanner={isForum || isRoomDetail || isSearch} />}
       <BottomNavigation />
     </>
   )
