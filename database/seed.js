@@ -230,13 +230,162 @@ async function seedPostgres() {
       ["tromoi-phong-tro-huynh-van-nghe-tan-binh", "user-renter-04", 5, "Anh chủ trọ trẻ tính, dễ tính và nhiệt tình. Lúc nhận phòng anh kiểm tra máy lạnh quạt gió hoạt động tốt mới bàn giao. Giá điện nước tính đúng theo giá cam kết, ko phát sinh phụ phí gì."],
     ]
     for (const [listingId, authorId, stars, text] of sampleReviews) {
+      const listingExists = await client.query("SELECT 1 FROM listings WHERE id = $1", [listingId]);
+      if (!listingExists.rowCount) continue;
       await client.query(
         `INSERT INTO reviews(id, listing_id, author_id, stars, text, created_at, updated_at)
          VALUES($1, $2, $3, $4, $5, now() - interval '3 days', now())
          ON CONFLICT (listing_id, author_id) DO UPDATE SET
            stars=EXCLUDED.stars, text=EXCLUDED.text, updated_at=now()`,
         [`review-${listingId}-${authorId}`, listingId, authorId, stars, text],
-      )
+      );
+    }
+
+    const sampleTransfers = [
+      {
+        id: "transfer-01",
+        ownerId: "user-renter-01",
+        title: "Pass phòng studio ban công Ung Văn Khiêm, Bình Thạnh",
+        desc: "Do mình nhận việc mới ở Quận 7 nên cần pass gấp phòng studio có ban công thoáng mát tại hẻm 105 Ung Văn Khiêm, P.25, Bình Thạnh.",
+        loc: "105 Ung Văn Khiêm, Phường 25, Bình Thạnh, TP. Hồ Chí Minh",
+        rent: 4200000,
+        fee: 0,
+        dep: "Cọc 1 tháng 4.200.000đ",
+        area: 28.00,
+        type: "Phòng studio",
+        amenities: ["Máy lạnh", "Tủ lạnh", "Ban công", "Máy giặt"],
+        img: "/images/rooms/scandinavian-room.jpg",
+        gallery: ["/images/rooms/scandinavian-room.jpg", "/images/rooms/studio-kitchen.jpg"],
+      },
+      {
+        id: "transfer-02",
+        ownerId: "user-renter-03",
+        title: "Nhượng gấp phòng trọ gác đúc cao Tô Hiến Thành, Q.10",
+        desc: "Mình tốt nghiệp chuẩn bị về quê công tác nên cần sang nhượng lại phòng trọ gác đúc cao đứng thẳng người ở Tô Hiến Thành, Q.10.",
+        loc: "248 Tô Hiến Thành, Phường 15, Quận 10, TP. Hồ Chí Minh",
+        rent: 3800000,
+        fee: 0,
+        dep: "Cọc 1 tháng 3.800.000đ",
+        area: 24.00,
+        type: "Phòng trọ",
+        amenities: ["Máy lạnh", "Gác lửng cao", "Chỗ để xe"],
+        img: "/images/rooms/wood-accent-room.jpg",
+        gallery: ["/images/rooms/wood-accent-room.jpg", "/images/rooms/student-desk.jpg"],
+      },
+      {
+        id: "transfer-03",
+        ownerId: "user-renter-02",
+        title: "Pass phòng căn hộ mini Bàu Cát, Tân Bình",
+        desc: "Căn hộ mini tầng 3 có thang máy và ban công riêng tại khu Bàu Cát, Tân Bình.",
+        loc: "52 Bàu Cát 1, Phường 14, Tân Bình, TP. Hồ Chí Minh",
+        rent: 4600000,
+        fee: 0,
+        dep: "Cọc 1 tháng 4.600.000đ",
+        area: 32.00,
+        type: "Căn hộ mini",
+        amenities: ["Máy lạnh", "Tủ lạnh", "Ban công", "Thang máy"],
+        img: "/images/rooms/compact-color-room.jpg",
+        gallery: ["/images/rooms/compact-color-room.jpg", "/images/rooms/blue-bedroom.jpg"],
+      },
+      {
+        id: "transfer-04",
+        ownerId: "user-renter-04",
+        title: "Chuyển nhượng studio Landmark Đỗ Xuân Hợp, TP. Thủ Đức",
+        desc: "Phòng studio full nội thất xịn xò tại đường Đỗ Xuân Hợp, TP. Thủ Đức.",
+        loc: "365 Đỗ Xuân Hợp, Phước Long B, TP. Thủ Đức, TP. Hồ Chí Minh",
+        rent: 5500000,
+        fee: 0,
+        dep: "Cọc 1 tháng 5.500.000đ",
+        area: 35.00,
+        type: "Căn hộ studio",
+        amenities: ["Full nội thất cao cấp", "Máy lạnh Inverter", "Sofa"],
+        img: "/images/rooms/city-window.jpg",
+        gallery: ["/images/rooms/city-window.jpg", "/images/rooms/studio-kitchen.jpg"],
+      },
+    ];
+
+    for (const t of sampleTransfers) {
+      await client.query(
+        `INSERT INTO transfers (
+           id, owner_id, title, description, location,
+           monthly_rent_vnd, transfer_fee_vnd, deposit_text, area_m2,
+           room_type, contract_end_date, available_from, amenities,
+           image_url, gallery, status, created_at, updated_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_DATE + INTERVAL '6 months', CURRENT_DATE + INTERVAL '3 days', $11, $12, $13, 'active', NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description, status = 'active', updated_at = NOW()`,
+        [t.id, t.ownerId, t.title, t.desc, t.loc, t.rent, t.fee, t.dep, t.area, t.type, JSON.stringify(t.amenities), t.img, JSON.stringify(t.gallery)],
+      );
+    }
+
+    const passPosts = [
+      {
+        id: "pass-forum-post-01",
+        authorId: "user-renter-01",
+        content: `[PASS PHÒNG GẤP - BÌNH THẠNH] Sang nhượng cọc phòng studio ban công Ung Văn Khiêm\n\nChào mọi người, do mình chuyển nơi làm việc sang Quận 7 nên cần pass lại gấp phòng studio lầu 2 ban công siêu thoáng ở hẻm 105 Ung Văn Khiêm, P.25, Bình Thạnh (ngay ngã tư Hàng Xanh, gần Hutech, Ngoại Thương).\n\n📌 Thông tin phòng:\n- Giá thuê: 4.200.000đ/tháng (giá này giữ cố định suốt hợp đồng).\n- Tiền cọc: 1 tháng (4.2tr), hợp đồng còn 7 tháng. Mình hỗ trợ 500k tiền dọn nhà cho bạn nào chốt sớm trong tuần này!\n- Phòng có sẵn: Máy lạnh Inverter, tủ lạnh, giường nệm cao su, tủ quần áo, kệ bếp riêng biệt nấu ăn thoải mái.\n- Tòa nhà có thang máy, khóa vân tay 2 lớp, camera 24/7, xe máy để free ở trệt.\n\n🎁 Tặng lại bạn mới: Kệ để giày dép gỗ, quạt cây và bộ rèm cửa chống nắng mình tự mua.\n\nChủ trọ cô Ngọc cực kỳ dễ thương, hỗ trợ làm lại phụ lục hợp đồng sang tên cọc minh bạch. Mọi người quan tâm nhắn tin cho mình hoặc ghé xem phòng sau 17h30 hàng ngày nhé!`,
+        image: "/images/rooms/scandinavian-room.jpg",
+        comments: [
+          ["pass-forum-comment-01", "user-renter-03", "Phòng ban công thoáng đãng xinh quá Trang ơi, hẻm Ung Văn Khiêm đoạn này mùa mưa không bị ngập nước đúng không bạn?", null],
+          ["pass-forum-comment-02", "user-renter-01", "@Thu Hà Dạ đoạn 105 cao ráo lắm bạn ơi, mưa to triều cường cũng ko bao giờ ngập nha. Bạn muốn ghé xem thì nhắn mình dẫn lên phòng nhé!", "pass-forum-comment-01"],
+        ],
+      },
+      {
+        id: "pass-forum-post-02",
+        authorId: "user-renter-03",
+        content: `[CHUYỂN NHƯỢNG PHÒNG TRỌ QUẬN 10] Pass phòng gác lửng cao Tô Hiến Thành sát ĐH Bách Khoa\n\nEm vừa tốt nghiệp chuẩn bị về quê nên cần nhượng lại phòng trọ đang thuê ở đường Tô Hiến Thành, P.15, Quận 10.\n\n✨ Chi tiết phòng:\n- Giá thuê: 3.800.000đ/tháng, diện tích 24m².\n- Gác lửng đúc bê tông kiên cố, cao 1m9 đứng thẳng người thoải mái, không lo cộc đầu.\n- Vệ sinh khép kín trong phòng, có sẵn máy lạnh mới vệ sinh sạch sẽ, quạt hút mùi.\n- Giờ giấc tự do, không chung chủ, có sân phơi đồ đón nắng trên sân thượng.\n- Cọc 1 tháng (3.8tr), hợp đồng còn 6 tháng. Em pass lại cọc và tặng kèm bàn học gỗ + giá sách gắn tường còn rất mới.\n\nBạn nào cần tìm phòng khu vực Q10, gần Bách Khoa, Huflit hay Big C Miền Đông thì nhắn tin em dẫn qua xem phòng nha!`,
+        image: "/images/rooms/wood-accent-room.jpg",
+        comments: [
+          ["pass-forum-comment-03", "user-renter-01", "Khu Tô Hiến Thành này tiện ăn uống mua sắm nè, chúc bạn sớm pass được phòng nha!", null],
+        ],
+      },
+      {
+        id: "pass-forum-post-03",
+        authorId: "user-renter-02",
+        content: `[PASS PHÒNG TÂN BÌNH] Nhượng căn hộ mini khu Bàu Cát, ban công riêng\n\nMình cần chuyển công tác gấp nên nhượng lại căn hộ mini tầng 3 tại hẻm 52 Bàu Cát 1, P.14, Tân Bình.\n\n🏡 Ưu điểm nổi bật:\n- Giá thuê: 4.600.000đ/tháng, diện tích 32m² rộng rãi.\n- Ban công đón gió thoáng mát, phơi đồ riêng tư không lo mưa gió.\n- Thang máy tốc độ cao, camera an ninh từng tầng, bảo vệ trực 24/24.\n- Tặng lại: Tủ lạnh mini mới mua 5 tháng + bàn làm việc chân sắt mặt gỗ xịn xò.\n- Hợp đồng còn 5 tháng, hỗ trợ sang tên cọc 1 tháng 4.6tr nhanh gọn lẹ.\n\nLiên hệ trực tiếp qua tin nhắn để hẹn xem phòng buổi tối nhé!`,
+        image: "/images/rooms/compact-color-room.jpg",
+        comments: [],
+      },
+      {
+        id: "pass-forum-post-04",
+        authorId: "user-renter-04",
+        content: `[CHUYỂN NHƯỢNG PHÒNG THỦ ĐỨC] Studio cao cấp Landmark Đỗ Xuân Hợp view thoáng\n\nCần pass lại căn studio cao cấp tại 365 Đỗ Xuân Hợp, Phước Long B, TP. Thủ Đức (tiện đi Khu Công Nghệ Cao, ĐH FPT, HUTECH cơ sở E).\n\n🌟 Tiện nghi sẵn có:\n- Giá: 5.500.000đ/tháng, diện tích 35m².\n- Full nội thất cao cấp: máy lạnh Inverter, smart TV, sofa bed, máy giặt riêng, tủ lạnh 2 cánh.\n- Bếp điện âm hiện đại, hút mùi không ám khói.\n- Hợp đồng còn 8 tháng, tiền cọc 1 tháng. Chủ nhà hỗ trợ ký mới hoàn toàn.\n\nAi có nhu cầu chuyển vào ngay đầu tháng liên hệ mình qua tin nhắn nhé!`,
+        image: "/images/rooms/city-window.jpg",
+        comments: [],
+      },
+    ];
+
+    for (const post of passPosts) {
+      await client.query(
+        `INSERT INTO forum_posts(id, author_id, content, image_url, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'active', NOW() - INTERVAL '3 hours', NOW())
+         ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content, image_url=EXCLUDED.image_url, status='active', updated_at=NOW()`,
+        [post.id, post.authorId, post.content, post.image],
+      );
+      for (const [cId, authorId, content, parentId] of post.comments) {
+        await client.query(
+          `INSERT INTO forum_comments(id, post_id, author_id, content, parent_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '1 hour', NOW())
+           ON CONFLICT (id) DO UPDATE SET content=EXCLUDED.content, parent_id=EXCLUDED.parent_id, updated_at=NOW()`,
+          [cId, post.id, authorId, content, parentId],
+        );
+      }
+    }
+
+    const sampleFriendRequests = [
+      ["fr-seed-01", "user-renter-01", "11e095c2-caff-4698-9168-7480ac8a8d17"],
+      ["fr-seed-02", "user-renter-03", "11e095c2-caff-4698-9168-7480ac8a8d17"],
+      ["fr-seed-03", "user-landlord-01", "11e095c2-caff-4698-9168-7480ac8a8d17"],
+    ];
+    for (const [frId, senderId, receiverId] of sampleFriendRequests) {
+      const senderExists = await client.query("SELECT 1 FROM users WHERE id = $1", [senderId]);
+      const receiverExists = await client.query("SELECT 1 FROM users WHERE id = $1", [receiverId]);
+      if (senderExists.rowCount && receiverExists.rowCount) {
+        await client.query(
+          `INSERT INTO friend_requests (id, sender_id, receiver_id, status, created_at)
+           VALUES ($1, $2, $3, 'pending', NOW() - INTERVAL '2 hours')
+           ON CONFLICT (sender_id, receiver_id) DO NOTHING`,
+          [frId, senderId, receiverId],
+        );
+      }
     }
 
     await client.query("COMMIT")

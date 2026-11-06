@@ -11,7 +11,12 @@ INSERT INTO transfers (
   monthly_rent_vnd, transfer_fee_vnd, deposit_text, area_m2,
   room_type, contract_end_date, available_from, amenities,
   image_url, gallery, status, created_at, updated_at
-) VALUES
+)
+SELECT v.id, v.owner_id, v.title, v.description, v.location,
+  v.monthly_rent_vnd, v.transfer_fee_vnd, v.deposit_text, v.area_m2,
+  v.room_type, v.contract_end_date, v.available_from, v.amenities,
+  v.image_url, v.gallery, v.status, v.created_at, v.updated_at
+FROM (VALUES
 (
   'transfer-01',
   'user-renter-01',
@@ -92,6 +97,13 @@ INSERT INTO transfers (
   NOW() - INTERVAL '8 hours',
   NOW()
 )
+) AS v(
+  id, owner_id, title, description, location,
+  monthly_rent_vnd, transfer_fee_vnd, deposit_text, area_m2,
+  room_type, contract_end_date, available_from, amenities,
+  image_url, gallery, status, created_at, updated_at
+)
+WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = v.owner_id)
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   description = EXCLUDED.description,
@@ -101,7 +113,9 @@ ON CONFLICT (id) DO UPDATE SET
 -- 3. Bai viet dien dan pass phong va chuyen nhuong (danh cho cong dong nguoi thue)
 INSERT INTO forum_posts (
   id, author_id, content, image_url, status, created_at, updated_at
-) VALUES
+)
+SELECT v.id, v.author_id, v.content, v.image_url, v.status, v.created_at, v.updated_at
+FROM (VALUES
 (
   'pass-forum-post-01',
   'user-renter-01',
@@ -138,6 +152,8 @@ INSERT INTO forum_posts (
   NOW() - INTERVAL '8 hours',
   NOW()
 )
+) AS v(id, author_id, content, image_url, status, created_at, updated_at)
+WHERE EXISTS (SELECT 1 FROM users u WHERE u.id = v.author_id)
 ON CONFLICT (id) DO UPDATE SET
   content = EXCLUDED.content,
   image_url = EXCLUDED.image_url,
@@ -146,7 +162,8 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- 4. Binh luan tuong tac cho bai viet pass phong tren dien dan
 INSERT INTO forum_comments (id, post_id, author_id, content, created_at, updated_at)
-VALUES
+SELECT v.id, v.post_id, v.author_id, v.content, v.created_at, v.updated_at
+FROM (VALUES
 (
   'pass-forum-comment-01',
   'pass-forum-post-01',
@@ -171,6 +188,9 @@ VALUES
   NOW() - INTERVAL '2 hours',
   NOW()
 )
+) AS v(id, post_id, author_id, content, created_at, updated_at)
+WHERE EXISTS (SELECT 1 FROM forum_posts fp WHERE fp.id = v.post_id)
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = v.author_id)
 ON CONFLICT (id) DO UPDATE SET
   content = EXCLUDED.content,
   updated_at = NOW();

@@ -93,7 +93,7 @@ Nhấn **Save**. Nếu đã có database `trooi`, hãy dùng lại, không tạo
 
 **Không đưa `.env` lên GitHub.** File này chứa mật khẩu và khóa riêng; Git của project đã bỏ qua file đó.
 
-### 5. Cài thư viện và tạo bảng bằng migration
+### 5. Cài thư viện và khởi tạo dữ liệu database
 
 Trong terminal tại thư mục gốc project, chạy:
 
@@ -102,45 +102,50 @@ pnpm install
 pnpm db:migrate
 ~~~
 
-Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 7 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
-
-   Để gửi OTP thật qua Gmail, điền các dòng sau vào `.env`:
-
-   ~~~ini
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_SECURE=false
-   SMTP_USER=dia-chi-gmail@gmail.com
-   SMTP_PASSWORD=GOOGLE_APP_PASSWORD
-   SMTP_FROM="Tro Oi <dia-chi-gmail@gmail.com>"
-   ~~~
-
-   Thay địa chỉ mẫu bằng Gmail dùng để gửi. Tạo Google App Password sau khi bật [Xác minh 2 bước](https://support.google.com/accounts/answer/185839); không dùng mật khẩu đăng nhập Gmail thông thường. Google có thể không hiện tùy chọn App Password cho một số tài khoản do chính sách bảo mật hoặc quản trị viên. Gmail dùng `smtp.gmail.com` và cổng TLS/STARTTLS `587` theo [tài liệu SMTP của Google](https://support.google.com/mail/answer/7104828). Không đưa App Password lên GitHub hoặc gửi trong chat.
+Migration đọc các file trong `database/migrations/`, tự tạo bảng và ghi lịch sử vào `schema_migrations`. Project hiện có 17 file migration. Không cần mở từng file SQL để tạo bảng thủ công.
 
 Migration đầu tiên bật pgcrypto, PostGIS và unaccent. Nếu báo thiếu PostGIS:
 
 1. Mở **Start**, tìm và mở **Stack Builder**.
 2. Chọn đúng phiên bản PostgreSQL đã cài (ví dụ PostgreSQL 18 x64 trên cổng 5432) → **Next**.
 3. Mở nhóm **Spatial Extensions**, chọn gói PostGIS tương thích và hoàn tất cài đặt.
-4. Chạy lại pnpm db:migrate.
+4. Chạy lại `pnpm db:migrate`.
 
 Có thể xem hướng dẫn cài đặt trong [tài liệu PostGIS cho Windows](https://postgis.net/documentation/getting_started/install_windows/).
 
-Để nạp dữ liệu phát triển tùy chọn, đặt `SEED_PASSWORD` (ít nhất 12 ký tự) trong `.env` theo chú thích ở `.env.example`, rồi chạy:
-
-~~~powershell
-pnpm db:seed
-~~~
-
-Seed dùng MongoDB và chỉ dành cho dữ liệu phát triển. Script tạo các tài khoản phát triển, 12 bài viết diễn đàn mẫu kèm bình luận và lượt thích để kiểm tra trang chủ và diễn đàn. Những bài này là nội dung minh họa do nhóm tạo, không phải bài đăng của người dùng thật.
-
-Để nhập 15 tin phòng Trọ Mới được người dùng xác nhận cho phép sử dụng, chạy:
+Tiếp theo, nhập 15 tin phòng Trọ Mới vào database:
 
 ~~~powershell
 pnpm db:import-tromoi
 ~~~
 
 Lệnh nhập có thể chạy lại an toàn: chỉ thêm các mã tin chưa có, không xóa hoặc ghi đè tin đã tồn tại. Bộ dữ liệu gồm 15 tin thuộc sáu loại phòng và 67 ảnh; có phòng tại TP. Hồ Chí Minh, Hà Nội và Đà Nẵng, từ phòng trọ đến căn hộ cao cấp. Vị trí bản đồ là gần đúng theo khu vực. Danh sách tin, ảnh và cách chọn ảnh được ghi tại [docs/tromoi-data-sources.md](docs/tromoi-data-sources.md).
+
+Tiếp theo, nạp dữ liệu phát triển mẫu (tài khoản demo, diễn đàn, bình luận, tin nhắn, thông báo):
+
+~~~powershell
+pnpm db:seed
+~~~
+
+> **Mẹo:** Bạn cũng có thể chạy trọn gói cả 3 bước trên bằng một lệnh duy nhất:
+> ~~~powershell
+> pnpm db:setup
+> ~~~
+
+Script seed tạo các tài khoản phát triển (người thuê, chủ trọ, admin với mật khẩu mặc định `PhongTro@123` hoặc cấu hình `SEED_PASSWORD`), các bài viết diễn đàn và bình luận mẫu, phòng pass và dữ liệu trò chuyện MongoDB để kiểm tra hệ thống.
+
+Để cấu hình gửi OTP xác thực qua Gmail (tùy chọn), điền các dòng sau vào `.env`:
+
+~~~ini
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=dia-chi-gmail@gmail.com
+SMTP_PASSWORD=GOOGLE_APP_PASSWORD
+SMTP_FROM="Tro Oi <dia-chi-gmail@gmail.com>"
+~~~
+
+Thay địa chỉ mẫu bằng Gmail dùng để gửi. Tạo Google App Password sau khi bật [Xác minh 2 bước](https://support.google.com/accounts/answer/185839); không dùng mật khẩu đăng nhập Gmail thông thường. Google có thể không hiện tùy chọn App Password cho một số tài khoản do chính sách bảo mật hoặc quản trị viên. Gmail dùng `smtp.gmail.com` và cổng TLS/STARTTLS `587` theo [tài liệu SMTP của Google](https://support.google.com/mail/answer/7104828). Không đưa App Password lên GitHub hoặc gửi trong chat.
 
 Khi chủ trọ tạo tin thật, có thể tải tối đa 6 ảnh của cùng một phòng. Ở môi trường phát triển, ảnh được lưu trong `server/uploads/` và thư mục này không được đưa lên Git. Môi trường production cần cấu hình Cloudinary trong `.env` để ảnh tồn tại ổn định sau khi triển khai.
 

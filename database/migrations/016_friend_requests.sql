@@ -13,8 +13,12 @@ CREATE INDEX IF NOT EXISTS idx_friend_requests_sender ON friend_requests(sender_
 
 -- Seed pending friend requests
 INSERT INTO friend_requests (id, sender_id, receiver_id, status, created_at)
-VALUES
+SELECT v.id, v.sender_id, v.receiver_id, v.status, v.created_at
+FROM (VALUES
   ('fr-seed-01', 'user-renter-01', '11e095c2-caff-4698-9168-7480ac8a8d17', 'pending', now() - interval '2 hours'),
   ('fr-seed-02', 'user-renter-03', '11e095c2-caff-4698-9168-7480ac8a8d17', 'pending', now() - interval '5 hours'),
   ('fr-seed-03', 'user-landlord-01', '11e095c2-caff-4698-9168-7480ac8a8d17', 'pending', now() - interval '1 day')
+) AS v(id, sender_id, receiver_id, status, created_at)
+WHERE EXISTS (SELECT 1 FROM users s WHERE s.id = v.sender_id)
+  AND EXISTS (SELECT 1 FROM users r WHERE r.id = v.receiver_id)
 ON CONFLICT (sender_id, receiver_id) DO NOTHING;

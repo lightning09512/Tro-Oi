@@ -58,7 +58,9 @@ DELETE FROM forum_comments WHERE post_id IN (
   'seed-forum-09', 'seed-forum-10', 'seed-forum-11', 'seed-forum-12'
 );
 
-INSERT INTO forum_comments(id, post_id, author_id, content, created_at) VALUES
+INSERT INTO forum_comments(id, post_id, author_id, content, created_at)
+SELECT v.id, v.post_id, v.author_id, v.content, v.created_at
+FROM (VALUES
   ('seed-forum-01-c1', 'seed-forum-01', 'user-renter-02', 'Chuẩn luôn b ơi, nhớ chụp luôn cả chỉ số đồng hồ điện nước ngày đầu dọn vào nữa nha, ko là gánh tiền tháng trước của ng ta ráng chịu á.', now() - interval '22 hours'),
   ('seed-forum-01-c2', 'seed-forum-01', 'user-landlord-01', 'Chủ trọ như mình cũng khuyến khích các bạn làm vậy nhé. Có video bàn giao ngay từ đầu hai bên cùng thoải mái, sau này trả phòng đỡ phải lấn cấn chuyện gì.', now() - interval '20 hours'),
   ('seed-forum-01-c3', 'seed-forum-01', 'user-renter-03', 'Bổ sung thêm là nhớ xả thử nước bồn cầu với vòi sen xem thoát nước có nhanh ko nha, trúng cống nghẹt là ám ảnh luôn.', now() - interval '18 hours'),
@@ -97,14 +99,25 @@ INSERT INTO forum_comments(id, post_id, author_id, content, created_at) VALUES
 
   ('seed-forum-12-c1', 'seed-forum-12', 'user-renter-02', 'Mẹo bọc quần áo cả móc thông minh ghê, đợt trước mình ngồi gấp đồ dọn trọ muốn gãy cái lưng haha.', now() - interval '276 hours'),
   ('seed-forum-12-c2', 'seed-forum-12', 'user-renter-03', 'Bác tài xế xe tải nhỏ 0908... đợt trc chở cho mình nhiệt tình lắm, phụ bưng bê đồ lên lầu luôn ko tính thêm tiền nè b, để mình nhắn sđt cho.', now() - interval '272 hours'),
-  ('seed-forum-12-c3', 'seed-forum-12', 'user-landlord-01', 'Chúc em sang phòng mới nhiều may mắn, ở trọ vui vẻ thuận lợi nhé!', now() - interval '268 hours');
+  ('seed-forum-12-c3', 'seed-forum-12', 'user-landlord-01', 'Chúc em sang phòng mới nhiều may mắn, ở trọ vui vẻ thuận lợi nhé!', now() - interval '268 hours')
+) AS v(id, post_id, author_id, content, created_at)
+WHERE EXISTS (SELECT 1 FROM forum_posts fp WHERE fp.id = v.post_id)
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = v.author_id)
+ON CONFLICT (id) DO UPDATE SET
+  content = EXCLUDED.content,
+  created_at = EXCLUDED.created_at;
 
 -- Add realistic tenant reviews
-INSERT INTO reviews(id, listing_id, author_id, stars, text, created_at, updated_at) VALUES
+INSERT INTO reviews(id, listing_id, author_id, stars, text, created_at, updated_at)
+SELECT v.id, v.listing_id, v.author_id, v.stars, v.text, v.created_at, v.updated_at
+FROM (VALUES
   ('rev-105-ung-van-khiem-01', 'tromoi-105-ung-van-khiem', 'user-renter-01', 5, 'Mình từng ở trọ bên cô Ngọc gần 1 năm trước khi đổi chỗ làm. Phòng sạch sẽ, nước máy mạnh, cô chú chủ trọ cực kỳ dễ thương và tôn trọng sự riêng tư của khách thuê. Xe để tầng trệt có khóa vân tay rất an tâm nha mn.', now() - interval '3 days', now()),
   ('rev-105-ung-van-khiem-02', 'tromoi-105-ung-van-khiem', 'user-renter-03', 5, 'Vị trí ở Ung Văn Khiêm ra ngã tư Hàng Xanh siêu gần, đi học Hutech hay Ngoại Thương đều tiện. Phòng có ban công đón nắng tốt, giờ giấc tự do không chung chủ.', now() - interval '7 days', now()),
   ('rev-binh-thanh-01', 'tromoi-binh-thanh-nguyen-van-dau', 'user-renter-02', 4, 'Phòng ốc sạch đẹp y như ảnh chụp trên web, gác cao đứng thẳng người thoải mái ko sợ đụng đầu. Điểm trừ xíu là hẻm 241 hơi đông vào giờ tan tầm, nhưng bù lại an ninh tốt, hàng xóm văn minh.', now() - interval '5 days', now()),
   ('rev-huynh-van-nghe-01', 'tromoi-phong-tro-huynh-van-nghe-tan-binh', 'user-renter-04', 5, 'Anh chủ trọ trẻ tính, dễ tính và nhiệt tình. Lúc nhận phòng anh kiểm tra máy lạnh quạt gió hoạt động tốt mới bàn giao. Giá điện nước tính đúng theo giá cam kết, ko phát sinh phụ phí gì.', now() - interval '4 days', now())
+) AS v(id, listing_id, author_id, stars, text, created_at, updated_at)
+WHERE EXISTS (SELECT 1 FROM listings l WHERE l.id = v.listing_id)
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = v.author_id)
 ON CONFLICT (listing_id, author_id) DO UPDATE SET
   stars = EXCLUDED.stars,
   text = EXCLUDED.text,
