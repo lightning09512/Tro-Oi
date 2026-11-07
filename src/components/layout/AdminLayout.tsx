@@ -1,60 +1,58 @@
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
-import BrandMark from "@/components/common/BrandMark"
 import useAuth from "@/hooks/useAuth"
 import { usePlatform } from "@/contexts/PlatformContext"
 
-const items = [
-  ["/admin", "chart", "Tổng quan"],
-  ["/admin/nguoi-dung", "users", "Người dùng"],
-  ["/admin/tin-cho-thue", "building", "Tin cho thuê"],
-  ["/admin/dien-dan", "chat", "Diễn đàn"],
-  ["/admin/danh-muc", "filter", "Danh mục"],
-  ["/admin/bao-cao", "shield", "Báo cáo"],
-  ["/admin/thong-ke", "chart", "Thống kê & báo cáo"],
-  ["/admin/ho-so", "user", "Hồ sơ & bảo mật"],
-] as const
+interface NavItemConfig {
+  to: string
+  icon: string
+  label: string
+  hasChevron?: boolean
+  badgeCount?: number
+  subItems?: { to: string; label: string }[]
+}
 
-const ADMIN_HEADER_META: Record<string, { title: string; subtitle: string }> = {
+const ADMIN_HEADER_META: Record<string, { label: string; searchTarget: string }> = {
   "/admin": {
-    title: "",
-    subtitle: "",
+    label: "Bảng quản trị",
+    searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/nguoi-dung": {
-    title: "Quản lý người dùng",
-    subtitle: "Quản lý tài khoản, vai trò và trạng thái hoạt động",
+    label: "Quản lý thành viên",
+    searchTarget: "/admin/nguoi-dung",
   },
   "/admin/tin-cho-thue": {
-    title: "Kiểm duyệt tin cho thuê",
-    subtitle: "Kiểm duyệt và quản lý danh sách phòng trọ trên hệ thống",
+    label: "Quản lý tin đăng",
+    searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/dien-dan": {
-    title: "Quản lý diễn đàn",
-    subtitle: "Kiểm duyệt bài viết và bình luận cộng đồng",
+    label: "Quản lý cộng đồng",
+    searchTarget: "/admin/dien-dan",
   },
   "/admin/danh-muc": {
-    title: "Danh mục phòng trọ",
-    subtitle: "Thiết lập phân loại phòng trọ và danh mục hệ thống",
+    label: "Quản lý danh mục",
+    searchTarget: "/admin/danh-muc",
   },
   "/admin/bao-cao": {
-    title: "Báo cáo vi phạm",
-    subtitle: "Tiếp nhận và xử lý phản ánh từ người dùng",
+    label: "Kiểm duyệt & Báo cáo",
+    searchTarget: "/admin/bao-cao",
   },
   "/admin/thong-ke": {
-    title: "Thống kê & báo cáo",
-    subtitle: "Theo dõi chỉ số tăng trưởng và xuất dữ liệu hệ thống",
+    label: "Báo cáo & Thống kê",
+    searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/ho-so": {
-    title: "",
-    subtitle: "",
+    label: "Cài đặt & Hồ sơ",
+    searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/doi-mat-khau": {
-    title: "",
-    subtitle: "",
+    label: "Đổi mật khẩu",
+    searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/thong-bao": {
-    title: "Thông báo hệ thống",
-    subtitle: "Theo dõi các thông báo và biến động mới nhất",
+    label: "Thông báo hệ thống",
+    searchTarget: "/admin/tin-cho-thue",
   },
 }
 
@@ -64,101 +62,337 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const pendingReports = reports.filter((item) => item.status === "pending").length
-  const unreadNotifications = notifications.filter(
-    (item) => item.userId === user?.id && !item.read,
-  ).length
+  const [quickQuery, setQuickQuery] = useState("")
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [mobileSideOpen, setMobileSideOpen] = useState(false)
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
+
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const accountMenuRef = useRef<HTMLDivElement | null>(null)
+
+  const pendingReports = useMemo(
+    () => reports.filter((item) => item.status === "pending").length,
+    [reports],
+  )
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter((item) => item.userId === user?.id && !item.read).length,
+    [notifications, user?.id],
+  )
+
   const isProfileActive = pathname === "/admin/ho-so" || pathname === "/admin/doi-mat-khau"
   const headerMeta = ADMIN_HEADER_META[pathname] ?? ADMIN_HEADER_META["/admin"]
 
+  const navItems: NavItemConfig[] = useMemo(
+    () => [
+      { to: "/admin", icon: "home", label: "Tổng quan" },
+      {
+        to: "/admin/tin-cho-thue",
+        icon: "list",
+        label: "Quản lý tin đăng",
+        hasChevron: true,
+        subItems: [
+          { to: "/admin/tin-cho-thue", label: "Tất cả tin cho thuê" },
+          { to: "/admin/danh-muc", label: "Danh mục & Tiện ích" },
+        ],
+      },
+      {
+        to: "/admin/bao-cao",
+        icon: "shield-check",
+        label: "Kiểm duyệt",
+        badgeCount: pendingReports,
+      },
+      {
+        to: "/admin/nguoi-dung",
+        icon: "users",
+        label: "Thành viên",
+        hasChevron: true,
+      },
+      {
+        to: "/admin/dien-dan",
+        icon: "chat",
+        label: "Cộng đồng",
+        hasChevron: true,
+      },
+      {
+        to: "/admin/thong-ke",
+        icon: "chart",
+        label: "Báo cáo",
+        hasChevron: true,
+      },
+      {
+        to: "/admin/ho-so",
+        icon: "settings",
+        label: "Cài đặt",
+      },
+    ],
+    [pendingReports],
+  )
+
+  // Phím tắt toàn cục Ctrl+K / Cmd+K để focus vào ô Tìm kiếm nhanh
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        searchInputRef.current?.focus()
+      } else if (event.key === "Escape") {
+        setAccountMenuOpen(false)
+        setMobileSideOpen(false)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
+  // Đóng menu tài khoản khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
+        setAccountMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Tự động đóng menu khi chuyển route
+  useEffect(() => {
+    setAccountMenuOpen(false)
+    setMobileSideOpen(false)
+  }, [pathname])
+
+  const handleQuickSearchSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    const trimmed = quickQuery.trim()
+    if (!trimmed) return
+    navigate(`${headerMeta.searchTarget}?q=${encodeURIComponent(trimmed)}`)
+  }
+
+  const handleLogout = () => {
+    setAccountMenuOpen(false)
+    if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi trang quản trị?")) return
+    logout()
+    navigate("/admin/dang-nhap", { replace: true, state: null })
+  }
+
   return (
-    <main className="admin-layout admin-shell">
-      <aside className="admin-side">
-        <NavLink className="admin-logo" to="/admin">
-          <BrandMark size={32} />
-          <b>Trọ Ơi</b>
+    <main className="admin-layout admin-shell saas-admin-shell">
+      {/* Lớp phủ màn hình nhỏ khi mở Sidebar */}
+      {mobileSideOpen && (
+        <div
+          className="saas-sidebar-backdrop"
+          onClick={() => setMobileSideOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* A. Thanh điều hướng dọc bên trái (Left Vertical Sidebar) */}
+      <aside className={`admin-side saas-admin-sidebar${mobileSideOpen ? " is-open" : ""}`}>
+        <NavLink className="admin-logo saas-brand-header" to="/admin">
+          <span className="saas-brand-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1v-9.5Z"
+                fill="currentColor"
+              />
+            </svg>
+          </span>
+          <b className="saas-brand-title">Trọ Ơi</b>
         </NavLink>
-        <small>QUẢN TRỊ HỆ THỐNG</small>
-        {items.map(([to, icon, label]) => (
-          <NavLink
-            end={to === "/admin"}
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              isActive || (to === "/admin/ho-so" && isProfileActive) ? "active" : ""
-            }
-          >
-            <Icon name={icon} />
-            <span>{label}</span>
-            {label === "Báo cáo" && pendingReports > 0 && <b>{pendingReports}</b>}
-          </NavLink>
-        ))}
+
+        <nav className="saas-sidebar-nav" aria-label="Điều hướng quản trị">
+          {navItems.map((item) => {
+            const isItemActive =
+              item.to === "/admin"
+                ? pathname === "/admin"
+                : item.to === "/admin/ho-so"
+                  ? isProfileActive
+                  : item.to === "/admin/tin-cho-thue"
+                    ? pathname === "/admin/tin-cho-thue" || pathname === "/admin/danh-muc"
+                    : pathname.startsWith(item.to)
+
+            const isSubOpen =
+              expandedMenu === item.to ||
+              (item.subItems && pathname === "/admin/danh-muc" && item.to === "/admin/tin-cho-thue")
+
+            return (
+              <div key={item.to} className="saas-nav-group">
+                <NavLink
+                  end={item.to === "/admin"}
+                  to={item.to}
+                  className={`saas-nav-item${isItemActive ? " active" : ""}`}
+                  onClick={() => {
+                    if (item.subItems) {
+                      setExpandedMenu((prev) => (prev === item.to ? null : item.to))
+                    }
+                  }}
+                >
+                  <span className="saas-nav-item-left">
+                    <Icon name={item.icon} size={18} />
+                    <span>{item.label}</span>
+                  </span>
+                  <span className="saas-nav-item-right">
+                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                      <b className="saas-nav-badge">{item.badgeCount}</b>
+                    )}
+                    {item.hasChevron && (
+                      <span
+                        className={`saas-nav-chevron${isSubOpen ? " is-open" : ""}`}
+                        onClick={(e) => {
+                          if (item.subItems) {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setExpandedMenu((prev) => (prev === item.to ? null : item.to))
+                          }
+                        }}
+                      >
+                        <Icon name="chevron-down" size={15} />
+                      </span>
+                    )}
+                  </span>
+                </NavLink>
+
+                {item.subItems && isSubOpen && (
+                  <div className="saas-nav-sublist">
+                    {item.subItems.map((sub) => (
+                      <NavLink
+                        key={sub.to}
+                        to={sub.to}
+                        className={({ isActive }) =>
+                          `saas-nav-subitem${isActive ? " active" : ""}`
+                        }
+                      >
+                        <span>{sub.label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </nav>
       </aside>
-      <section className="admin-main">
-        <header className="admin-topbar">
-          <div>
-            {headerMeta.title ? <h1>{headerMeta.title}</h1> : null}
-            {headerMeta.subtitle ? <p>{headerMeta.subtitle}</p> : null}
+
+      {/* Khu vực chính bên phải */}
+      <section className="admin-main saas-admin-main">
+        {/* B. Thanh Header trên cùng (Top Header Bar) */}
+        <header className="admin-topbar saas-topbar">
+          <div className="saas-topbar-left">
+            <button
+              type="button"
+              className="saas-mobile-menu-btn"
+              onClick={() => setMobileSideOpen((prev) => !prev)}
+              aria-label="Mở menu điều hướng"
+            >
+              <Icon name="menu" size={20} />
+            </button>
+            <h1 className="saas-topbar-title">{headerMeta.label}</h1>
           </div>
-          <NavLink
-            to="/"
-            className="admin-home-btn"
-            title="Xem giao diện trang chủ công khai"
-          >
-            <Icon name="home" size={16} />
-            <span>Trang chủ</span>
-          </NavLink>
-          <button
-            type="button"
-            className={`icon-btn admin-notif-btn${pathname === "/admin/thong-bao" ? " is-active" : ""}`}
-            aria-label={
-              unreadNotifications > 0
-                ? `Thông báo, ${unreadNotifications} chưa đọc`
-                : "Thông báo"
-            }
-            title={
-              unreadNotifications > 0
-                ? `${unreadNotifications} thông báo chưa đọc`
-                : "Thông báo"
-            }
-            onClick={() => navigate("/admin/thong-bao")}
-          >
-            <Icon name="bell" />
-            {unreadNotifications > 0 && (
-              <span className="admin-notif-badge">{unreadNotifications}</span>
-            )}
-          </button>
-          <NavLink
-            to="/admin/ho-so"
-            className={`admin-user-pill${isProfileActive ? " is-active" : ""}`}
-            aria-label="Hồ sơ quản trị viên"
-            title="Cài đặt hồ sơ và mật khẩu quản trị"
-          >
-            <span className="avatar">
-              {user?.avatarUrl ? (
-                <img className="user-avatar-image" src={user.avatarUrl} alt="" />
-              ) : (
-                (user?.initials ?? "AD")
+
+          <div className="saas-topbar-right">
+            {/* Ô tìm kiếm toàn cục (Tìm kiếm nhanh... (⌘K)) */}
+            <form
+              className="saas-global-search"
+              onSubmit={handleQuickSearchSubmit}
+              role="search"
+            >
+              <Icon name="search" size={15} />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={quickQuery}
+                onChange={(event) => setQuickQuery(event.target.value)}
+                placeholder="Tìm kiếm nhanh... (⌘K)"
+                aria-label="Tìm kiếm nhanh"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </form>
+
+            {/* Nút chuông thông báo có chấm đỏ thông báo mới */}
+            <button
+              type="button"
+              className={`saas-notif-btn${pathname === "/admin/thong-bao" ? " is-active" : ""}`}
+              aria-label={
+                unreadNotifications > 0
+                  ? `Thông báo, ${unreadNotifications} chưa đọc`
+                  : "Thông báo"
+              }
+              title={
+                unreadNotifications > 0
+                  ? `${unreadNotifications} thông báo chưa đọc`
+                  : "Thông báo"
+              }
+              onClick={() => navigate("/admin/thong-bao")}
+            >
+              <Icon name="bell" size={18} />
+              <span
+                className={`saas-notif-dot${unreadNotifications > 0 ? " has-unread" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {/* Cụm thông tin tài khoản Admin + Dropdown Menu */}
+            <div className="saas-account-dropdown" ref={accountMenuRef}>
+              <button
+                type="button"
+                className={`saas-account-trigger${accountMenuOpen || isProfileActive ? " is-active" : ""}`}
+                onClick={() => setAccountMenuOpen((prev) => !prev)}
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+              >
+                <span className="saas-account-avatar">
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name || "Admin"} />
+                  ) : (
+                    <span>{user?.initials ?? "AD"}</span>
+                  )}
+                </span>
+                <strong className="saas-account-name">
+                  {user?.name === "Quản trị viên" ? "Admin" : (user?.name ?? "Admin")}
+                </strong>
+                <Icon name="chevron-down" size={15} />
+              </button>
+
+              {accountMenuOpen && (
+                <div className="saas-account-menu" role="menu">
+                  <div className="saas-account-menu-header">
+                    <strong>{user?.name ?? "Quản trị viên"}</strong>
+                    <span>{user?.email ?? "admin@trooi.vn"}</span>
+                  </div>
+                  <div className="saas-account-menu-divider" />
+                  <NavLink to="/" className="saas-account-menu-item" role="menuitem">
+                    <Icon name="home" size={15} />
+                    <span>Về trang chủ công khai</span>
+                  </NavLink>
+                  <NavLink to="/admin/ho-so" className="saas-account-menu-item" role="menuitem">
+                    <Icon name="user" size={15} />
+                    <span>Hồ sơ & Bảo mật</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/doi-mat-khau"
+                    className="saas-account-menu-item"
+                    role="menuitem"
+                  >
+                    <Icon name="lock" size={15} />
+                    <span>Đổi mật khẩu</span>
+                  </NavLink>
+                  <div className="saas-account-menu-divider" />
+                  <button
+                    type="button"
+                    className="saas-account-menu-item is-danger"
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
               )}
-            </span>
-            <span className="admin-user-pill-info">
-              <strong>{user?.name ?? "Quản trị viên"}</strong>
-              <small>Quản trị viên</small>
-            </span>
-          </NavLink>
-          <button
-            type="button"
-            className="admin-logout"
-            onClick={() => {
-              if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi trang quản trị?")) return
-              logout()
-              navigate("/admin/dang-nhap", { replace: true, state: null })
-            }}
-          >
-            Đăng xuất
-          </button>
+            </div>
+          </div>
         </header>
-        <div className="admin-content">
+
+        <div className="admin-content saas-admin-content">
           <Outlet />
         </div>
       </section>

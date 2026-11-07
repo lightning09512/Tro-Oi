@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
-import { useLocation } from "react-router"
+import { useLocation, useSearchParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import { usePlatform, type CategoryRecord, type ContentStatus, type ListingStatus, type PlatformUser, type ReportRecord } from "@/contexts/PlatformContext"
 import { authService } from "@/services/authService"
@@ -27,8 +27,9 @@ export default function AdminResourcePage() {
   const { pathname } = useLocation()
   const resource = (pathname.split("/")[2] === "tin-cho-thue" ? "listings" : pathname.split("/")[2] === "dien-dan" ? "forum" : pathname.split("/")[2] === "danh-muc" ? "categories" : pathname.split("/")[2] === "bao-cao" ? "reports" : "users") as Resource
   const { users, saveUser, deleteUser, listings, setListingStatus, deleteListing, posts, setPostStatus, deletePost, categories, saveCategory, deleteCategory, reports, updateReport, addNotification, deleteComment, connectionState, connectionError } = usePlatform()
-  const [query, setQuery] = useState("")
-  const [filter, setFilter] = useState("all")
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
+  const [filter, setFilter] = useState(() => searchParams.get("status") ?? "all")
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
   const [editorError, setEditorError] = useState("")
   const [dialog, setDialog] = useState<"edit" | "report" | null>(null)
@@ -41,7 +42,25 @@ export default function AdminResourcePage() {
   const busyRef = useRef(false)
   const dialogRef = useRef<HTMLElement>(null)
   useDialogFocus(dialogRef, () => { if (!busyRef.current) setDialog(null) }, Boolean(dialog))
-  useEffect(() => { setQuery(""); setFilter("all"); setDialog(null); setActionError("") }, [resource])
+  useEffect(() => {
+    const nextQuery = searchParams.get("q") ?? ""
+    const nextStatus = searchParams.get("status") ?? "all"
+    setQuery(nextQuery)
+    setFilter(nextStatus)
+    setDialog(null)
+    setActionError("")
+  }, [resource, searchParams])
+
+  const handleFilterChange = (nextStatus: string) => {
+    setFilter(nextStatus)
+    const nextParams = new URLSearchParams(searchParams)
+    if (nextStatus === "all") {
+      nextParams.delete("status")
+    } else {
+      nextParams.set("status", nextStatus)
+    }
+    setSearchParams(nextParams, { replace: true })
+  }
   const statusOptions: Record<Resource, string[]> = { users: ["active", "locked"], listings: ["pending", "active", "hidden", "rented", "rejected"], forum: ["active", "pending", "hidden"], categories: ["active", "hidden"], reports: ["pending", "accepted", "rejected"] }
 
   const title: Record<Resource, string> = { users: "Người dùng", listings: "Tin cho thuê", forum: "Kiểm duyệt diễn đàn", categories: "Danh mục", reports: "Báo cáo vi phạm" }
@@ -232,7 +251,7 @@ export default function AdminResourcePage() {
       <section className={`resource-panel resource-panel--${resource}`} aria-busy={Boolean(busyId) || connectionState === "loading"}>
         {connectionState === "loading" && <p className="management-feedback" role="status">Đang tải dữ liệu…</p>}
         {connectionState === "error" && <p className="form-message error" role="alert">{connectionError || "Không tải được dữ liệu. Hãy tải lại trang để thử lại."}</p>}
-        <div className="workspace-toolbar"><label className="workspace-search"><Icon name="search"/><input aria-label={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} autoComplete="off" spellCheck={false}/></label><select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Lọc trạng thái"><option value="all">Tất cả trạng thái</option>{statusOptions[resource].map((value) => <option value={value} key={value}>{statusText[value]}</option>)}</select><span>{filtered.length} kết quả</span></div>
+        <div className="workspace-toolbar"><label className="workspace-search"><Icon name="search"/><input aria-label={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Tìm trong ${title[resource].toLocaleLowerCase("vi")}`} autoComplete="off" spellCheck={false}/></label><select value={filter} onChange={(event) => handleFilterChange(event.target.value)} aria-label="Lọc trạng thái"><option value="all">Tất cả trạng thái</option>{statusOptions[resource].map((value) => <option value={value} key={value}>{statusText[value]}</option>)}</select><span>{filtered.length} kết quả</span></div>
         <div className={`resource-list resource-list--${resource}`}>{filtered.map((row) => <article className={`resource-row resource-row--${resource}`} key={row.id}>{row.image && <img className="resource-row-media" src={row.image} alt={row.title} loading="lazy" />}<div className="resource-row-main"><div className="resource-row-heading"><span className="resource-kind">{kind[resource]}</span><span className={`status-pill status-${row.status}`}>{statusText[row.status] ?? row.status}</span></div><h3>{row.title}</h3><p>{row.detail}</p><small>{row.meta}</small>{resource === "forum" && posts.find((item) => item.id === row.id)?.comments.map((comment) => <div className="admin-comment-row" key={comment.id}><span><b>{comment.author}</b> · {comment.text}</span><button className="danger-action" onClick={() => { if (window.confirm("Xóa bình luận vi phạm này?")) { void deleteComment(row.id, comment.id).catch((caught: unknown) => setActionError(caught instanceof Error ? caught.message : "Không thể xóa bình luận.")) } }}>Xóa bình luận</button></div>)}</div><fieldset className="resource-row-actions" disabled={Boolean(busyId)} aria-label={`Thao tác với ${row.title}`}>
           {resource === "users" && <><button onClick={() => openEdit(users.find((item) => item.id === row.id))}><Icon name="edit" size={15}/> Sửa</button><button onClick={() => action(row.id, row.status)}>{row.status === "locked" ? "Mở khóa" : "Khóa"}</button><button className="danger-action" onClick={() => remove(row.id, row.title)}>Xóa</button></>}
           {resource === "listings" && <>{row.status !== "active" && row.status !== "rented" && <button onClick={() => action(row.id, "active")}>{row.status === "pending" ? "Duyệt tin" : "Hiện tin"}</button>}{row.status === "pending" && <button onClick={() => action(row.id, "rejected")}>Từ chối</button>}{row.status === "active" && <button onClick={() => action(row.id, "hidden")}>Ẩn tin</button>}<button className="danger-action" onClick={() => remove(row.id, row.title)}>Gỡ tin</button></>}

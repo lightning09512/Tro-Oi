@@ -20,14 +20,17 @@ body,
 .reports-page,
 .workspace-page,
 .management-page,
-.admin-shell,
-.admin-layout,
-.admin-main,
-.admin-resource-page,
 .auth-page,
 .error-page,
 .placeholder-page {
   background-color: #f5f8f5 !important;
+}
+
+.admin-shell,
+.admin-layout,
+.admin-main,
+.admin-resource-page {
+  background-color: #f1f5f9 !important;
 }
 
 /* Shared product primitives. Page-specific refinements follow this file. */
@@ -151,143 +154,453 @@ input, textarea { caret-color: var(--teal-dark); }
 .bottom-nav { padding-bottom: env(safe-area-inset-bottom); background: white; border-top: 1px solid var(--line); }
 .bottom-nav a { min-width: 0; min-height: 56px; gap: 4px; font-size: 10px; color: #607267; }
 .bottom-nav a.active { color: var(--teal-dark); background: #f0f6f0; }
-.admin-shell { background: var(--bg); }
-.admin-shell .admin-side { background: #183e2b; padding-top: 28px; }
-.admin-shell .admin-logo { align-items: center; color: white; text-decoration: none; margin-bottom: 36px; }
-.admin-shell .admin-side > small { display: none; }
-.admin-shell .admin-side > a:not(.admin-logo) { min-height: 46px; font-size: 14px; margin-block: 4px; color: #dceae0; }
-.admin-shell .admin-side > a:not(.admin-logo):is(.active, :hover) { background: #315c43; color: white; }
-.admin-shell .admin-main > header { padding-inline: 32px; box-shadow: none; }
-.admin-shell .admin-main > header h1 { font-size: 19px; }
-.admin-shell .admin-main > header p { font-size: 12px; color: var(--muted); }
-.admin-shell .admin-content { padding: 32px; }
-.admin-shell .admin-topbar { gap: 10px; }
-.admin-shell .admin-home-btn {
+
+/* ==========================================================================
+   MODERN SAAS ADMIN SHELL (Shadcn UI / Linear Inspired)
+   ========================================================================== */
+.admin-shell.saas-admin-shell {
+  background: #f1f5f9 !important;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+}
+
+/* A. Left Vertical Sidebar */
+.admin-shell.saas-admin-shell .admin-side.saas-admin-sidebar {
+  width: 248px;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 40;
+}
+
+.admin-shell.saas-admin-shell .saas-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  text-decoration: none;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #10b981;
+  color: #ffffff;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
+.admin-shell.saas-admin-shell .saas-brand-title {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.admin-shell.saas-admin-shell .saas-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item.active {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item-left {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 14px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item-left svg {
+  color: #64748b;
+  flex-shrink: 0;
+  transition: color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item.active .saas-nav-item-left svg,
+.admin-shell.saas-admin-shell .saas-nav-item:hover .saas-nav-item-left svg {
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-item-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   border-radius: 999px;
-  border: 1px solid #d5e3d8;
-  background: #f7faf8;
-  color: #245f3b;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 150ms ease;
-}
-.admin-shell .admin-home-btn:hover {
-  background: #edf5ee;
-  border-color: #9fbea4;
-  color: #1b4d2e;
-}
-.admin-shell .admin-notif-btn {
-  position: relative;
-  border-radius: 999px;
-  border: 1px solid #d5e3d8;
-  color: #344b3a;
-  transition: all 150ms ease;
-}
-.admin-shell .admin-notif-btn:hover,
-.admin-shell .admin-notif-btn.is-active {
-  background: #edf5ee;
-  border-color: #245f3b;
-  color: #245f3b;
-}
-.admin-shell .admin-notif-badge {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  border: 2px solid #fff;
-  background: #dc5b50;
-  color: #fff;
-  font-size: 9px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 11px;
   font-weight: 700;
   display: inline-grid;
   place-items: center;
-  line-height: 1;
 }
-.admin-shell .admin-user-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 44px;
-  padding: 4px 12px 4px 5px;
-  border-radius: 999px;
-  border: 1px solid #dfe7e1;
-  background: #fff;
-  color: #26382e;
+
+.admin-shell.saas-admin-shell .saas-nav-chevron {
+  display: inline-grid;
+  place-items: center;
+  color: #94a3b8;
+  transition: transform 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.admin-shell.saas-admin-shell .saas-nav-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 4px 28px;
+  padding-left: 10px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.admin-shell.saas-admin-shell .saas-nav-subitem {
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
   text-decoration: none;
   transition: all 150ms ease;
 }
-.admin-shell .admin-user-pill:hover {
-  background: #f4f8f4;
-  border-color: #b7d0bc;
+
+.admin-shell.saas-admin-shell .saas-nav-subitem:hover,
+.admin-shell.saas-admin-shell .saas-nav-subitem.active {
+  color: #0f172a;
+  background: #f8fafc;
+  font-weight: 600;
 }
-.admin-shell .admin-user-pill.is-active {
-  background: #edf5ee;
-  border-color: #2f7a4b;
-  box-shadow: 0 0 0 2px rgba(47, 122, 75, 0.14);
-}
-.admin-shell .admin-user-pill .avatar {
-  width: 34px;
-  height: 34px;
-  font-size: 12px;
-}
-.admin-shell .admin-user-pill-info {
+
+/* B. Top Header Bar */
+.admin-shell.saas-admin-shell .saas-admin-main {
   display: flex;
   flex-direction: column;
-  line-height: 1.25;
-  text-align: left;
+  min-width: 0;
+  background: #f1f5f9 !important;
 }
-.admin-shell .admin-user-pill-info strong {
-  font-size: 13px;
+
+.admin-shell.saas-admin-shell .admin-main > header.saas-topbar {
+  height: 64px;
+  min-height: 64px;
+  padding: 0 24px;
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.admin-shell.saas-admin-shell .saas-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-mobile-menu-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.admin-shell.saas-admin-shell .saas-topbar-title {
+  font-size: 20px;
   font-weight: 700;
-  color: #1f3325;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0;
   white-space: nowrap;
 }
-.admin-shell .admin-user-pill-info small {
-  font-size: 11px;
-  color: #617469;
-  white-space: nowrap;
+
+.admin-shell.saas-admin-shell .saas-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
-.admin-shell .admin-logout {
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid #ead5d4;
-  background: #fff;
-  color: #a0413c;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
+
+.admin-shell.saas-admin-shell .saas-global-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 268px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
   transition: all 150ms ease;
 }
-.admin-shell .admin-logout:hover {
-  background: #fff4f3;
-  border-color: #dcaba8;
-  color: #872f2b;
+
+.admin-shell.saas-admin-shell .saas-global-search:focus-within {
+  background: #ffffff;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
+  color: #0f172a;
 }
-@media (max-width: 960px) {
-  .admin-shell .admin-user-pill-info,
-  .admin-shell .admin-home-btn span {
-    display: none;
+
+.admin-shell.saas-admin-shell .saas-global-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #0f172a;
+  padding: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-global-search input::placeholder {
+  color: #64748b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #475569;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-btn:hover,
+.admin-shell.saas-admin-shell .saas-notif-btn.is-active {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1.5px solid #ffffff;
+}
+
+.admin-shell.saas-admin-shell .saas-account-dropdown {
+  position: relative;
+}
+
+.admin-shell.saas-admin-shell .saas-account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 2px 8px 2px 4px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-account-trigger:hover,
+.admin-shell.saas-admin-shell .saas-account-trigger.is-active {
+  background: #f1f5f9;
+}
+
+.admin-shell.saas-admin-shell .saas-account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-shell.saas-admin-shell .saas-account-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 210px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+  z-index: 60;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-header {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-header strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-header span {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-item:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-item.is-danger {
+  color: #dc2626;
+}
+
+.admin-shell.saas-admin-shell .saas-account-menu-item.is-danger:hover {
+  background: #fef2f2;
+}
+
+.admin-shell.saas-admin-shell .admin-content.saas-admin-content {
+  padding: 24px;
+  flex: 1;
+}
+
+.saas-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .admin-shell.saas-admin-shell {
+    grid-template-columns: 1fr;
   }
-  .admin-shell .admin-user-pill {
-    padding: 3px;
+  .admin-shell.saas-admin-shell .admin-side.saas-admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
   }
-  .admin-shell .admin-home-btn {
-    width: 40px;
-    padding: 0;
-    justify-content: center;
+  .admin-shell.saas-admin-shell .admin-side.saas-admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .saas-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    z-index: 35;
+  }
+  .admin-shell.saas-admin-shell .saas-mobile-menu-btn {
+    display: inline-flex;
   }
 }
+
 .site-footer { background: #193e2d; }
 .site-footer .footer-brand p, .site-footer .footer-links a { color: #d6e3d9; }
 .notification-popover { max-height: min(640px, calc(100dvh - 104px)); border-radius: 16px; box-shadow: var(--ui-elevation); border: none; }
@@ -302,9 +615,9 @@ input, textarea { caret-color: var(--teal-dark); }
   .room-info { padding: 16px; }
   .dialog-backdrop { padding: 12px; }
   .dialog-backdrop .action-dialog { max-height: calc(100dvh - 24px); padding: 24px 20px; }
-  .admin-shell .admin-content { padding: 20px 16px; }
+  .admin-shell.saas-admin-shell .saas-global-search { display: none; }
+  .admin-shell.saas-admin-shell .admin-content.saas-admin-content { padding: 16px; }
   .admin-shell .admin-main > header { padding-inline: 16px; }
-  .admin-shell .admin-main > header p { display: none; }
   .site-header { height: 64px; }
   .notification-popover { position: fixed; top: 76px; right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 164px); }
 }
