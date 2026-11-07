@@ -352,6 +352,28 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_categories", JSON.stringify(categories)) }, [categories])
   useEffect(() => { if (!isApiMode) window.localStorage.setItem("phongtroplus_notifications", JSON.stringify(notifications)) }, [notifications])
 
+  // Đồng bộ đa tab thời gian thực cho chế độ Local/Demo qua StorageEvent (từ đề xuất của Dev B)
+  useEffect(() => {
+    if (isApiMode) return
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key?.startsWith("phongtroplus_")) return
+      if (event.key === "phongtroplus_listings") setListings(loadListings())
+      if (event.key === "phongtroplus_posts") setFeedPosts(loadFeedPosts())
+      if (event.key === "phongtroplus_users") setUsers(storage("users", initialUsers))
+      if (event.key === "phongtroplus_reports") {
+        setReports(
+          storage("reports", [] as ReportRecord[]).filter((item) =>
+            ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType),
+          ),
+        )
+      }
+      if (event.key === "phongtroplus_categories") setCategories(storage("categories", initialCategories))
+      if (event.key === "phongtroplus_notifications") setNotifications(storage("notifications", [] as NotificationRecord[]))
+    }
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
   useEffect(() => {
     if (!isApiMode) return
     let alive = true
