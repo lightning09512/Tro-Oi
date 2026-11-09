@@ -261,8 +261,31 @@ const loadMessages = () => storage("messages", initialMessages).map((conversatio
 const initialCategories: CategoryRecord[] = [
   ...["Thủ Đức", "Gò Vấp", "Bình Thạnh", "Tân Phú"].map((name, i) => ({ id: `district-${i}`, type: "Khu vực" as const, name, status: "active" as const })),
   ...["Phòng trọ", "Căn hộ mini", "Căn hộ", "Ở ghép", "Ký túc xá", "Nhà nguyên căn"].map((name, i) => ({ id: `room-type-${i}`, type: "Loại phòng" as const, name, status: "active" as const })),
-  ...["Máy lạnh", "Bãi đỗ xe", "Ban công", "Máy giặt", "Cho nuôi thú cưng"].map((name, i) => ({ id: `amenity-${i}`, type: "Tiện ích" as const, name, status: "active" as const })),
+  ...[
+    "Giường nệm",
+    "Máy lạnh",
+    "Wi-Fi tốc độ cao",
+    "Máy giặt",
+    "Giờ giấc tự do",
+    "Camera an ninh",
+    "Bãi đỗ xe",
+    "Ban công",
+    "Cho nuôi thú cưng",
+  ].map((name, i) => ({ id: `amenity-${i}`, type: "Tiện ích" as const, name, status: "active" as const })),
 ]
+
+const loadCategories = (): CategoryRecord[] => {
+  const saved = storage("categories", initialCategories)
+  const missing = initialCategories.filter(
+    (def) =>
+      !saved.some(
+        (item) =>
+          item.type === def.type &&
+          item.name.trim().toLocaleLowerCase("vi") === def.name.trim().toLocaleLowerCase("vi"),
+      ),
+  )
+  return missing.length > 0 ? [...saved, ...missing] : saved
+}
 
 const storage = <T,>(key: string, fallback: T): T => {
   try {
@@ -338,7 +361,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [reports, setReports] = useState(() => isApiMode ? [] as ReportRecord[] : storage("reports", [] as ReportRecord[]).filter((item) => ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType)))
   const [messages, setMessages] = useState(() => isApiMode ? [] as MessageRecord[] : loadMessages())
   const [reviews, setReviews] = useState(() => isApiMode ? [] as RoomReview[] : storage("reviews", initialReviews).filter((review) => review.id !== "review-1" && !legacyDemoListingIds.has(review.listingId)))
-  const [categories, setCategories] = useState(() => isApiMode ? [] as CategoryRecord[] : storage("categories", initialCategories))
+  const [categories, setCategories] = useState(() => isApiMode ? [] as CategoryRecord[] : loadCategories())
   const [notifications, setNotifications] = useState(() => isApiMode ? [] as NotificationRecord[] : storage("notifications", [] as NotificationRecord[]))
   const [connectionState, setConnectionState] = useState<PlatformContextValue["connectionState"]>(isApiMode ? "loading" : "demo")
   const [connectionError, setConnectionError] = useState("")
@@ -367,7 +390,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           ),
         )
       }
-      if (event.key === "phongtroplus_categories") setCategories(storage("categories", initialCategories))
+      if (event.key === "phongtroplus_categories") setCategories(loadCategories())
       if (event.key === "phongtroplus_notifications") setNotifications(storage("notifications", [] as NotificationRecord[]))
     }
     window.addEventListener("storage", handleStorage)
