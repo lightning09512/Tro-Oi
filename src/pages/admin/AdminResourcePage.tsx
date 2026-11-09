@@ -105,6 +105,8 @@ export default function AdminResourcePage() {
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
 
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
+  const [defaultCategoryType, setDefaultCategoryType] =
+    useState<CategoryRecord["type"]>("Khu vực")
   const [editorError, setEditorError] = useState("")
   const [dialog, setDialog] = useState<"edit" | "report" | null>(null)
   const [actionError, setActionError] = useState("")
@@ -368,11 +370,92 @@ export default function AdminResourcePage() {
     return owner?.phone ?? ""
   }, [selectedListing, users])
 
-  const openEdit = (item?: PlatformUser | CategoryRecord) => {
+  const openEdit = (
+    item?: PlatformUser | CategoryRecord,
+    presetCategoryType?: CategoryRecord["type"],
+  ) => {
     setEditing(item ?? null)
+    if (presetCategoryType) {
+      setDefaultCategoryType(presetCategoryType)
+    } else if (item && "type" in item) {
+      setDefaultCategoryType(item.type)
+    } else {
+      setDefaultCategoryType("Khu vực")
+    }
     setEditorError("")
     setDialog("edit")
   }
+
+  // Số lượng tin cho thuê áp dụng cho từng mục Danh mục & Tiện ích
+  const categoryUsageCounts = useMemo(() => {
+    const amenityKeywordsMap: Record<string, string[]> = {
+      "wi-fi tốc độ cao": ["wi-fi", "wifi", "internet"],
+      "wi-fi": ["wi-fi", "wifi", "internet"],
+      "bãi đỗ xe": ["bãi đỗ xe", "bãi xe", "bãi để xe", "sân xe", "bãi đỗ ô tô", "chỗ đỗ ô tô"],
+      "máy lạnh": ["máy lạnh", "điều hòa"],
+      "giường nệm": ["giường nệm", "giường"],
+      "camera an ninh": ["camera an ninh", "camera", "bảo vệ"],
+      "máy giặt": ["máy giặt"],
+      "ban công": ["ban công"],
+      "giờ giấc tự do": ["giờ giấc tự do"],
+      "cho nuôi thú cưng": ["thú cưng", "nuôi thú"],
+    }
+
+    const counts: Record<string, number> = {}
+    for (const cat of categories) {
+      const target = cat.name.trim().toLocaleLowerCase("vi")
+      if (!target) {
+        counts[cat.id] = 0
+        continue
+      }
+      if (cat.type === "Khu vực") {
+        counts[cat.id] = listings.filter((item) =>
+          (item.location || "").toLocaleLowerCase("vi").includes(target),
+        ).length
+      } else if (cat.type === "Loại phòng") {
+        counts[cat.id] = listings.filter(
+          (item) => (item.type || "").trim().toLocaleLowerCase("vi") === target,
+        ).length
+      } else {
+        const keywords = amenityKeywordsMap[target] ?? [target]
+        counts[cat.id] = listings.filter((item) =>
+          (item.amenities ?? []).some((am) => {
+            const normAm = am.trim().toLocaleLowerCase("vi")
+            return keywords.some(
+              (kw) => normAm === kw || normAm.includes(kw) || kw.includes(normAm),
+            )
+          }),
+        ).length
+      }
+    }
+    return counts
+  }, [categories, listings])
+
+  // Danh sách Danh mục & Tiện ích đã lọc theo từ khóa & trạng thái
+  const filteredCategories = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("vi")
+    return categories.filter((item) => {
+      const matchStatus = filter === "all" || item.status === filter
+      if (!matchStatus) return false
+      if (normalizedQuery) {
+        const searchable = `${item.name} ${item.type}`.toLocaleLowerCase("vi")
+        if (!searchable.includes(normalizedQuery)) return false
+      }
+      return true
+    })
+  }, [categories, filter, query])
+
+  // Phân nhóm Danh mục & Tiện ích thành 3 cột độc lập (Khu vực, Loại phòng, Tiện ích)
+  const groupedCategories = useMemo(() => {
+    const sortByName = (list: CategoryRecord[]) =>
+      [...list].sort((a, b) => a.name.localeCompare(b.name, "vi"))
+
+    return {
+      areas: sortByName(filteredCategories.filter((item) => item.type === "Khu vực")),
+      roomTypes: sortByName(filteredCategories.filter((item) => item.type === "Loại phòng")),
+      amenities: sortByName(filteredCategories.filter((item) => item.type === "Tiện ích")),
+    }
+  }, [filteredCategories])
 
   const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -585,6 +668,391 @@ export default function AdminResourcePage() {
       busyRef.current = false
       setBusyId("")
     }
+  }
+
+  const editDialogNode =
+    dialog === "edit" ? (
+      <div className="dialog-backdrop">
+        <section
+          ref={dialogRef}
+          className="action-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-editor-title"
+        >
+          <button
+            className="dialog-close"
+            disabled={Boolean(busyId)}
+            onClick={() => setDialog(null)}
+            aria-label="Đóng"
+          >
+            <Icon name="close" />
+          </button>
+          <h2 id="admin-editor-title">
+            {editing
+              ? "Cập nhật thông tin"
+              : resource === "categories"
+                ? `Thêm ${defaultCategoryType.toLocaleLowerCase("vi")} mới`
+                : "Tạo mới"}
+          </h2>
+          <form className="dialog-form" onSubmit={saveEditor}>
+            {editorError && (
+              <p className="form-message error" role="alert">
+                {editorError}
+              </p>
+            )}
+            {!editing && resource === "users" && (
+              <p className="demo-note">
+                {isApiMode
+                  ? "Đặt mật khẩu ban đầu an toàn; mật khẩu sẽ được băm trước khi lưu."
+                  : `Tài khoản demo mới dùng mật khẩu ${authService.demoPassword}; người dùng có thể đổi mật khẩu sau khi đăng nhập.`}
+              </p>
+            )}
+            {resource === "users" ? (
+              <>
+                <label className="form-field">
+                  <span>Họ tên</span>
+                  <input
+                    name="name"
+                    defaultValue={editing && "name" in editing ? editing.name : ""}
+                    required
+                  />
+                </label>
+                <label className="form-field">
+                  <span>Email</span>
+                  <input
+                    name="email"
+                    type="email"
+                    defaultValue={editing && "email" in editing ? editing.email : ""}
+                    required
+                  />
+                </label>
+                <label className="form-field">
+                  <span>Số điện thoại</span>
+                  <input
+                    name="phone"
+                    defaultValue={editing && "phone" in editing ? editing.phone : ""}
+                    required
+                  />
+                </label>
+                {!editing && (
+                  <label className="form-field">
+                    <span>Mật khẩu ban đầu</span>
+                    <input
+                      name="password"
+                      type="password"
+                      minLength={8}
+                      required={isApiMode}
+                      autoComplete="new-password"
+                      placeholder="Ít nhất 8 ký tự"
+                    />
+                  </label>
+                )}
+                <label className="form-field">
+                  <span>Vai trò</span>
+                  <select
+                    name="role"
+                    defaultValue={editing && "role" in editing ? editing.role : "renter"}
+                  >
+                    <option value="renter">Người thuê</option>
+                    <option value="landlord">Chủ trọ</option>
+                    <option value="admin">Quản trị viên</option>
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span>Trạng thái</span>
+                  <select
+                    name="status"
+                    defaultValue={editing && "status" in editing ? editing.status : "active"}
+                  >
+                    <option value="active">Đang hoạt động</option>
+                    <option value="locked">Đã khóa</option>
+                  </select>
+                </label>
+              </>
+            ) : (
+              <>
+                <label className="form-field">
+                  <span>Tên danh mục</span>
+                  <input
+                    name="name"
+                    key={editing ? `name-${editing.id}` : `name-new-${defaultCategoryType}`}
+                    defaultValue={editing && "name" in editing ? editing.name : ""}
+                    placeholder={`Nhập tên ${defaultCategoryType.toLocaleLowerCase("vi")}...`}
+                    required
+                  />
+                </label>
+                <label className="form-field">
+                  <span>Nhóm</span>
+                  <select
+                    name="type"
+                    key={editing ? `type-${editing.id}` : `type-new-${defaultCategoryType}`}
+                    defaultValue={
+                      editing && "type" in editing ? editing.type : defaultCategoryType
+                    }
+                  >
+                    <option value="Khu vực">Khu vực</option>
+                    <option value="Loại phòng">Loại phòng</option>
+                    <option value="Tiện ích">Tiện ích</option>
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span>Trạng thái</span>
+                  <select
+                    name="status"
+                    key={editing ? `status-${editing.id}` : `status-new-${defaultCategoryType}`}
+                    defaultValue={editing && "status" in editing ? editing.status : "active"}
+                  >
+                    <option value="active">Đang hoạt động</option>
+                    <option value="hidden">Đang ẩn</option>
+                  </select>
+                </label>
+              </>
+            )}
+            <div className="dialog-actions">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={Boolean(busyId)}
+                onClick={() => setDialog(null)}
+              >
+                Hủy
+              </Button>
+              <Button disabled={Boolean(busyId)}>
+                {busyId === "editor" ? "Đang lưu…" : "Lưu thông tin"}
+              </Button>
+            </div>
+          </form>
+        </section>
+      </div>
+    ) : null
+
+  // Giao diện chuyên biệt cho màn hình "Danh mục & Tiện ích" (3-Column Grouped Taxonomy Board)
+  if (resource === "categories") {
+    const taxonomyColumns: {
+      type: CategoryRecord["type"]
+      title: string
+      addLabel: string
+      items: CategoryRecord[]
+      icon: "pin" | "home" | "sparkles"
+    }[] = [
+      {
+        type: "Khu vực",
+        title: "Khu vực hoạt động",
+        addLabel: "+ Thêm khu vực",
+        items: groupedCategories.areas,
+        icon: "pin",
+      },
+      {
+        type: "Loại phòng",
+        title: "Loại hình phòng",
+        addLabel: "+ Thêm loại phòng",
+        items: groupedCategories.roomTypes,
+        icon: "home",
+      },
+      {
+        type: "Tiện ích",
+        title: "Tiện ích phòng trọ",
+        addLabel: "+ Thêm tiện ích",
+        items: groupedCategories.amenities,
+        icon: "sparkles",
+      },
+    ]
+
+    return (
+      <main className="admin-resource-page management-page management-admin admin-resource-page--categories saas-taxonomy-page">
+        {/* 1. Thanh Công Cụ Đầu Trang (Top Toolbar 1 hàng ngang duy nhất) */}
+        <div className="saas-taxonomy-toolbar">
+          <div className="saas-taxonomy-toolbar-left">
+            <label className="saas-taxonomy-search">
+              <Icon name="search" size={16} />
+              <input
+                type="search"
+                aria-label="Tìm trong danh mục và tiện ích"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm trong danh mục & tiện ích..."
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </label>
+
+            <select
+              className="saas-taxonomy-select"
+              value={filter}
+              onChange={(event) => handleFilterChange(event.target.value)}
+              aria-label="Lọc trạng thái danh mục"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              {statusOptions.categories.map((value) => (
+                <option value={value} key={value}>
+                  {statusText[value]}
+                </option>
+              ))}
+            </select>
+
+            <span className="saas-taxonomy-count">{filteredCategories.length} kết quả</span>
+          </div>
+
+          <div className="saas-taxonomy-toolbar-right">
+            <button
+              type="button"
+              className="saas-csv-export-btn"
+              onClick={() => downloadCsv("categories-tro-oi.csv", filtered)}
+            >
+              <Icon name="download" size={16} />
+              <span>Tải CSV</span>
+            </button>
+
+            <button
+              type="button"
+              className="saas-primary-emerald-btn"
+              onClick={() => openEdit(undefined, "Khu vực")}
+            >
+              <span>+ Thêm mới</span>
+            </button>
+          </div>
+        </div>
+
+        {actionError && (
+          <p className="form-message error" role="alert">
+            {actionError}
+          </p>
+        )}
+
+        {connectionState === "loading" && (
+          <p className="management-feedback" role="status">
+            Đang tải dữ liệu…
+          </p>
+        )}
+        {connectionState === "error" && (
+          <p className="form-message error" role="alert">
+            {connectionError || "Không tải được dữ liệu. Hãy tải lại trang để thử lại."}
+          </p>
+        )}
+
+        {/* 2. Bố Cục Chính: Bảng 3 Cột Dọc Độc Lập (3-Column Grid) */}
+        <section
+          className="saas-taxonomy-board"
+          aria-busy={Boolean(busyId) || connectionState === "loading"}
+        >
+          {taxonomyColumns.map((col) => (
+            <article key={col.type} className="saas-taxonomy-card">
+              <div className="saas-taxonomy-card-top">
+                <header className="saas-taxonomy-card-header">
+                  <span className="saas-taxonomy-card-icon" aria-hidden="true">
+                    {col.icon === "pin" && <Icon name="pin" size={18} />}
+                    {col.icon === "home" && <Icon name="home" size={18} />}
+                    {col.icon === "sparkles" && (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <h2>
+                    {col.title} ({col.items.length})
+                  </h2>
+                </header>
+
+                {col.items.length > 0 ? (
+                  <div className="saas-taxonomy-list">
+                    {col.items.map((item) => {
+                      const usageCount = categoryUsageCounts[item.id] ?? 0
+                      const isHidden = item.status === "hidden"
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`saas-taxonomy-row${isHidden ? " is-hidden" : ""}`}
+                        >
+                          {/* Cụm bên trái: Tên mục + Badge trạng thái & số lượng tin */}
+                          <div className="saas-taxonomy-row-left">
+                            <span className="saas-taxonomy-item-name" title={item.name}>
+                              {item.name}
+                            </span>
+                            {isHidden ? (
+                              <span className="saas-taxonomy-pill is-hidden">
+                                <span className="saas-taxonomy-dot is-hidden" />
+                                <span>Đã ẩn</span>
+                              </span>
+                            ) : (
+                              <span className="saas-taxonomy-pill is-active">
+                                <span>{usageCount} tin</span>
+                                <span className="saas-taxonomy-dot is-active" />
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Cụm bên phải: 3 thao tác Sửa | Ẩn | Xóa trên cùng 1 hàng ngang */}
+                          <fieldset
+                            className="saas-taxonomy-row-actions"
+                            disabled={Boolean(busyId)}
+                            aria-label={`Thao tác với ${item.name}`}
+                          >
+                            <button
+                              type="button"
+                              className="saas-taxonomy-action-btn"
+                              onClick={() => openEdit(item, item.type)}
+                            >
+                              Sửa
+                            </button>
+                            <span className="saas-taxonomy-action-sep" aria-hidden="true">
+                              |
+                            </span>
+                            <button
+                              type="button"
+                              className="saas-taxonomy-action-btn"
+                              onClick={() => action(item.id, "hidden")}
+                            >
+                              {isHidden ? "Hiện" : "Ẩn"}
+                            </button>
+                            <span className="saas-taxonomy-action-sep" aria-hidden="true">
+                              |
+                            </span>
+                            <button
+                              type="button"
+                              className="saas-taxonomy-action-btn is-danger"
+                              onClick={() => remove(item.id, item.name)}
+                            >
+                              Xóa
+                            </button>
+                          </fieldset>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="saas-taxonomy-empty">Không có mục nào khớp</p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="saas-taxonomy-add-col-btn"
+                onClick={() => openEdit(undefined, col.type)}
+              >
+                {col.addLabel}
+              </button>
+            </article>
+          ))}
+        </section>
+
+        {editDialogNode}
+      </main>
+    )
   }
 
   // Giao diện chuyên biệt cho màn hình "Tin cho thuê" (Master-Detail Split View + Rich Horizontal Cards)
@@ -1243,149 +1711,7 @@ export default function AdminResourcePage() {
         )}
       </section>
 
-      {dialog === "edit" && (
-        <div className="dialog-backdrop">
-          <section
-            ref={dialogRef}
-            className="action-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="admin-editor-title"
-          >
-            <button
-              className="dialog-close"
-              disabled={Boolean(busyId)}
-              onClick={() => setDialog(null)}
-              aria-label="Đóng"
-            >
-              <Icon name="close" />
-            </button>
-            <h2 id="admin-editor-title">{editing ? "Cập nhật thông tin" : "Tạo mới"}</h2>
-            <form className="dialog-form" onSubmit={saveEditor}>
-              {editorError && (
-                <p className="form-message error" role="alert">
-                  {editorError}
-                </p>
-              )}
-              {!editing && resource === "users" && (
-                <p className="demo-note">
-                  {isApiMode
-                    ? "Đặt mật khẩu ban đầu an toàn; mật khẩu sẽ được băm trước khi lưu."
-                    : `Tài khoản demo mới dùng mật khẩu ${authService.demoPassword}; người dùng có thể đổi mật khẩu sau khi đăng nhập.`}
-                </p>
-              )}
-              {resource === "users" ? (
-                <>
-                  <label className="form-field">
-                    <span>Họ tên</span>
-                    <input
-                      name="name"
-                      defaultValue={editing && "name" in editing ? editing.name : ""}
-                      required
-                    />
-                  </label>
-                  <label className="form-field">
-                    <span>Email</span>
-                    <input
-                      name="email"
-                      type="email"
-                      defaultValue={editing && "email" in editing ? editing.email : ""}
-                      required
-                    />
-                  </label>
-                  <label className="form-field">
-                    <span>Số điện thoại</span>
-                    <input
-                      name="phone"
-                      defaultValue={editing && "phone" in editing ? editing.phone : ""}
-                      required
-                    />
-                  </label>
-                  {!editing && (
-                    <label className="form-field">
-                      <span>Mật khẩu ban đầu</span>
-                      <input
-                        name="password"
-                        type="password"
-                        minLength={8}
-                        required={isApiMode}
-                        autoComplete="new-password"
-                        placeholder="Ít nhất 8 ký tự"
-                      />
-                    </label>
-                  )}
-                  <label className="form-field">
-                    <span>Vai trò</span>
-                    <select
-                      name="role"
-                      defaultValue={editing && "role" in editing ? editing.role : "renter"}
-                    >
-                      <option value="renter">Người thuê</option>
-                      <option value="landlord">Chủ trọ</option>
-                      <option value="admin">Quản trị viên</option>
-                    </select>
-                  </label>
-                  <label className="form-field">
-                    <span>Trạng thái</span>
-                    <select
-                      name="status"
-                      defaultValue={editing && "status" in editing ? editing.status : "active"}
-                    >
-                      <option value="active">Đang hoạt động</option>
-                      <option value="locked">Đã khóa</option>
-                    </select>
-                  </label>
-                </>
-              ) : (
-                <>
-                  <label className="form-field">
-                    <span>Tên danh mục</span>
-                    <input
-                      name="name"
-                      defaultValue={editing && "name" in editing ? editing.name : ""}
-                      required
-                    />
-                  </label>
-                  <label className="form-field">
-                    <span>Nhóm</span>
-                    <select
-                      name="type"
-                      defaultValue={editing && "type" in editing ? editing.type : "Khu vực"}
-                    >
-                      <option>Khu vực</option>
-                      <option>Loại phòng</option>
-                      <option>Tiện ích</option>
-                    </select>
-                  </label>
-                  <label className="form-field">
-                    <span>Trạng thái</span>
-                    <select
-                      name="status"
-                      defaultValue={editing && "status" in editing ? editing.status : "active"}
-                    >
-                      <option value="active">Đang dùng</option>
-                      <option value="hidden">Đang ẩn</option>
-                    </select>
-                  </label>
-                </>
-              )}
-              <div className="dialog-actions">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={Boolean(busyId)}
-                  onClick={() => setDialog(null)}
-                >
-                  Hủy
-                </Button>
-                <Button disabled={Boolean(busyId)}>
-                  {busyId === "editor" ? "Đang lưu…" : "Lưu thông tin"}
-                </Button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+      {editDialogNode}
 
       {dialog === "report" && reportTarget && (
         <div className="dialog-backdrop">
