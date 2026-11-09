@@ -52,16 +52,8 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
 ]
 
 function resolvePostLoginPath(role: UserRole, requested?: string): string {
+  // Khi đăng nhập tài khoản Admin, trang mặc định luôn là trang Tổng quan (/admin)
   if (role === "admin") {
-    if (
-      requested &&
-      requested.startsWith("/admin") &&
-      requested !== "/admin/ho-so" &&
-      requested !== "/admin/doi-mat-khau" &&
-      requested !== "/admin/dang-nhap"
-    ) {
-      return requested
-    }
     return "/admin"
   }
   if (requested) {
@@ -192,7 +184,9 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
             {error}
           </p>
         )}
-        <Button type="submit" disabled={loading}>{loading ? "Đang đăng nhập..." : "Đăng nhập"}</Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+        </Button>
 
         {!admin && (
           <p className="auth-switch">
@@ -208,7 +202,7 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
               <h3 className="demo-table-title">Bảng tài khoản mẫu</h3>
             </div>
             <p className="demo-table-desc">
-              Bấm vào bất kỳ dòng nào hoặc nút <b>Điền nhanh</b> để tự động nhập tài khoản & mật khẩu:
+              Bấm vào bất kỳ dòng nào hoặc nút <b>Điền nhanh</b> để tự động nhập tài khoản &amp; mật khẩu:
             </p>
           </div>
 
@@ -273,7 +267,9 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
 
           <div className="demo-table-footer">
             <div className="demo-footer-info">
-              <span>Mật khẩu: <code className="demo-code-inline">{authService.demoPassword}</code></span>
+              <span>
+                Mật khẩu: <code className="demo-code-inline">{authService.demoPassword}</code>
+              </span>
               <button
                 type="button"
                 className="demo-copy-pwd-btn"
