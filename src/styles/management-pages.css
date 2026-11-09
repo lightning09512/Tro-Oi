@@ -1775,3 +1775,780 @@
     align-items: stretch;
   }
 }
+
+
+/* ==========================================================================
+   MÀN HÌNH QUẢN LÝ TIN CHO THUÊ (.saas-listings-page)
+   Master-Detail Split View + Rich Horizontal Cards (2-Tone Slate & Emerald)
+   ========================================================================== */
+.saas-listings-page {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 0 40px;
+  box-sizing: border-box;
+}
+
+/* 1.A. Hàng đầu tiên: Dãy 4 Tab Trạng Thái (Bên trái) + Nút Tải CSV (Bên phải) */
+.saas-listings-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.saas-csv-export-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 7px 14px;
+  min-height: 36px !important;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.saas-csv-export-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* Dãy Tabs Trạng Thái Tối Giản (Đồng nhất nền trắng/xám nhạt, không lòe loẹt) */
+.saas-listings-status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.saas-status-tab {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  line-height: 1.35;
+}
+
+.saas-status-tab:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.saas-status-tab.is-active {
+  background: #ffffff;
+  border: 2px solid #059669;
+  color: #0f172a;
+  font-weight: 600;
+  padding: 6px 13px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.saas-status-tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.saas-status-tab-dot.is-active {
+  background: #10b981;
+}
+
+.saas-status-tab-count {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 1.C. Thanh Tìm Kiếm & Bộ Lọc Dropdown */
+.saas-listings-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.saas-listings-search {
+  flex: 1 1 260px;
+  min-width: 260px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.saas-listings-search:focus-within {
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.14);
+}
+
+.saas-listings-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: 0;
+  padding: 0;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+
+.saas-listings-search input::placeholder {
+  color: #94a3b8;
+}
+
+.saas-listings-select {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 34px 8px 12px;
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 500;
+  min-height: 38px;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.saas-listings-select:hover {
+  border-color: #cbd5e1;
+}
+
+.saas-listings-select:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.14);
+}
+
+/* 2. Bố Cục Chính 2 Cột (Master-Detail Split View) */
+.saas-listings-split-view {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(320px, 4fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.saas-listings-split-view.is-full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Cột Trái (xl:col-span-8): Danh sách Thẻ Ngang Tinh Gọn */
+.saas-listings-master {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.saas-listing-hcard {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.saas-listing-hcard:hover {
+  border-color: #cbd5e1;
+}
+
+.saas-listing-hcard.is-selected {
+  background: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.22);
+}
+
+.saas-listing-hcard-thumb {
+  width: 128px;
+  height: 96px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+
+.saas-listing-hcard-body {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.saas-listing-hcard-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.saas-badge-neutral {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.saas-badge-neutral-bordered {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.saas-badge-emerald {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.saas-listing-hcard-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 5px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.saas-listing-hcard-address {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.saas-listing-hcard-specs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.saas-spec-price {
+  background: #f1f5f9;
+  color: #047857;
+  border: 1px solid #e2e8f0;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.saas-spec-chip {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.35;
+}
+
+.saas-spec-chip svg {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+/* Cụm Nút Thao Tác Tối Giản (Duy nhất 1 bộ 3 nút nằm gọn trên 1 hàng ngang) */
+.saas-listing-hcard-actions {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.saas-btn-outline {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.saas-btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.saas-btn-outline-danger {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e11d48;
+  cursor: pointer;
+  transition: all 150ms ease;
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.saas-btn-outline-danger:hover:not(:disabled) {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.saas-listings-empty {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 48px 20px;
+}
+
+/* Cột Phải (xl:col-span-4): Ngăn "Chi tiết & Kiểm duyệt nhanh" (Sticky Inspection Panel) */
+.saas-listings-inspector {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  position: sticky;
+  top: 24px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.saas-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.saas-inspector-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.saas-inspector-close {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  border-radius: 6px;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.saas-inspector-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.saas-inspector-gallery {
+  margin-top: 12px;
+}
+
+.saas-inspector-photo-stage {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.saas-inspector-photo {
+  width: 100%;
+  height: 184px;
+  object-fit: cover;
+  display: block;
+}
+
+.saas-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  transition: all 150ms ease;
+  padding: 0 0 1px !important;
+}
+
+.saas-gallery-arrow:hover {
+  background: #ffffff;
+  border-color: #059669;
+  color: #059669;
+}
+
+.saas-gallery-arrow.is-prev {
+  left: 8px;
+}
+
+.saas-gallery-arrow.is-next {
+  right: 8px;
+}
+
+.saas-gallery-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.saas-gallery-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  min-height: 12px;
+}
+
+.saas-gallery-dot {
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  min-height: 7px !important;
+  max-width: 7px !important;
+  max-height: 7px !important;
+  border-radius: 50% !important;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: none !important;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.saas-gallery-dot:hover {
+  background: #94a3b8;
+}
+
+.saas-gallery-dot.is-active {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  max-width: 8px !important;
+  max-height: 8px !important;
+  border-radius: 50% !important;
+  background: #059669;
+}
+
+.saas-inspector-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 12px 0 0;
+  line-height: 1.4;
+}
+
+.saas-inspector-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.saas-inspector-price {
+  color: #047857;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.saas-inspector-dot {
+  color: #cbd5e1;
+}
+
+.saas-inspector-area {
+  color: #475569;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.saas-inspector-desc {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.55;
+  margin: 10px 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.saas-inspector-info-box {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.saas-inspector-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.saas-inspector-info-row svg {
+  color: #64748b;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.saas-inspector-info-row b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.saas-inspector-amenities h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 14px 0 8px;
+}
+
+.saas-inspector-amenity-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.saas-amenity-tag {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Thanh điều khiển Phân trang (Pagination Bar) */
+.saas-pagination-bar {
+  margin-top: 4px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.saas-pagination-info {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.saas-pagination-info b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.saas-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.saas-page-nav-btn {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 11px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #475569 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.saas-page-nav-btn:hover:not(:disabled) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.saas-page-nav-btn:disabled {
+  opacity: 0.4 !important;
+  pointer-events: none;
+}
+
+.saas-page-num-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.saas-page-num-btn:hover:not(.is-active) {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.saas-page-num-btn.is-active {
+  background: #059669 !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 1279px) {
+  .saas-listings-split-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .saas-listings-inspector {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .saas-listing-hcard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .saas-listing-hcard-thumb {
+    width: 100%;
+    height: 160px;
+  }
+  .saas-listing-hcard-actions {
+    justify-content: flex-end;
+    padding-top: 10px !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+  .saas-pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .saas-pagination-controls {
+    justify-content: center;
+  }
+}

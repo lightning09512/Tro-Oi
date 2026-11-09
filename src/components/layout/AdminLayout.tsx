@@ -8,9 +8,7 @@ interface NavItemConfig {
   to: string
   icon: string
   label: string
-  hasChevron?: boolean
   badgeCount?: number
-  subItems?: { to: string; label: string }[]
 }
 
 const ADMIN_HEADER_META: Record<string, { label: string; searchTarget: string }> = {
@@ -19,23 +17,23 @@ const ADMIN_HEADER_META: Record<string, { label: string; searchTarget: string }>
     searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/nguoi-dung": {
-    label: "Quản lý thành viên",
+    label: "Thành viên",
     searchTarget: "/admin/nguoi-dung",
   },
   "/admin/tin-cho-thue": {
-    label: "Quản lý tin đăng",
+    label: "Tin cho thuê",
     searchTarget: "/admin/tin-cho-thue",
   },
   "/admin/dien-dan": {
-    label: "Quản lý cộng đồng",
+    label: "Cộng đồng",
     searchTarget: "/admin/dien-dan",
   },
   "/admin/danh-muc": {
-    label: "Quản lý danh mục",
+    label: "Danh mục & Tiện ích",
     searchTarget: "/admin/danh-muc",
   },
   "/admin/bao-cao": {
-    label: "Kiểm duyệt & Báo cáo",
+    label: "Kiểm duyệt",
     searchTarget: "/admin/bao-cao",
   },
   "/admin/thong-ke": {
@@ -65,7 +63,6 @@ export default function AdminLayout() {
   const [quickQuery, setQuickQuery] = useState("")
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [mobileSideOpen, setMobileSideOpen] = useState(false)
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
 
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
@@ -86,45 +83,18 @@ export default function AdminLayout() {
   const navItems: NavItemConfig[] = useMemo(
     () => [
       { to: "/admin", icon: "home", label: "Tổng quan" },
-      {
-        to: "/admin/tin-cho-thue",
-        icon: "list",
-        label: "Quản lý tin đăng",
-        hasChevron: true,
-        subItems: [
-          { to: "/admin/tin-cho-thue", label: "Tất cả tin cho thuê" },
-          { to: "/admin/danh-muc", label: "Danh mục & Tiện ích" },
-        ],
-      },
+      { to: "/admin/tin-cho-thue", icon: "building", label: "Tin cho thuê" },
+      { to: "/admin/danh-muc", icon: "grid", label: "Danh mục & Tiện ích" },
       {
         to: "/admin/bao-cao",
         icon: "shield-check",
         label: "Kiểm duyệt",
         badgeCount: pendingReports,
       },
-      {
-        to: "/admin/nguoi-dung",
-        icon: "users",
-        label: "Thành viên",
-        hasChevron: true,
-      },
-      {
-        to: "/admin/dien-dan",
-        icon: "chat",
-        label: "Cộng đồng",
-        hasChevron: true,
-      },
-      {
-        to: "/admin/thong-ke",
-        icon: "chart",
-        label: "Báo cáo",
-        hasChevron: true,
-      },
-      {
-        to: "/admin/ho-so",
-        icon: "settings",
-        label: "Cài đặt",
-      },
+      { to: "/admin/nguoi-dung", icon: "users", label: "Thành viên" },
+      { to: "/admin/dien-dan", icon: "chat", label: "Cộng đồng" },
+      { to: "/admin/thong-ke", icon: "chart", label: "Báo cáo" },
+      { to: "/admin/ho-so", icon: "settings", label: "Cài đặt" },
     ],
     [pendingReports],
   )
@@ -186,7 +156,7 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* A. Thanh điều hướng dọc bên trái (Left Vertical Sidebar) */}
+      {/* A. Thanh điều hướng dọc bên trái (Flat Top-Level Navigation) */}
       <aside className={`admin-side saas-admin-sidebar${mobileSideOpen ? " is-open" : ""}`}>
         <NavLink className="admin-logo saas-brand-header" to="/admin">
           <span className="saas-brand-icon" aria-hidden="true">
@@ -207,13 +177,7 @@ export default function AdminLayout() {
                 ? pathname === "/admin"
                 : item.to === "/admin/ho-so"
                   ? isProfileActive
-                  : item.to === "/admin/tin-cho-thue"
-                    ? pathname === "/admin/tin-cho-thue" || pathname === "/admin/danh-muc"
-                    : pathname.startsWith(item.to)
-
-            const isSubOpen =
-              expandedMenu === item.to ||
-              (item.subItems && pathname === "/admin/danh-muc" && item.to === "/admin/tin-cho-thue")
+                  : pathname.startsWith(item.to)
 
             return (
               <div key={item.to} className="saas-nav-group">
@@ -221,52 +185,17 @@ export default function AdminLayout() {
                   end={item.to === "/admin"}
                   to={item.to}
                   className={`saas-nav-item${isItemActive ? " active" : ""}`}
-                  onClick={() => {
-                    if (item.subItems) {
-                      setExpandedMenu((prev) => (prev === item.to ? null : item.to))
-                    }
-                  }}
                 >
                   <span className="saas-nav-item-left">
                     <Icon name={item.icon} size={18} />
                     <span>{item.label}</span>
                   </span>
-                  <span className="saas-nav-item-right">
-                    {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                  {item.badgeCount !== undefined && item.badgeCount > 0 && (
+                    <span className="saas-nav-item-right">
                       <b className="saas-nav-badge">{item.badgeCount}</b>
-                    )}
-                    {item.hasChevron && (
-                      <span
-                        className={`saas-nav-chevron${isSubOpen ? " is-open" : ""}`}
-                        onClick={(e) => {
-                          if (item.subItems) {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setExpandedMenu((prev) => (prev === item.to ? null : item.to))
-                          }
-                        }}
-                      >
-                        <Icon name="chevron-down" size={15} />
-                      </span>
-                    )}
-                  </span>
+                    </span>
+                  )}
                 </NavLink>
-
-                {item.subItems && isSubOpen && (
-                  <div className="saas-nav-sublist">
-                    {item.subItems.map((sub) => (
-                      <NavLink
-                        key={sub.to}
-                        to={sub.to}
-                        className={({ isActive }) =>
-                          `saas-nav-subitem${isActive ? " active" : ""}`
-                        }
-                      >
-                        <span>{sub.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
               </div>
             )
           })}
