@@ -17,7 +17,7 @@ type SearchFilters = {
   minPrice: string
   maxPrice: string
   areaRange: string
-  roomType: string
+  roomType: string[]
   amenities: string[]
 }
 
@@ -26,17 +26,18 @@ const defaultFilters: SearchFilters = {
   minPrice: "",
   maxPrice: "",
   areaRange: "all",
-  roomType: "all",
+  roomType: [],
   amenities: [],
 }
 
 function readFilters(params: URLSearchParams): SearchFilters {
+  const roomTypeParam = params.get("type")
   return {
     location: params.get("location") ?? ((params.has("type") || params.has("q")) ? "" : defaultFilters.location),
     minPrice: params.get("minPrice") ?? "",
     maxPrice: params.get("maxPrice") ?? "",
     areaRange: params.get("areaRange") ?? "all",
-    roomType: params.get("type") ?? "all",
+    roomType: roomTypeParam ? roomTypeParam.split(",").map((value) => value.trim()).filter(Boolean) : [],
     amenities: params.get("amenities")?.split(",").filter(Boolean) ?? [],
   }
 }
@@ -105,6 +106,13 @@ function Filters({
     onChange({ amenities: next })
   }
 
+  const toggleRoomType = (type: string, checked: boolean) => {
+    const next = checked
+      ? [...filters.roomType, type]
+      : filters.roomType.filter((value) => value !== type)
+    onChange({ roomType: next })
+  }
+
   return (
     <aside className="filters">
       <div className="filter-head">
@@ -159,16 +167,25 @@ function Filters({
         </select>
       </div>
       <div className="filter-group">
-        <label htmlFor={`${idPrefix}-filter-type`}>Loại phòng</label>
-        <select
-          id={`${idPrefix}-filter-type`}
-          className="filter-select"
-          value={filters.roomType}
-          onChange={(event) => onChange({ roomType: event.target.value })}
-        >
-          <option value="all">Tất cả loại phòng</option>
-          {roomTypes.map((type) => <option value={type} key={type}>{type}</option>)}
-        </select>
+        <label>Loại phòng</label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={filters.roomType.length === 0}
+            onChange={(event) => onChange({ roomType: event.target.checked ? [] : filters.roomType })}
+          />
+          <span>Tất cả loại phòng</span>
+        </label>
+        {roomTypes.map((type) => (
+          <label className="check" key={type}>
+            <input
+              type="checkbox"
+              checked={filters.roomType.includes(type)}
+              onChange={(event) => toggleRoomType(type, event.target.checked)}
+            />
+            <span>{type}</span>
+          </label>
+        ))}
       </div>
       <div className="filter-group">
         <label>Tiện ích</label>
@@ -258,7 +275,7 @@ export default function SearchPage() {
     if (keyword) params.set("q", keyword)
     if (appliedFilters.minPrice) params.set("minPrice", appliedFilters.minPrice)
     if (appliedFilters.maxPrice) params.set("maxPrice", appliedFilters.maxPrice)
-    if (appliedFilters.roomType !== "all") params.set("type", appliedFilters.roomType)
+    if (appliedFilters.roomType.length) params.set("type", appliedFilters.roomType.join(","))
     if (appliedFilters.amenities.length) params.set("amenities", appliedFilters.amenities.join(","))
     if (appliedFilters.areaRange === "under20") params.set("maxArea", "19.99")
     if (appliedFilters.areaRange === "20-30") { params.set("minArea", "20"); params.set("maxArea", "30") }
@@ -311,8 +328,8 @@ export default function SearchPage() {
           room.amenities.includes(amenity),
         )
         const matchesType =
-          appliedFilters.roomType === "all" ||
-          room.type === appliedFilters.roomType
+          appliedFilters.roomType.length === 0 ||
+          appliedFilters.roomType.includes(room.type)
         return (
           matchesLocation &&
           (!keyword || isApiMode || normalize(`${room.title} ${room.location} ${room.amenities.join(" ")}`).includes(normalize(keyword))) &&
@@ -357,8 +374,8 @@ export default function SearchPage() {
     if (draftFilters.maxPrice) params.set("maxPrice", draftFilters.maxPrice)
     if (draftFilters.areaRange !== "all")
       params.set("areaRange", draftFilters.areaRange)
-    if (draftFilters.roomType !== "all")
-      params.set("type", draftFilters.roomType)
+    if (draftFilters.roomType.length)
+      params.set("type", draftFilters.roomType.join(","))
     if (draftFilters.amenities.length)
       params.set("amenities", draftFilters.amenities.join(","))
     if (isNearSearch) {
