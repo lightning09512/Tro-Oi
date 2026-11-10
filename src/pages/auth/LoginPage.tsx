@@ -58,10 +58,10 @@ function resolvePostLoginPath(role: UserRole, requested?: string): string {
   }
   if (requested) {
     if (requested.startsWith("/admin")) {
-      return role === "landlord" ? "/chu-tro/thong-ke" : "/"
+      return role === "landlord" ? "/chu-tro/thong-ke" : "/tim-phong"
     }
     if (role === "renter" && requested.startsWith("/chu-tro")) {
-      return "/"
+      return "/tim-phong"
     }
     if (
       requested !== "/tai-khoan/ho-so" &&
@@ -71,7 +71,7 @@ function resolvePostLoginPath(role: UserRole, requested?: string): string {
       return requested
     }
   }
-  return role === "landlord" ? "/chu-tro/thong-ke" : "/"
+  return "/tim-phong"
 }
 
 export default function LoginPage({ admin = false }: { admin?: boolean }) {
