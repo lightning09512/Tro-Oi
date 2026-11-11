@@ -3571,11 +3571,24 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
 }
 
-/* Danh sách Thẻ Báo Cáo (Full-width, sạch sẽ) */
+/* Danh sách Báo Cáo Bố Cục Lưới 4 Cột Có Đường Ngăn Cách Dọc (4-Column Grid/Table) */
 .saas-reports-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+
+.saas-reports-table-header {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  background: #f8fafc; /* bg-slate-50 */
+  border: 1px solid #e2e8f0; /* border-slate-200 */
+  border-radius: 12px 12px 8px 8px;
+  padding: 12px 20px; /* px-5 py-3 */
+  font-size: 12px; /* text-xs */
+  font-weight: 700; /* font-bold */
+  color: #475569; /* text-slate-600 */
+  align-items: center;
 }
 
 .saas-report-card {
@@ -3583,10 +3596,9 @@
   border: 1px solid #e2e8f0; /* border-slate-200 */
   border-radius: 12px; /* rounded-xl */
   padding: 16px 20px; /* px-5 py-4 */
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: center;
-  justify-content: space-between;
-  gap: 24px; /* gap-6 */
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -3595,98 +3607,220 @@
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
 }
 
-.saas-report-card-main {
-  flex: 1 1 0%;
+/* Chia 4 cột theo lưới 12 cột (4 - 3 - 3 - 2) kèm đường kẻ dọc mảnh ngăn cách */
+.saas-report-col-1 {
+  grid-column: span 4 / span 4;
+  padding-right: 20px;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-/* Dòng 1: Meta row (Nhãn loại nội dung + Nhãn trạng thái + Lý do + Báo cáo bởi) */
-.saas-report-card-meta {
+.saas-report-col-2 {
+  grid-column: span 3 / span 3;
+  padding: 0 20px;
+  min-width: 0;
+}
+
+.saas-report-col-3 {
+  grid-column: span 3 / span 3;
+  padding: 0 20px;
+  min-width: 0;
+}
+
+.saas-report-col-4 {
+  grid-column: span 2 / span 2;
+  padding-left: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.saas-reports-table-header .saas-report-col-4 {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.saas-report-card .saas-report-col-2,
+.saas-report-card .saas-report-col-3,
+.saas-report-card .saas-report-col-4 {
+  border-left: 1px solid #f1f5f9; /* lg:divide-x lg:divide-slate-100 */
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.saas-report-card .saas-report-col-4 {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Cột 1 - Hàng 1: 2 Badge phân biệt hoàn toàn về hình dáng & độ tương phản */
+.saas-report-card-badges {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+/* Badge Loại nội dung: Khung vuông bo nhẹ nền trắng có viền + Icon */
+.saas-report-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* gap-1.5 */
+  background: #ffffff; /* bg-white */
+  border: 1px solid #cbd5e1; /* border-slate-300 */
+  color: #334155; /* text-slate-700 */
+  padding: 2px 10px; /* px-2.5 py-0.5 */
+  border-radius: 6px; /* rounded-md */
   font-size: 12px; /* text-xs */
-  color: #64748b; /* text-slate-500 */
+  font-weight: 500; /* font-medium */
   line-height: 1.4;
 }
 
-.saas-report-type-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f1f5f9; /* bg-slate-100 */
-  color: #334155; /* text-slate-700 */
-  padding: 2px 10px; /* px-2.5 py-0.5 */
-  border-radius: 6px; /* rounded-md */
-  font-size: 12px;
-  font-weight: 500; /* font-medium */
-}
-
-.saas-report-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px; /* px-2.5 py-0.5 */
-  border-radius: 6px; /* rounded-md */
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.saas-report-status-pill.is-slate {
-  background: #f1f5f9; /* bg-slate-100 */
-  color: #334155; /* text-slate-700 */
-}
-
-.saas-report-status-pill.is-emerald {
-  background: #ecfdf5; /* bg-emerald-50 */
-  color: #047857; /* text-emerald-700 */
-  border: 1px solid #a7f3d0; /* border-emerald-200 */
-}
-
-.saas-report-meta-dot {
-  color: #94a3b8;
-}
-
-.saas-report-meta-text {
-  color: #64748b;
-}
-
-.saas-report-meta-text strong {
-  font-weight: 500; /* font-medium */
-  color: #334155; /* text-slate-700 */
-}
-
-/* Dòng 2: Tiêu đề đối tượng bị báo cáo */
-.saas-report-card-title {
-  font-size: 15.5px !important; /* text-base */
-  font-weight: 700 !important; /* font-bold */
-  color: #0f172a !important; /* text-slate-900 */
-  margin: 6px 0 0 !important; /* mt-1.5 */
-  line-height: 1.4 !important;
-}
-
-/* Dòng 3: Nội dung chi tiết từ người báo cáo */
-.saas-report-card-desc {
-  font-size: 13.5px; /* text-sm */
-  color: #475569; /* text-slate-600 */
-  margin: 4px 0 0; /* mt-1 */
-  line-height: 1.55; /* leading-relaxed */
-}
-
-/* Khối Nút Hành Động Bên Phải */
-.saas-report-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* gap-2 */
+.saas-report-type-badge svg {
+  color: #475569;
   flex-shrink: 0;
 }
 
+/* Badge Trạng thái xử lý: Kiểu Pill bo tròn hoàn toàn (rounded-full) */
+.saas-report-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px; /* px-2.5 py-0.5 */
+  border-radius: 9999px; /* rounded-full */
+  font-size: 12px; /* text-xs */
+  line-height: 1.4;
+}
+
+/* ● Chờ xét duyệt: Nền xám đen đậm nổi bật, chữ trắng */
+.saas-report-status-pill.is-pending {
+  background: #1e293b; /* bg-slate-800 */
+  color: #ffffff; /* text-white */
+  font-weight: 600; /* font-semibold */
+}
+
+.saas-report-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ✓ Đã chấp nhận: Nền xanh lá nhạt, chữ xanh lá đậm */
+.saas-report-status-pill.is-accepted {
+  background: #ecfdf5; /* bg-emerald-50 */
+  color: #047857; /* text-emerald-700 */
+  border: 1px solid #a7f3d0; /* border-emerald-200 */
+  font-weight: 600; /* font-semibold */
+}
+
+/* ✕ Từ chối: Nền xám nhạt, chữ xám mờ */
+.saas-report-status-pill.is-rejected {
+  background: #f1f5f9; /* bg-slate-100 */
+  color: #64748b; /* text-slate-500 */
+  font-weight: 500; /* font-medium */
+}
+
+/* Cột 1 - Hàng 2: Lý do báo cáo (reason) in đậm cỡ lớn nổi bật nhất */
+.saas-report-reason-title {
+  font-size: 15px !important; /* text-[15px] */
+  font-weight: 700 !important; /* font-bold */
+  color: #0f172a !important; /* text-slate-900 */
+  margin: 8px 0 0 !important; /* mt-2 */
+  line-height: 1.38 !important; /* leading-snug */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* Cột 2: Nội dung bị báo cáo */
+.saas-report-col-label {
+  font-size: 12px; /* text-xs */
+  color: #64748b; /* text-slate-500 */
+  margin-bottom: 4px; /* mb-1 */
+  display: block;
+}
+
+.saas-report-target-title {
+  font-size: 13.5px; /* text-sm */
+  font-weight: 600; /* font-semibold */
+  color: #1e293b; /* text-slate-800 */
+  margin: 0;
+  line-height: 1.4; /* leading-snug */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+.saas-report-target-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.saas-report-target-link:hover {
+  color: #047857 !important; /* hover:text-emerald-700 */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.saas-report-target-link:hover .saas-report-target-arrow {
+  color: #059669;
+  transform: translate(1.5px, -1.5px);
+}
+
+.saas-report-target-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  transition: transform 150ms ease, color 150ms ease;
+}
+
+/* Cột 3: Chi tiết phản ánh */
+.saas-report-reporter-line {
+  font-size: 12px; /* text-xs */
+  color: #475569;
+  margin-bottom: 4px; /* mb-1 */
+  display: block;
+}
+
+.saas-report-reporter-line strong {
+  font-weight: 600; /* font-semibold */
+  color: #1e293b; /* text-slate-800 */
+}
+
+.saas-report-quote-desc {
+  font-size: 12.5px; /* text-xs */
+  color: #475569; /* text-slate-600 */
+  margin: 0;
+  line-height: 1.55; /* leading-relaxed */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* Cột 4: Nút thao tác (1 nút duy nhất trên mỗi dòng, min-w-[96px]) */
 .saas-report-btn-primary {
-  min-height: 34px !important;
-  height: 34px !important;
-  padding: 0 14px !important; /* px-3.5 py-1.5 */
+  min-height: 36px !important;
+  height: 36px !important;
+  min-width: 96px !important; /* min-w-[96px] */
+  padding: 0 16px !important; /* px-4 py-2 */
   border-radius: 8px !important; /* rounded-lg */
   border: 1px solid #059669 !important;
   background: #059669 !important; /* bg-emerald-600 */
@@ -3698,6 +3832,7 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  text-align: center !important;
   white-space: nowrap !important;
 }
 
@@ -3707,9 +3842,10 @@
 }
 
 .saas-report-btn-outline {
-  min-height: 34px !important;
-  height: 34px !important;
-  padding: 0 14px !important; /* px-3.5 py-1.5 */
+  min-height: 36px !important;
+  height: 36px !important;
+  min-width: 96px !important; /* min-w-[96px] */
+  padding: 0 14px !important; /* px-3.5 py-2 */
   border-radius: 8px !important; /* rounded-lg */
   border: 1px solid #e2e8f0 !important; /* border-slate-200 */
   background: #ffffff !important;
@@ -3721,6 +3857,7 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  text-align: center !important;
   white-space: nowrap !important;
 }
 
@@ -3730,22 +3867,35 @@
   color: #0f172a !important;
 }
 
-@media (max-width: 768px) {
-  .saas-report-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
+@media (max-width: 1024px) {
+  .saas-reports-table-header {
+    display: none;
   }
 
-  .saas-report-card-actions {
-    justify-content: flex-end;
-    padding-top: 10px;
+  .saas-report-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .saas-report-col-1,
+  .saas-report-col-2,
+  .saas-report-col-3,
+  .saas-report-col-4 {
+    grid-column: span 1 / span 1;
+    padding: 0;
+  }
+
+  .saas-report-card .saas-report-col-2,
+  .saas-report-card .saas-report-col-3,
+  .saas-report-card .saas-report-col-4 {
+    border-left: none;
     border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
   }
 }
 
 /* ==========================================================================
-   PHẦN 3: HỘP THOẠI "XỬ LÝ BÁO CÁO" (Tối giản câu chữ)
+   PHẦN 3: HỘP THOẠI "XỬ LÝ BÁO CÁO" (Tối giản câu chữ & Full-width Vertical Stack)
    ========================================================================== */
 
 .saas-report-modal {
@@ -3777,45 +3927,74 @@
   line-height: 1.35 !important;
 }
 
-/* Hộp tóm tắt đối tượng 2 dòng gọn gàng */
+/* Hộp tóm tắt đối tượng xếp chồng dọc 100% chiều rộng (Full-width Vertical Stack) */
 .saas-report-modal-summary {
   background: #f8fafc; /* bg-slate-50 */
   border: 1px solid rgba(226, 232, 240, 0.85); /* border-slate-200/80 */
   border-radius: 12px; /* rounded-xl */
-  padding: 14px; /* p-3.5 */
+  padding: 16px; /* p-4 */
   margin: 16px 0; /* my-4 */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* space-y-2 */
 }
 
-.saas-report-modal-summary-row1 {
+/* Dòng 1: Lý do báo cáo */
+.saas-report-modal-summary-reason-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+}
+
+.saas-report-modal-summary-label {
+  font-size: 12px; /* text-xs */
+  color: #64748b; /* text-slate-500 */
+  line-height: 1.4;
+}
+
+.saas-report-modal-reason-tag {
+  background: rgba(226, 232, 240, 0.75); /* bg-slate-200/70 */
+  color: #1e293b; /* text-slate-800 */
+  padding: 2px 10px; /* px-2.5 py-0.5 */
+  border-radius: 6px; /* rounded-md */
+  font-size: 12px; /* text-xs */
+  font-weight: 600; /* font-semibold */
+  line-height: 1.4;
+}
+
+/* Dòng 2: Đối tượng bị báo cáo (Trải rộng 100% chiều ngang) */
+.saas-report-modal-summary-target-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
 }
 
 .saas-report-modal-target {
   font-size: 14px; /* text-sm */
   font-weight: 700; /* font-bold */
   color: #0f172a; /* text-slate-900 */
+  width: 100%; /* w-full */
   line-height: 1.4;
 }
 
-.saas-report-modal-reason-tag {
-  background: rgba(226, 232, 240, 0.75); /* bg-slate-200/70 */
-  color: #334155; /* text-slate-700 */
-  padding: 2px 8px; /* px-2 py-0.5 */
-  border-radius: 5px; /* rounded */
-  font-size: 11.5px; /* text-xs */
-  font-weight: 500; /* font-medium */
-  white-space: nowrap;
-  flex-shrink: 0;
+/* Dòng 3: Mô tả của người báo cáo (Hiển thị trọn vẹn toàn văn trong Modal) */
+.saas-report-modal-summary-desc {
+  font-size: 12px; /* text-xs */
+  color: #475569; /* text-slate-600 */
+  margin: 4px 0 0;
+  padding-top: 8px; /* pt-2 */
+  border-top: 1px solid rgba(226, 232, 240, 0.65); /* border-t border-slate-200/60 */
+  line-height: 1.55; /* leading-relaxed */
+  word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
 }
 
-.saas-report-modal-summary-row2 {
-  font-size: 12.5px; /* text-xs */
-  color: #475569; /* text-slate-600 */
-  margin: 6px 0 0; /* mt-1.5 */
-  line-height: 1.45;
+.saas-report-modal-reporter {
+  font-weight: 600;
+  color: #334155;
 }
 
 .saas-report-modal-form {

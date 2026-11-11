@@ -521,6 +521,39 @@ export default function AdminResourcePage() {
     })
   }, [reports, filter, reportTargetTypeFilter, query])
 
+  // Xác định URL hiển thị thực tế của đối tượng bị báo cáo (Phương án A - Mở ở tab mới)
+  const getReportTargetUrl = (report: ReportRecord): string => {
+    if (report.targetType === "Tin phòng") {
+      const matchedListing =
+        listings.find((item) => item.id === report.targetId) ??
+        listings.find(
+          (item) =>
+            item.title.trim().toLocaleLowerCase("vi") ===
+            report.targetTitle.trim().toLocaleLowerCase("vi"),
+        )
+      return `/phong/${matchedListing ? matchedListing.id : report.targetId}`
+    }
+
+    if (report.targetType === "Bài viết") {
+      const matchedPost = posts.find((item) => item.id === report.targetId)
+      return matchedPost ? `/bai-viet/${matchedPost.id}` : "/dien-dan"
+    }
+
+    // Bình luận: tìm bài viết chứa bình luận này để mở trang bài viết diễn đàn
+    const parentPost =
+      posts.find(
+        (post) =>
+          post.id === report.targetId ||
+          post.comments?.some((comment) => comment.id === report.targetId),
+      ) ??
+      posts.find(
+        (post) =>
+          report.targetTitle.toLocaleLowerCase("vi").includes("chuyển trọ") &&
+          post.id === "seed-forum-12",
+      )
+    return parentPost ? `/bai-viet/${parentPost.id}` : "/dien-dan"
+  }
+
   const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (busyRef.current) return
@@ -1207,15 +1240,37 @@ export default function AdminResourcePage() {
             </button>
           </div>
 
-          {/* Hộp tóm tắt đối tượng 2 dòng gọn gàng */}
+          {/* Hộp tóm tắt đối tượng xếp chồng dọc 100% chiều rộng (Full-width Vertical Stack) */}
           <div className="saas-report-modal-summary">
-            <div className="saas-report-modal-summary-row1">
-              <strong className="saas-report-modal-target">{reportTarget.targetTitle}</strong>
+            {/* Dòng 1: Lý do báo cáo */}
+            <div className="saas-report-modal-summary-reason-row">
+              <span className="saas-report-modal-summary-label">Lý do báo cáo:</span>
               <span className="saas-report-modal-reason-tag">{reportTarget.reason}</span>
             </div>
-            <p className="saas-report-modal-summary-row2">
-              {reportTarget.reporter}: &ldquo;
-              {reportTarget.description || "Không có mô tả chi tiết."}&rdquo;
+
+            {/* Dòng 2: Đối tượng bị báo cáo (Trải rộng 100% chiều ngang) */}
+            <div className="saas-report-modal-summary-target-block">
+              <span className="saas-report-modal-summary-label">Nội dung bị báo cáo:</span>
+              <a
+                href={getReportTargetUrl(reportTarget)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="saas-report-modal-target saas-report-target-link"
+                title="Mở xem nội dung gốc trong tab mới"
+              >
+                <span>{reportTarget.targetTitle}</span>
+                <span className="saas-report-target-arrow" aria-hidden="true">
+                  ↗
+                </span>
+              </a>
+            </div>
+
+            {/* Dòng 3: Mô tả của người báo cáo */}
+            <p className="saas-report-modal-summary-desc">
+              <strong className="saas-report-modal-reporter">
+                Người báo cáo ({reportTarget.reporter}):
+              </strong>{" "}
+              &ldquo;{reportTarget.description || "Không có mô tả chi tiết."}&rdquo;
             </p>
           </div>
 
@@ -1442,12 +1497,21 @@ export default function AdminResourcePage() {
           </p>
         )}
 
-        {/* Danh sách Thẻ Báo Cáo (Full-width, sạch sẽ, không có hộp xám đen bên phải) */}
+        {/* Danh sách Báo Cáo Bố Cục Lưới 4 Cột Có Đường Ngăn Cách Dọc (4-Column Grid/Table) */}
         <section
           className="saas-reports-list"
           aria-busy={Boolean(busyId) || connectionState === "loading"}
           aria-label="Danh sách báo cáo vi phạm"
         >
+          {filteredReports.length > 0 && (
+            <div className="saas-reports-table-header" role="row" aria-hidden="true">
+              <div className="saas-report-col-1">Lý do vi phạm &amp; Phân loại</div>
+              <div className="saas-report-col-2">Nội dung bị báo cáo</div>
+              <div className="saas-report-col-3">Chi tiết phản ánh</div>
+              <div className="saas-report-col-4">Thao tác</div>
+            </div>
+          )}
+
           {filteredReports.map((report) => {
             const isAccepted = report.status === "accepted"
             const isPending = report.status === "pending"
@@ -1455,75 +1519,85 @@ export default function AdminResourcePage() {
               report.targetType === "Tin phòng"
                 ? "home"
                 : report.targetType === "Bài viết"
-                  ? "file-text"
+                  ? "edit"
                   : "chat"
 
             return (
               <article key={report.id} className="saas-report-card">
-                {/* Khối Nội Dung Bên Trái (Chiếm ~80% chiều ngang) */}
-                <div className="saas-report-card-main">
-                  {/* Dòng 1: Thông tin phân loại & Trạng thái (Slate & Emerald) */}
-                  <div className="saas-report-card-meta">
-                    <span className="saas-report-type-pill">
-                      <Icon name={typeIcon} size={12} />
+                {/* Cột 1 (lg:col-span-4): Lý do vi phạm & Phân loại */}
+                <div className="saas-report-col-1">
+                  {/* Hàng 1: 2 Badge phân biệt hoàn toàn về hình dáng & độ tương phản */}
+                  <div className="saas-report-card-badges">
+                    <span className="saas-report-type-badge">
+                      <Icon name={typeIcon} size={13} />
                       <span>{report.targetType}</span>
                     </span>
 
-                    <span
-                      className={
-                        isAccepted
-                          ? "saas-report-status-pill is-emerald"
-                          : "saas-report-status-pill is-slate"
-                      }
-                    >
-                      {statusText[report.status] ?? report.status}
-                    </span>
-
-                    <span className="saas-report-meta-dot" aria-hidden="true">
-                      ·
-                    </span>
-                    <span className="saas-report-meta-text">
-                      Lý do: <strong>{report.reason}</strong>
-                    </span>
-
-                    <span className="saas-report-meta-dot" aria-hidden="true">
-                      ·
-                    </span>
-                    <span className="saas-report-meta-text">
-                      Báo cáo bởi: <strong>{report.reporter}</strong>
-                    </span>
+                    {isPending ? (
+                      <span className="saas-report-status-pill is-pending">
+                        <span className="saas-report-status-dot" aria-hidden="true" />
+                        <span>Chờ xét duyệt</span>
+                      </span>
+                    ) : isAccepted ? (
+                      <span className="saas-report-status-pill is-accepted">
+                        <span aria-hidden="true">✓</span>
+                        <span>Đã chấp nhận</span>
+                      </span>
+                    ) : (
+                      <span className="saas-report-status-pill is-rejected">
+                        <span aria-hidden="true">✕</span>
+                        <span>Từ chối</span>
+                      </span>
+                    )}
                   </div>
 
-                  {/* Dòng 2: Tiêu đề đối tượng bị báo cáo */}
-                  <h3 className="saas-report-card-title">{report.targetTitle}</h3>
+                  {/* Hàng 2: Lý do báo cáo (reason) in đậm cỡ lớn nổi bật nhất */}
+                  <h3 className="saas-report-reason-title" title={report.reason}>
+                    {report.reason}
+                  </h3>
+                </div>
 
-                  {/* Dòng 3: Nội dung chi tiết từ người báo cáo (Hiển thị trực tiếp dưới tiêu đề) */}
-                  <p className="saas-report-card-desc">
-                    {report.description || "Không có mô tả chi tiết."}
+                {/* Cột 2 (lg:col-span-3): Nội dung bị báo cáo */}
+                <div className="saas-report-col-2">
+                  <span className="saas-report-col-label">Đối tượng:</span>
+                  <a
+                    href={getReportTargetUrl(report)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="saas-report-target-title saas-report-target-link"
+                    title={`${report.targetTitle} — Mở xem nội dung gốc trong tab mới`}
+                  >
+                    <span>{report.targetTitle}</span>
+                    <span className="saas-report-target-arrow" aria-hidden="true">
+                      ↗
+                    </span>
+                  </a>
+                </div>
+
+                {/* Cột 3 (lg:col-span-3): Chi tiết phản ánh */}
+                <div className="saas-report-col-3">
+                  <span className="saas-report-reporter-line">
+                    Người báo cáo: <strong>{report.reporter}</strong>
+                  </span>
+                  <p
+                    className="saas-report-quote-desc"
+                    title={report.description || "Không có mô tả chi tiết."}
+                  >
+                    &ldquo;{report.description || "Không có mô tả chi tiết."}&rdquo;
                   </p>
                 </div>
 
-                {/* Khối Nút Hành Động Bên Phải */}
-                <div className="saas-report-card-actions">
+                {/* Cột 4 (lg:col-span-2): Thao tác (Chỉ giữ duy nhất 1 nút hành động) */}
+                <div className="saas-report-col-4">
                   {isPending ? (
-                    <>
-                      <button
-                        type="button"
-                        className="saas-report-btn-primary"
-                        disabled={Boolean(busyId)}
-                        onClick={() => openReportModal(report, "accepted")}
-                      >
-                        Xử lý
-                      </button>
-                      <button
-                        type="button"
-                        className="saas-report-btn-outline"
-                        disabled={Boolean(busyId)}
-                        onClick={() => openReportModal(report, "rejected")}
-                      >
-                        Từ chối
-                      </button>
-                    </>
+                    <button
+                      type="button"
+                      className="saas-report-btn-primary"
+                      disabled={Boolean(busyId)}
+                      onClick={() => openReportModal(report, "accepted")}
+                    >
+                      Xử lý
+                    </button>
                   ) : (
                     <button
                       type="button"

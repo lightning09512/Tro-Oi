@@ -209,6 +209,68 @@ const initialUsers: PlatformUser[] = [
 
 const initialReviews: RoomReview[] = []
 
+const initialReports: ReportRecord[] = [
+  {
+    id: "demo-mock-report-3",
+    reporterId: "user-renter-04",
+    reporter: "Quang Minh",
+    targetType: "Bình luận",
+    targetId: "comment-chuyen-tro-cuoi-thang",
+    targetTitle: "Bình luận tại bài viết Chuyển trọ cuối tháng",
+    reason: "Ngôn từ xúc phạm, quấy rối thành viên khác",
+    description: "Để lại bình luận mang tính khiêu khích và sử dụng từ ngữ xúc phạm người đăng bài.",
+    status: "rejected",
+    adminNote: "",
+    createdAt: "2026-11-10T10:30:00.000Z",
+  },
+  {
+    id: "demo-mock-report-2",
+    reporterId: "user-renter-03",
+    reporter: "Thu Hà",
+    targetType: "Tin phòng",
+    targetId: "room-go-vap-balcony",
+    targetTitle: "Căn hộ P301 ban công, 1358 Quang Trung, Gò Vấp",
+    reason: "Hình ảnh phòng không đúng thực tế",
+    description: "Ảnh đăng trên web là phòng mới sơn sửa đẹp, thực tế phòng ẩm mốc và diện tích nhỏ hơn nhiều.",
+    status: "accepted",
+    adminNote: "",
+    createdAt: "2026-11-10T09:15:00.000Z",
+  },
+  {
+    id: "demo-mock-report-4",
+    reporterId: "user-renter-02",
+    reporter: "Nguyễn An",
+    targetType: "Bài viết",
+    targetId: "post-tim-ban-nu-spkt",
+    targetTitle: "Tìm bạn nữ ở ghép gần ĐH Sư Phạm Kỹ Thuật",
+    reason: "Nội dung spam / lừa đảo đặt cọc",
+    description: "Bài viết yêu cầu chuyển khoản đặt cọc trước khi xem phòng, tài khoản nhận tiền có dấu hiệu lừa đảo.",
+    status: "pending",
+    adminNote: "",
+    createdAt: "2026-11-10T08:45:00.000Z",
+  },
+  {
+    id: "demo-mock-report-1",
+    reporterId: "user-renter-01",
+    reporter: "Hoàng Trang",
+    targetType: "Tin phòng",
+    targetId: "room-hong-bang-q6",
+    targetTitle: "Nhà Trọ 633/12/29 Hồng Bàng, Phường 2, Quận 6",
+    reason: "Giá thực tế sai lệch so với tin đăng",
+    description: "Chủ trọ đăng giá 2.5 triệu/tháng nhưng khi gọi điện đến xem phòng thì thông báo giá 3.5 triệu chưa tính tiền điện nước.",
+    status: "pending",
+    adminNote: "",
+    createdAt: "2026-11-10T08:00:00.000Z",
+  },
+]
+
+const loadReports = (): ReportRecord[] => {
+  const saved = storage("reports", initialReports).filter((item) =>
+    ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType),
+  )
+  return saved.length > 0 ? saved : initialReports
+}
+
 const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversation, index) => {
   const avatarUrls = [
     "/images/avatars/demo-owner-03.jpg",
@@ -358,7 +420,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [listings, setListings] = useState(() => isApiMode ? [] as RentalListing[] : loadListings())
   const [feedPosts, setFeedPosts] = useState(() => isApiMode ? [] as ForumPost[] : loadFeedPosts())
   const [users, setUsers] = useState(() => isApiMode ? [] as PlatformUser[] : storage("users", initialUsers))
-  const [reports, setReports] = useState(() => isApiMode ? [] as ReportRecord[] : storage("reports", [] as ReportRecord[]).filter((item) => ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType)))
+  const [reports, setReports] = useState(() => isApiMode ? [] as ReportRecord[] : loadReports())
   const [messages, setMessages] = useState(() => isApiMode ? [] as MessageRecord[] : loadMessages())
   const [reviews, setReviews] = useState(() => isApiMode ? [] as RoomReview[] : storage("reviews", initialReviews).filter((review) => review.id !== "review-1" && !legacyDemoListingIds.has(review.listingId)))
   const [categories, setCategories] = useState(() => isApiMode ? [] as CategoryRecord[] : loadCategories())
@@ -384,11 +446,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       if (event.key === "phongtroplus_posts") setFeedPosts(loadFeedPosts())
       if (event.key === "phongtroplus_users") setUsers(storage("users", initialUsers))
       if (event.key === "phongtroplus_reports") {
-        setReports(
-          storage("reports", [] as ReportRecord[]).filter((item) =>
-            ["Tin phòng", "Bài viết", "Bình luận"].includes(item.targetType),
-          ),
-        )
+        setReports(loadReports())
       }
       if (event.key === "phongtroplus_categories") setCategories(loadCategories())
       if (event.key === "phongtroplus_notifications") setNotifications(storage("notifications", [] as NotificationRecord[]))
