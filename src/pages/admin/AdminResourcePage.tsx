@@ -107,8 +107,22 @@ export default function AdminResourcePage() {
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
   const [defaultCategoryType, setDefaultCategoryType] =
     useState<CategoryRecord["type"]>("Khu vực")
+  const [categoryStatusActive, setCategoryStatusActive] = useState(true)
+  const [reportTargetTypeFilter, setReportTargetTypeFilter] =
+    useState<"all" | ReportRecord["targetType"]>("all")
   const [editorError, setEditorError] = useState("")
-  const [dialog, setDialog] = useState<"edit" | "report" | null>(null)
+  const [dialog, setDialog] = useState<"edit" | "report" | "delete" | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string
+    title: string
+    detail?: string
+    image?: string
+    price?: string
+    ownerName?: string
+    type?: string
+    actionLabel?: string
+    confirmMessage?: string
+  } | null>(null)
   const [actionError, setActionError] = useState("")
   const [reportTarget, setReportTarget] = useState<ReportRecord | null>(null)
   const [reportDecision, setReportDecision] = useState<ReportRecord["status"]>("accepted")
@@ -121,7 +135,10 @@ export default function AdminResourcePage() {
   useDialogFocus(
     dialogRef,
     () => {
-      if (!busyRef.current) setDialog(null)
+      if (!busyRef.current) {
+        setDialog(null)
+        setDeleteTarget(null)
+      }
     },
     Boolean(dialog),
   )
@@ -131,7 +148,9 @@ export default function AdminResourcePage() {
     const nextStatus = searchParams.get("status") ?? "all"
     setQuery(nextQuery)
     setFilter(nextStatus)
+    setReportTargetTypeFilter("all")
     setDialog(null)
+    setDeleteTarget(null)
     setActionError("")
   }, [resource, searchParams])
 
@@ -382,8 +401,24 @@ export default function AdminResourcePage() {
     } else {
       setDefaultCategoryType("Khu vực")
     }
+    setCategoryStatusActive(item ? item.status !== "hidden" : true)
     setEditorError("")
     setDialog("edit")
+  }
+
+  const openReportModal = (
+    report: ReportRecord,
+    presetDecision?: ReportRecord["status"],
+  ) => {
+    setReportTarget(report)
+    setReportDecision(
+      presetDecision ??
+        (report.status === "rejected" ? "rejected" : "accepted"),
+    )
+    setReportNote(report.adminNote ?? "")
+    setSendWarning(false)
+    setActionError("")
+    setDialog("report")
   }
 
   // Số lượng tin cho thuê áp dụng cho từng mục Danh mục & Tiện ích
@@ -456,6 +491,35 @@ export default function AdminResourcePage() {
       amenities: sortByName(filteredCategories.filter((item) => item.type === "Tiện ích")),
     }
   }, [filteredCategories])
+
+  // Số liệu thống kê cho 4 Tab trạng thái trên màn hình Kiểm duyệt (/admin/bao-cao)
+  const reportTabCounts = useMemo(() => {
+    const total = reports.length
+    const pending = reports.filter((item) => item.status === "pending").length
+    const accepted = reports.filter((item) => item.status === "accepted").length
+    const rejected = reports.filter((item) => item.status === "rejected").length
+    return { total, pending, accepted, rejected }
+  }, [reports])
+
+  // Danh sách Báo cáo vi phạm đã lọc theo Tab trạng thái, Loại nội dung & Từ khóa
+  const filteredReports = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("vi")
+    return reports.filter((item) => {
+      const matchStatus = filter === "all" || item.status === filter
+      if (!matchStatus) return false
+      const matchType =
+        reportTargetTypeFilter === "all" || item.targetType === reportTargetTypeFilter
+      if (!matchType) return false
+      if (normalizedQuery) {
+        const searchable =
+          `${item.targetTitle} ${item.targetType} ${item.reason} ${item.reporter} ${item.description}`.toLocaleLowerCase(
+            "vi",
+          )
+        if (!searchable.includes(normalizedQuery)) return false
+      }
+      return true
+    })
+  }, [reports, filter, reportTargetTypeFilter, query])
 
   const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -596,16 +660,52 @@ export default function AdminResourcePage() {
     }
   }
 
-  const remove = async (id: string, name: string) => {
-    if (busyRef.current) return
-    if (
-      !window.confirm(
+  const requestDeleteListing = (item: RentalListing) => {
+    setDeleteTarget({
+      id: item.id,
+      title: item.title,
+      detail: item.location,
+      image: item.image,
+      price: formatListingPrice(item),
+      ownerName: item.ownerName,
+      type: item.type || "Tin cho thuê",
+      actionLabel: "Gỡ tin",
+      confirmMessage:
+        "Bạn có chắc chắn muốn gỡ tin đăng này khỏi hệ thống? Tin đăng sẽ không còn hiển thị trên kết quả tìm kiếm và người thuê sẽ không thể truy cập.",
+    })
+    setDialog("delete")
+  }
+
+  const requestDeleteCategory = (item: CategoryRecord) => {
+    setDeleteTarget({
+      id: item.id,
+      title: item.name,
+      detail: `Nhóm: ${item.type}`,
+      type: "Danh mục",
+      actionLabel: "Xóa danh mục",
+      confirmMessage: `Bạn có chắc chắn muốn xóa ${item.type.toLocaleLowerCase("vi")} “${item.name}”? Các tin đang dùng mục này có thể cần được cập nhật lại.`,
+    })
+    setDialog("delete")
+  }
+
+  const remove = (id: string, name: string, detail?: string) => {
+    setDeleteTarget({
+      id,
+      title: name,
+      detail,
+      type: kind[resource] ?? "Mục",
+      actionLabel: resource === "reports" ? "Từ chối báo cáo" : "Xóa",
+      confirmMessage:
         resource === "reports"
           ? `Từ chối báo cáo “${name}”?`
-          : `Bạn có chắc muốn xóa “${name}”?`,
-      )
-    )
-      return
+          : `Bạn có chắc chắn muốn xóa “${name}”? Thao tác này sẽ xóa dữ liệu khỏi hệ thống.`,
+    })
+    setDialog("delete")
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || busyRef.current) return
+    const { id } = deleteTarget
     setActionError("")
     busyRef.current = true
     setBusyId(id)
@@ -618,11 +718,17 @@ export default function AdminResourcePage() {
           .catch((error: unknown) =>
             setActionError(error instanceof Error ? error.message : "Không thể xóa tài khoản."),
           )
+      } else if (resource === "listings") {
+        await deleteListing(id)
+      } else if (resource === "forum") {
+        await deletePost(id)
+      } else if (resource === "categories") {
+        await deleteCategory(id)
+      } else if (resource === "reports") {
+        await updateReport(id, "rejected", "Đã từ chối báo cáo.")
       }
-      if (resource === "listings") await deleteListing(id)
-      if (resource === "forum") await deletePost(id)
-      if (resource === "categories") await deleteCategory(id)
-      if (resource === "reports") await updateReport(id, "rejected", "Đã từ chối báo cáo.")
+      setDialog(null)
+      setDeleteTarget(null)
     } catch (caught) {
       setActionError(
         caught instanceof Error ? caught.message : "Không thể xóa nội dung. Hãy thử lại.",
@@ -672,160 +778,791 @@ export default function AdminResourcePage() {
 
   const editDialogNode =
     dialog === "edit" ? (
-      <div className="dialog-backdrop">
+      <div
+        className="dialog-backdrop"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !busyRef.current) {
+            setDialog(null)
+          }
+        }}
+      >
+        {resource === "categories" ? (
+          <section
+            ref={dialogRef}
+            className="action-dialog saas-category-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-category-modal-title"
+          >
+            {/* Header nền trắng sạch sẽ, không có mô tả phụ */}
+            <div className="saas-category-modal-header">
+              <div className="saas-category-modal-header-left">
+                <span className="saas-category-modal-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+                    <path
+                      d="M19 3v4m-2-2h4"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <h2 id="admin-category-modal-title" className="saas-category-modal-title">
+                  {editing ? "Cập nhật danh mục & tiện ích" : "Thêm danh mục & tiện ích mới"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="saas-modal-close-btn"
+                disabled={Boolean(busyId)}
+                onClick={() => setDialog(null)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form className="saas-category-modal-form" onSubmit={saveEditor}>
+              {editorError && (
+                <p className="form-message error" role="alert">
+                  {editorError}
+                </p>
+              )}
+
+              {/* Trường 1 - Nhóm phân loại (3 ô chọn trực quan nằm ngang) */}
+              <div className="saas-category-field-group">
+                <span className="saas-category-field-label">Nhóm phân loại</span>
+                <input type="hidden" name="type" value={defaultCategoryType} />
+                <div className="saas-category-type-grid" role="radiogroup" aria-label="Nhóm phân loại">
+                  {(
+                    [
+                      { value: "Khu vực", label: "Khu vực", icon: "pin" },
+                      { value: "Loại phòng", label: "Loại phòng", icon: "home" },
+                      { value: "Tiện ích", label: "Tiện ích phòng", icon: "sparkles" },
+                    ] as const
+                  ).map((opt) => {
+                    const isSelected = defaultCategoryType === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        className={`saas-category-type-card${isSelected ? " is-selected" : ""}`}
+                        onClick={() => setDefaultCategoryType(opt.value)}
+                      >
+                        <Icon name={opt.icon} size={18} />
+                        <span>{opt.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Trường 2 - Tên danh mục (Không hiển thị dòng gợi ý nhanh) */}
+              <label className="saas-category-field-group">
+                <span className="saas-category-field-label">Tên danh mục</span>
+                <input
+                  name="name"
+                  className="saas-category-text-input"
+                  key={editing ? `name-${editing.id}` : "name-new-cat"}
+                  defaultValue={editing && "name" in editing ? editing.name : ""}
+                  placeholder="VD: Quận 7, Thủ Đức, Ban công..."
+                  autoComplete="off"
+                  required
+                />
+              </label>
+
+              {/* Trường 3 - Trạng thái hiển thị (Tinh gọn trên 1 dòng ngang với Toggle Switch) */}
+              <div className="saas-category-status-row">
+                <input
+                  type="hidden"
+                  name="status"
+                  value={categoryStatusActive ? "active" : "hidden"}
+                />
+                <div className="saas-category-status-text">
+                  <strong className="saas-category-status-title">Trạng thái hiển thị</strong>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={categoryStatusActive}
+                  aria-label="Trạng thái hiển thị"
+                  className={`saas-toggle-switch${categoryStatusActive ? " is-active" : ""}`}
+                  onClick={() => setCategoryStatusActive((prev) => !prev)}
+                >
+                  <span className="saas-toggle-thumb" />
+                </button>
+              </div>
+
+              {/* Footer */}
+              <div className="saas-category-modal-footer">
+                <button
+                  type="button"
+                  className="saas-modal-btn-outline"
+                  disabled={Boolean(busyId)}
+                  onClick={() => setDialog(null)}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="saas-modal-btn-emerald"
+                  disabled={Boolean(busyId)}
+                >
+                  {busyId === "editor" ? "Đang lưu…" : "Lưu danh mục"}
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : (
+          <section
+            ref={dialogRef}
+            className="action-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-editor-title"
+          >
+            <button
+              className="dialog-close"
+              disabled={Boolean(busyId)}
+              onClick={() => setDialog(null)}
+              aria-label="Đóng"
+            >
+              <Icon name="close" />
+            </button>
+            <h2 id="admin-editor-title">{editing ? "Cập nhật thông tin" : "Tạo mới"}</h2>
+            <form className="dialog-form" onSubmit={saveEditor}>
+              {editorError && (
+                <p className="form-message error" role="alert">
+                  {editorError}
+                </p>
+              )}
+              {!editing && resource === "users" && (
+                <p className="demo-note">
+                  {isApiMode
+                    ? "Đặt mật khẩu ban đầu an toàn; mật khẩu sẽ được băm trước khi lưu."
+                    : `Tài khoản demo mới dùng mật khẩu ${authService.demoPassword}; người dùng có thể đổi mật khẩu sau khi đăng nhập.`}
+                </p>
+              )}
+              <label className="form-field">
+                <span>Họ tên</span>
+                <input
+                  name="name"
+                  defaultValue={editing && "name" in editing ? editing.name : ""}
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Email</span>
+                <input
+                  name="email"
+                  type="email"
+                  defaultValue={editing && "email" in editing ? editing.email : ""}
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Số điện thoại</span>
+                <input
+                  name="phone"
+                  defaultValue={editing && "phone" in editing ? editing.phone : ""}
+                  required
+                />
+              </label>
+              {!editing && (
+                <label className="form-field">
+                  <span>Mật khẩu ban đầu</span>
+                  <input
+                    name="password"
+                    type="password"
+                    minLength={8}
+                    required={isApiMode}
+                    autoComplete="new-password"
+                    placeholder="Ít nhất 8 ký tự"
+                  />
+                </label>
+              )}
+              <label className="form-field">
+                <span>Vai trò</span>
+                <select
+                  name="role"
+                  defaultValue={editing && "role" in editing ? editing.role : "renter"}
+                >
+                  <option value="renter">Người thuê</option>
+                  <option value="landlord">Chủ trọ</option>
+                  <option value="admin">Quản trị viên</option>
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Trạng thái</span>
+                <select
+                  name="status"
+                  defaultValue={editing && "status" in editing ? editing.status : "active"}
+                >
+                  <option value="active">Đang hoạt động</option>
+                  <option value="locked">Đã khóa</option>
+                </select>
+              </label>
+              <div className="dialog-actions">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={Boolean(busyId)}
+                  onClick={() => setDialog(null)}
+                >
+                  Hủy
+                </Button>
+                <Button disabled={Boolean(busyId)}>
+                  {busyId === "editor" ? "Đang lưu…" : "Lưu thông tin"}
+                </Button>
+              </div>
+            </form>
+          </section>
+        )}
+      </div>
+    ) : null
+
+  const confirmDialogNode =
+    dialog === "delete" && deleteTarget ? (
+      <div
+        className="dialog-backdrop"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !busyRef.current) {
+            setDialog(null)
+            setDeleteTarget(null)
+          }
+        }}
+      >
         <section
           ref={dialogRef}
-          className="action-dialog"
+          className="action-dialog saas-confirm-dialog"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="admin-editor-title"
+          aria-labelledby="saas-confirm-title"
         >
           <button
-            className="dialog-close"
+            type="button"
+            className="dialog-close saas-confirm-close"
             disabled={Boolean(busyId)}
-            onClick={() => setDialog(null)}
+            onClick={() => {
+              setDialog(null)
+              setDeleteTarget(null)
+            }}
             aria-label="Đóng"
           >
-            <Icon name="close" />
+            <Icon name="close" size={16} />
           </button>
-          <h2 id="admin-editor-title">
-            {editing
-              ? "Cập nhật thông tin"
+
+          <div className="saas-confirm-icon-wrap" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
+          <h2 id="saas-confirm-title" className="saas-confirm-title">
+            {resource === "listings"
+              ? "Xác nhận gỡ tin cho thuê"
               : resource === "categories"
-                ? `Thêm ${defaultCategoryType.toLocaleLowerCase("vi")} mới`
-                : "Tạo mới"}
+                ? "Xác nhận xóa danh mục"
+                : "Xác nhận xóa nội dung"}
           </h2>
-          <form className="dialog-form" onSubmit={saveEditor}>
-            {editorError && (
-              <p className="form-message error" role="alert">
-                {editorError}
-              </p>
-            )}
-            {!editing && resource === "users" && (
-              <p className="demo-note">
-                {isApiMode
-                  ? "Đặt mật khẩu ban đầu an toàn; mật khẩu sẽ được băm trước khi lưu."
-                  : `Tài khoản demo mới dùng mật khẩu ${authService.demoPassword}; người dùng có thể đổi mật khẩu sau khi đăng nhập.`}
-              </p>
-            )}
-            {resource === "users" ? (
-              <>
-                <label className="form-field">
-                  <span>Họ tên</span>
-                  <input
-                    name="name"
-                    defaultValue={editing && "name" in editing ? editing.name : ""}
-                    required
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Email</span>
-                  <input
-                    name="email"
-                    type="email"
-                    defaultValue={editing && "email" in editing ? editing.email : ""}
-                    required
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Số điện thoại</span>
-                  <input
-                    name="phone"
-                    defaultValue={editing && "phone" in editing ? editing.phone : ""}
-                    required
-                  />
-                </label>
-                {!editing && (
-                  <label className="form-field">
-                    <span>Mật khẩu ban đầu</span>
-                    <input
-                      name="password"
-                      type="password"
-                      minLength={8}
-                      required={isApiMode}
-                      autoComplete="new-password"
-                      placeholder="Ít nhất 8 ký tự"
-                    />
-                  </label>
+
+          <p className="saas-confirm-desc">
+            {deleteTarget.confirmMessage ||
+              `Bạn có chắc chắn muốn xóa “${deleteTarget.title}”? Thao tác này sẽ xóa dữ liệu khỏi hệ thống.`}
+          </p>
+
+          {resource === "listings" && (
+            <div className="saas-confirm-snippet">
+              <img
+                className="saas-confirm-snippet-thumb"
+                src={deleteTarget.image || ROOM_FALLBACK_SVG}
+                alt={deleteTarget.title}
+                onError={(e) => {
+                  e.currentTarget.onerror = null
+                  e.currentTarget.src = ROOM_FALLBACK_SVG
+                }}
+              />
+              <div className="saas-confirm-snippet-body">
+                <h4 className="saas-confirm-snippet-title" title={deleteTarget.title}>
+                  {deleteTarget.title}
+                </h4>
+                <div className="saas-confirm-snippet-meta">
+                  {deleteTarget.price && (
+                    <span className="saas-confirm-snippet-price">{deleteTarget.price}</span>
+                  )}
+                  {deleteTarget.ownerName && (
+                    <span className="saas-confirm-snippet-owner">
+                      Chủ trọ: {deleteTarget.ownerName}
+                    </span>
+                  )}
+                </div>
+                {deleteTarget.detail && (
+                  <p className="saas-confirm-snippet-loc" title={deleteTarget.detail}>
+                    {deleteTarget.detail}
+                  </p>
                 )}
-                <label className="form-field">
-                  <span>Vai trò</span>
-                  <select
-                    name="role"
-                    defaultValue={editing && "role" in editing ? editing.role : "renter"}
-                  >
-                    <option value="renter">Người thuê</option>
-                    <option value="landlord">Chủ trọ</option>
-                    <option value="admin">Quản trị viên</option>
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Trạng thái</span>
-                  <select
-                    name="status"
-                    defaultValue={editing && "status" in editing ? editing.status : "active"}
-                  >
-                    <option value="active">Đang hoạt động</option>
-                    <option value="locked">Đã khóa</option>
-                  </select>
-                </label>
-              </>
-            ) : (
-              <>
-                <label className="form-field">
-                  <span>Tên danh mục</span>
-                  <input
-                    name="name"
-                    key={editing ? `name-${editing.id}` : `name-new-${defaultCategoryType}`}
-                    defaultValue={editing && "name" in editing ? editing.name : ""}
-                    placeholder={`Nhập tên ${defaultCategoryType.toLocaleLowerCase("vi")}...`}
-                    required
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Nhóm</span>
-                  <select
-                    name="type"
-                    key={editing ? `type-${editing.id}` : `type-new-${defaultCategoryType}`}
-                    defaultValue={
-                      editing && "type" in editing ? editing.type : defaultCategoryType
-                    }
-                  >
-                    <option value="Khu vực">Khu vực</option>
-                    <option value="Loại phòng">Loại phòng</option>
-                    <option value="Tiện ích">Tiện ích</option>
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Trạng thái</span>
-                  <select
-                    name="status"
-                    key={editing ? `status-${editing.id}` : `status-new-${defaultCategoryType}`}
-                    defaultValue={editing && "status" in editing ? editing.status : "active"}
-                  >
-                    <option value="active">Đang hoạt động</option>
-                    <option value="hidden">Đang ẩn</option>
-                  </select>
-                </label>
-              </>
+              </div>
+            </div>
+          )}
+
+          <div className="saas-confirm-warning-badge" role="alert">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 8v4m0 4h.01M3.6 19h16.8c1.2 0 1.9-1.3 1.3-2.3L13.3 4.2c-.6-1-2-1-2.6 0L2.3 16.7c-.6 1 .1 2.3 1.3 2.3Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>
+              {resource === "listings"
+                ? "Lưu ý: Tin đăng sau khi gỡ sẽ bị xóa khỏi danh sách và không thể phục hồi."
+                : "Lưu ý: Thao tác này không thể hoàn tác sau khi xác nhận."}
+            </span>
+          </div>
+
+          <div className="saas-confirm-actions">
+            <button
+              type="button"
+              className="saas-btn-cancel"
+              disabled={Boolean(busyId)}
+              onClick={() => {
+                setDialog(null)
+                setDeleteTarget(null)
+              }}
+            >
+              Hủy
+            </button>
+
+            <button
+              type="button"
+              className="saas-btn-danger-solid"
+              disabled={Boolean(busyId)}
+              onClick={confirmDelete}
+            >
+              {busyId ? (
+                <>
+                  <span className="saas-btn-spinner" aria-hidden="true" />
+                  <span>Đang xử lý…</span>
+                </>
+              ) : (
+                <span>
+                  {deleteTarget.actionLabel ||
+                    (resource === "listings" ? "Xác nhận gỡ tin" : "Xác nhận xóa")}
+                </span>
+              )}
+            </button>
+          </div>
+        </section>
+      </div>
+    ) : null
+
+  const reportDialogNode =
+    dialog === "report" && reportTarget ? (
+      <div
+        className="dialog-backdrop"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && !busyRef.current) {
+            setDialog(null)
+          }
+        }}
+      >
+        <section
+          ref={dialogRef}
+          className="action-dialog saas-report-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-report-modal-title"
+        >
+          {/* Header chỉ có tiêu đề "Xử lý báo cáo" và nút đóng ✕ */}
+          <div className="saas-report-modal-header">
+            <h2 id="admin-report-modal-title" className="saas-report-modal-title">
+              Xử lý báo cáo
+            </h2>
+            <button
+              type="button"
+              className="saas-modal-close-btn"
+              disabled={Boolean(busyId)}
+              onClick={() => setDialog(null)}
+              aria-label="Đóng"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Hộp tóm tắt đối tượng 2 dòng gọn gàng */}
+          <div className="saas-report-modal-summary">
+            <div className="saas-report-modal-summary-row1">
+              <strong className="saas-report-modal-target">{reportTarget.targetTitle}</strong>
+              <span className="saas-report-modal-reason-tag">{reportTarget.reason}</span>
+            </div>
+            <p className="saas-report-modal-summary-row2">
+              {reportTarget.reporter}: &ldquo;
+              {reportTarget.description || "Không có mô tả chi tiết."}&rdquo;
+            </p>
+          </div>
+
+          <form className="saas-report-modal-form" onSubmit={saveReportDecision}>
+            {actionError && (
+              <p className="form-message error" role="alert">
+                {actionError}
+              </p>
             )}
-            <div className="dialog-actions">
-              <Button
+
+            {/* Kết quả xử lý: 2 nút chọn ngang tinh gọn */}
+            <div className="saas-report-field-group">
+              <span className="saas-report-field-label">Kết quả</span>
+              <div className="saas-report-decision-grid" role="radiogroup" aria-label="Kết quả xử lý">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={reportDecision === "accepted"}
+                  className={`saas-report-decision-btn${reportDecision === "accepted" ? " is-selected" : ""}`}
+                  onClick={() => setReportDecision("accepted")}
+                >
+                  <span
+                    className={`saas-report-decision-check${reportDecision === "accepted" ? " is-checked" : ""}`}
+                    aria-hidden="true"
+                  >
+                    {reportDecision === "accepted" ? "✓" : ""}
+                  </span>
+                  <span>Chấp nhận báo cáo</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={reportDecision === "rejected"}
+                  className={`saas-report-decision-btn${reportDecision === "rejected" ? " is-selected" : ""}`}
+                  onClick={() => setReportDecision("rejected")}
+                >
+                  <span
+                    className={`saas-report-decision-check${reportDecision === "rejected" ? " is-checked" : ""}`}
+                    aria-hidden="true"
+                  >
+                    {reportDecision === "rejected" ? "✕" : ""}
+                  </span>
+                  <span>Từ chối báo cáo</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Ghi chú / Cảnh báo */}
+            <div className="saas-report-field-group">
+              <label htmlFor="admin-report-note-input" className="saas-report-field-label">
+                Ghi chú / Cảnh báo
+              </label>
+              <textarea
+                id="admin-report-note-input"
+                className="saas-report-textarea"
+                rows={3}
+                value={reportNote}
+                onChange={(event) => setReportNote(event.target.value)}
+                placeholder="Nhập nội dung cảnh báo..."
+              />
+
+              <div className="saas-report-warning-toggle-row">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={sendWarning}
+                  aria-label="Gửi cảnh báo cho người vi phạm"
+                  className={`saas-toggle-switch saas-toggle-switch--sm${sendWarning ? " is-active" : ""}`}
+                  onClick={() => setSendWarning((prev) => !prev)}
+                >
+                  <span className="saas-toggle-thumb" />
+                </button>
+                <span
+                  className="saas-report-warning-toggle-label"
+                  onClick={() => setSendWarning((prev) => !prev)}
+                >
+                  Gửi cảnh báo cho người vi phạm
+                </span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="saas-report-modal-footer">
+              <button
                 type="button"
-                variant="outline"
+                className="saas-modal-btn-outline"
                 disabled={Boolean(busyId)}
                 onClick={() => setDialog(null)}
               >
                 Hủy
-              </Button>
-              <Button disabled={Boolean(busyId)}>
-                {busyId === "editor" ? "Đang lưu…" : "Lưu thông tin"}
-              </Button>
+              </button>
+              <button
+                type="submit"
+                className="saas-modal-btn-emerald-dark"
+                disabled={Boolean(busyId)}
+              >
+                {busyId === "report" ? "Đang lưu…" : "Lưu kết quả"}
+              </button>
             </div>
           </form>
         </section>
       </div>
     ) : null
+
+  // Giao diện chuyên biệt cho màn hình "Kiểm duyệt" (/admin/bao-cao)
+  if (resource === "reports") {
+    return (
+      <main className="admin-resource-page management-page management-admin admin-resource-page--reports saas-reports-page">
+        {/* Hàng 1: Dãy 4 Tab Trạng thái + Nút Tải CSV */}
+        <div className="saas-listings-top-row saas-reports-top-row">
+          <div className="saas-status-tabs" role="tablist" aria-label="Lọc theo trạng thái báo cáo">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "all"}
+              className={`saas-status-tab${filter === "all" ? " is-active" : ""}`}
+              onClick={() => handleFilterChange("all")}
+            >
+              <span>Tất cả báo cáo</span>
+              <strong className="saas-tab-badge">{reportTabCounts.total}</strong>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "pending"}
+              className={`saas-status-tab${filter === "pending" ? " is-active" : ""}`}
+              onClick={() => handleFilterChange("pending")}
+            >
+              <span className="saas-tab-dot is-slate" aria-hidden="true" />
+              <span>Chờ xét duyệt</span>
+              <strong className="saas-tab-badge">{reportTabCounts.pending}</strong>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "accepted"}
+              className={`saas-status-tab${filter === "accepted" ? " is-active" : ""}`}
+              onClick={() => handleFilterChange("accepted")}
+            >
+              <span className="saas-tab-dot is-emerald" aria-hidden="true" />
+              <span>Đã chấp nhận</span>
+              <strong className="saas-tab-badge">{reportTabCounts.accepted}</strong>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filter === "rejected"}
+              className={`saas-status-tab${filter === "rejected" ? " is-active" : ""}`}
+              onClick={() => handleFilterChange("rejected")}
+            >
+              <span className="saas-tab-dot is-slate" aria-hidden="true" />
+              <span>Từ chối</span>
+              <strong className="saas-tab-badge">{reportTabCounts.rejected}</strong>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="saas-csv-btn"
+            onClick={() => downloadCsv("bao-cao-vi-pham-tro-oi.csv", filtered)}
+          >
+            <Icon name="download" size={16} />
+            <span>Tải CSV</span>
+          </button>
+        </div>
+
+        {/* Hàng 2: Thanh Tìm kiếm & Bộ lọc Loại nội dung */}
+        <div className="saas-reports-filter-bar">
+          <label className="saas-filter-search saas-reports-search">
+            <Icon name="search" size={16} />
+            <input
+              aria-label="Tìm theo nội dung, người báo cáo, lý do"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Tìm theo nội dung, người báo cáo, lý do..."
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+
+          <div className="saas-reports-type-filter" role="group" aria-label="Lọc theo loại nội dung">
+            <span className="saas-reports-type-filter-label">Loại nội dung:</span>
+            <div className="saas-reports-type-segment">
+              {(
+                [
+                  { value: "all", label: "Tất cả" },
+                  { value: "Tin phòng", label: "Tin phòng" },
+                  { value: "Bài viết", label: "Bài viết" },
+                  { value: "Bình luận", label: "Bình luận" },
+                ] as const
+              ).map((seg) => (
+                <button
+                  key={seg.value}
+                  type="button"
+                  className={`saas-reports-type-segment-btn${reportTargetTypeFilter === seg.value ? " is-active" : ""}`}
+                  onClick={() => setReportTargetTypeFilter(seg.value)}
+                >
+                  {seg.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {actionError && (
+          <p className="form-message error" role="alert">
+            {actionError}
+          </p>
+        )}
+
+        {connectionState === "loading" && (
+          <p className="management-feedback" role="status">
+            Đang tải dữ liệu báo cáo…
+          </p>
+        )}
+
+        {connectionState === "error" && (
+          <p className="form-message error" role="alert">
+            {connectionError || "Không tải được dữ liệu. Hãy tải lại trang để thử lại."}
+          </p>
+        )}
+
+        {/* Danh sách Thẻ Báo Cáo (Full-width, sạch sẽ, không có hộp xám đen bên phải) */}
+        <section
+          className="saas-reports-list"
+          aria-busy={Boolean(busyId) || connectionState === "loading"}
+          aria-label="Danh sách báo cáo vi phạm"
+        >
+          {filteredReports.map((report) => {
+            const isAccepted = report.status === "accepted"
+            const isPending = report.status === "pending"
+            const typeIcon =
+              report.targetType === "Tin phòng"
+                ? "home"
+                : report.targetType === "Bài viết"
+                  ? "file-text"
+                  : "chat"
+
+            return (
+              <article key={report.id} className="saas-report-card">
+                {/* Khối Nội Dung Bên Trái (Chiếm ~80% chiều ngang) */}
+                <div className="saas-report-card-main">
+                  {/* Dòng 1: Thông tin phân loại & Trạng thái (Slate & Emerald) */}
+                  <div className="saas-report-card-meta">
+                    <span className="saas-report-type-pill">
+                      <Icon name={typeIcon} size={12} />
+                      <span>{report.targetType}</span>
+                    </span>
+
+                    <span
+                      className={
+                        isAccepted
+                          ? "saas-report-status-pill is-emerald"
+                          : "saas-report-status-pill is-slate"
+                      }
+                    >
+                      {statusText[report.status] ?? report.status}
+                    </span>
+
+                    <span className="saas-report-meta-dot" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="saas-report-meta-text">
+                      Lý do: <strong>{report.reason}</strong>
+                    </span>
+
+                    <span className="saas-report-meta-dot" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="saas-report-meta-text">
+                      Báo cáo bởi: <strong>{report.reporter}</strong>
+                    </span>
+                  </div>
+
+                  {/* Dòng 2: Tiêu đề đối tượng bị báo cáo */}
+                  <h3 className="saas-report-card-title">{report.targetTitle}</h3>
+
+                  {/* Dòng 3: Nội dung chi tiết từ người báo cáo (Hiển thị trực tiếp dưới tiêu đề) */}
+                  <p className="saas-report-card-desc">
+                    {report.description || "Không có mô tả chi tiết."}
+                  </p>
+                </div>
+
+                {/* Khối Nút Hành Động Bên Phải */}
+                <div className="saas-report-card-actions">
+                  {isPending ? (
+                    <>
+                      <button
+                        type="button"
+                        className="saas-report-btn-primary"
+                        disabled={Boolean(busyId)}
+                        onClick={() => openReportModal(report, "accepted")}
+                      >
+                        Xử lý
+                      </button>
+                      <button
+                        type="button"
+                        className="saas-report-btn-outline"
+                        disabled={Boolean(busyId)}
+                        onClick={() => openReportModal(report, "rejected")}
+                      >
+                        Từ chối
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="saas-report-btn-outline"
+                      disabled={Boolean(busyId)}
+                      onClick={() => openReportModal(report)}
+                    >
+                      Xem chi tiết
+                    </button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
+
+          {filteredReports.length === 0 &&
+            connectionState !== "loading" &&
+            connectionState !== "error" && (
+              <div className="resource-empty resource-empty--reports saas-reports-empty">
+                <Icon name="shield" />
+                <h3>
+                  {reports.length
+                    ? "Không tìm thấy báo cáo phù hợp"
+                    : emptyTitle.reports}
+                </h3>
+                <p>
+                  {reports.length
+                    ? "Thử thay đổi từ khóa, loại nội dung hoặc trạng thái đang lọc."
+                    : emptyDescription.reports}
+                </p>
+              </div>
+            )}
+        </section>
+
+        {reportDialogNode}
+        {confirmDialogNode}
+      </main>
+    )
+  }
 
   // Giao diện chuyên biệt cho màn hình "Danh mục & Tiện ích" (3-Column Grouped Taxonomy Board)
   if (resource === "categories") {
@@ -1025,7 +1762,7 @@ export default function AdminResourcePage() {
                             <button
                               type="button"
                               className="saas-taxonomy-action-btn is-danger"
-                              onClick={() => remove(item.id, item.name)}
+                              onClick={() => requestDeleteCategory(item)}
                             >
                               Xóa
                             </button>
@@ -1051,6 +1788,7 @@ export default function AdminResourcePage() {
         </section>
 
         {editDialogNode}
+        {confirmDialogNode}
       </main>
     )
   }
@@ -1285,7 +2023,7 @@ export default function AdminResourcePage() {
                     <button
                       type="button"
                       className="saas-btn-outline-danger"
-                      onClick={() => remove(item.id, item.title)}
+                      onClick={() => requestDeleteListing(item)}
                     >
                       Gỡ tin
                     </button>
@@ -1505,6 +2243,8 @@ export default function AdminResourcePage() {
             </aside>
           )}
         </section>
+
+        {confirmDialogNode}
       </main>
     )
   }
@@ -1712,82 +2452,8 @@ export default function AdminResourcePage() {
       </section>
 
       {editDialogNode}
-
-      {dialog === "report" && reportTarget && (
-        <div className="dialog-backdrop">
-          <section
-            ref={dialogRef}
-            className="action-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="admin-report-title"
-          >
-            <button
-              className="dialog-close"
-              disabled={Boolean(busyId)}
-              onClick={() => setDialog(null)}
-              aria-label="Đóng"
-            >
-              <Icon name="close" />
-            </button>
-            <h2 id="admin-report-title">{reportTarget.targetTitle}</h2>
-            <p className="dialog-target">
-              {reportTarget.targetType} · {reportTarget.reason}
-              <br />
-              {reportTarget.description}
-            </p>
-            <form className="dialog-form" onSubmit={saveReportDecision}>
-              {actionError && (
-                <p className="form-message error" role="alert">
-                  {actionError}
-                </p>
-              )}
-              <label className="form-field">
-                <span>Kết quả</span>
-                <select
-                  value={reportDecision}
-                  onChange={(event) =>
-                    setReportDecision(event.target.value as ReportRecord["status"])
-                  }
-                >
-                  <option value="accepted">Chấp nhận báo cáo</option>
-                  <option value="rejected">Từ chối báo cáo</option>
-                </select>
-              </label>
-              <label className="form-field">
-                <span>Ghi chú / nội dung cảnh báo</span>
-                <textarea
-                  rows={4}
-                  value={reportNote}
-                  onChange={(event) => setReportNote(event.target.value)}
-                  placeholder="Ghi lại quyết định xử lý hoặc nội dung cảnh báo."
-                />
-              </label>
-              <label className="inline-check">
-                <input
-                  type="checkbox"
-                  checked={sendWarning}
-                  onChange={(event) => setSendWarning(event.target.checked)}
-                />
-                Gửi ghi chú này thành cảnh báo cho người dùng liên quan.
-              </label>
-              <div className="dialog-actions">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={Boolean(busyId)}
-                  onClick={() => setDialog(null)}
-                >
-                  Hủy
-                </Button>
-                <Button icon="send" disabled={Boolean(busyId)}>
-                  {busyId === "report" ? "Đang lưu…" : "Lưu kết quả"}
-                </Button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
+      {reportDialogNode}
+      {confirmDialogNode}
     </main>
   )
 }
