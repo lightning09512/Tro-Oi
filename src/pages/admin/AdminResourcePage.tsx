@@ -11,7 +11,7 @@ import {
   type ReportRecord,
 } from "@/contexts/PlatformContext"
 import { authService } from "@/services/authService"
-import { isApiMode } from "@/services/apiClient"
+import { isApiMode, apiRequest } from "@/services/apiClient"
 import useDialogFocus from "@/hooks/useDialogFocus"
 
 type Resource = "users" | "listings" | "forum" | "categories" | "reports"
@@ -126,8 +126,9 @@ export default function AdminResourcePage() {
   const [actionError, setActionError] = useState("")
   const [reportTarget, setReportTarget] = useState<ReportRecord | null>(null)
   const [reportDecision, setReportDecision] = useState<ReportRecord["status"]>("accepted")
-  const [reportNote, setReportNote] = useState("")
+  const [reporterNote, setReporterNote] = useState("")
   const [sendWarning, setSendWarning] = useState(false)
+  const [warningMessage, setWarningMessage] = useState("")
   const [busyId, setBusyId] = useState("")
   const busyRef = useRef(false)
   const dialogRef = useRef<HTMLElement>(null)
@@ -415,8 +416,9 @@ export default function AdminResourcePage() {
       presetDecision ??
         (report.status === "rejected" ? "rejected" : "accepted"),
     )
-    setReportNote(report.adminNote ?? "")
+    setReporterNote(report.adminNote ?? "")
     setSendWarning(false)
+    setWarningMessage("")
     setActionError("")
     setDialog("report")
   }
@@ -678,8 +680,9 @@ export default function AdminResourcePage() {
         if (report) {
           setReportTarget(report)
           setReportDecision("accepted")
-          setReportNote("")
+          setReporterNote("")
           setSendWarning(false)
+          setWarningMessage("")
           setDialog("report")
         }
       }
@@ -775,16 +778,16 @@ export default function AdminResourcePage() {
   const saveReportDecision = async (event: FormEvent) => {
     event.preventDefault()
     if (!reportTarget || busyRef.current) return
-    if (sendWarning && !reportNote.trim()) {
-      setActionError("Nhập nội dung cảnh báo trước khi gửi cho người dùng.")
+    if (sendWarning && !warningMessage.trim()) {
+      setActionError("Vui lòng nhập nội dung cảnh báo gửi cho người vi phạm.")
       return
     }
     setActionError("")
     busyRef.current = true
     setBusyId("report")
     try {
-      await updateReport(reportTarget.id, reportDecision, reportNote)
-      if (sendWarning && reportNote.trim()) {
+      await updateReport(reportTarget.id, reportDecision, reporterNote.trim())
+      if (sendWarning && warningMessage.trim()) {
         const targetUserId =
           reportTarget.targetType === "Tin phòng"
             ? listings.find((item) => item.id === reportTarget.targetId)?.ownerId
@@ -793,12 +796,28 @@ export default function AdminResourcePage() {
               : posts
                   .flatMap((item) => item.comments)
                   .find((item) => item.id === reportTarget.targetId)?.authorId
-        if (targetUserId)
-          await addNotification({
-            userId: targetUserId,
-            title: "Cảnh báo từ quản trị viên",
-            detail: reportNote.trim(),
-          })
+        if (targetUserId) {
+          if (isApiMode) {
+            try {
+              await apiRequest(`reports/${encodeURIComponent(reportTarget.id)}/warning`, {
+                method: "POST",
+                body: JSON.stringify({ userId: targetUserId, note: warningMessage.trim() }),
+              })
+            } catch {
+              await addNotification({
+                userId: targetUserId,
+                title: "Cảnh báo từ quản trị viên",
+                detail: warningMessage.trim(),
+              })
+            }
+          } else {
+            await addNotification({
+              userId: targetUserId,
+              title: "Cảnh báo từ quản trị viên",
+              detail: warningMessage.trim(),
+            })
+          }
+        }
       }
       setDialog(null)
     } catch (error) {
@@ -1240,17 +1259,17 @@ export default function AdminResourcePage() {
             </button>
           </div>
 
-          {/* Hộp tóm tắt đối tượng xếp chồng dọc 100% chiều rộng (Full-width Vertical Stack) */}
-          <div className="saas-report-modal-summary">
-            {/* Dòng 1: Lý do báo cáo */}
-            <div className="saas-report-modal-summary-reason-row">
-              <span className="saas-report-modal-summary-label">Lý do báo cáo:</span>
+          {/* Khung tóm tắt đối tượng: Bố cục Lưới Nhãn – Giá Trị Đồng Nhất (145px | 1fr) */}
+          <div className="saas-report-modal-summary saas-report-summary-grid">
+            {/* Hàng 1: Lý do báo cáo */}
+            <span className="saas-report-summary-label">Lý do báo cáo:</span>
+            <div className="saas-report-summary-value">
               <span className="saas-report-modal-reason-tag">{reportTarget.reason}</span>
             </div>
 
-            {/* Dòng 2: Đối tượng bị báo cáo (Trải rộng 100% chiều ngang) */}
-            <div className="saas-report-modal-summary-target-block">
-              <span className="saas-report-modal-summary-label">Nội dung bị báo cáo:</span>
+            {/* Hàng 2: Nội dung bị báo cáo */}
+            <span className="saas-report-summary-label">Nội dung bị báo cáo:</span>
+            <div className="saas-report-summary-value">
               <a
                 href={getReportTargetUrl(reportTarget)}
                 target="_blank"
@@ -1265,13 +1284,17 @@ export default function AdminResourcePage() {
               </a>
             </div>
 
-            {/* Dòng 3: Mô tả của người báo cáo */}
-            <p className="saas-report-modal-summary-desc">
+            {/* Đường kẻ mảnh ngăn cách Hàng 2 và Hàng 3 */}
+            <div className="saas-report-summary-divider" aria-hidden="true" />
+
+            {/* Hàng 3: Chi tiết phản ánh */}
+            <span className="saas-report-summary-label">Chi tiết phản ánh:</span>
+            <div className="saas-report-summary-value saas-report-summary-desc-text">
               <strong className="saas-report-modal-reporter">
-                Người báo cáo ({reportTarget.reporter}):
+                {reportTarget.reporter}:
               </strong>{" "}
               &ldquo;{reportTarget.description || "Không có mô tả chi tiết."}&rdquo;
-            </p>
+            </div>
           </div>
 
           <form className="saas-report-modal-form" onSubmit={saveReportDecision}>
@@ -1319,39 +1342,68 @@ export default function AdminResourcePage() {
               </div>
             </div>
 
-            {/* Ghi chú / Cảnh báo */}
+            {/* Ô 1: Phản hồi cho người báo cáo (Luôn hiển thị) */}
             <div className="saas-report-field-group">
               <label htmlFor="admin-report-note-input" className="saas-report-field-label">
-                Ghi chú / Cảnh báo
+                Phản hồi cho người báo cáo ({reportTarget.reporter})
               </label>
               <textarea
                 id="admin-report-note-input"
                 className="saas-report-textarea"
-                rows={3}
-                value={reportNote}
-                onChange={(event) => setReportNote(event.target.value)}
-                placeholder="Nhập nội dung cảnh báo..."
+                rows={2}
+                value={reporterNote}
+                onChange={(event) => setReporterNote(event.target.value)}
+                placeholder="VD: Cảm ơn bạn đã báo cáo, BQT đã kiểm tra và xử lý vi phạm này..."
               />
-
-              <div className="saas-report-warning-toggle-row">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={sendWarning}
-                  aria-label="Gửi cảnh báo cho người vi phạm"
-                  className={`saas-toggle-switch saas-toggle-switch--sm${sendWarning ? " is-active" : ""}`}
-                  onClick={() => setSendWarning((prev) => !prev)}
-                >
-                  <span className="saas-toggle-thumb" />
-                </button>
-                <span
-                  className="saas-report-warning-toggle-label"
-                  onClick={() => setSendWarning((prev) => !prev)}
-                >
-                  Gửi cảnh báo cho người vi phạm
-                </span>
-              </div>
             </div>
+
+            {/* Công tắc Toggle: Gửi cảnh báo nhắc nhở đến người vi phạm */}
+            <div
+              className="saas-report-warning-toggle-container"
+              onClick={() => setSendWarning((prev) => !prev)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  setSendWarning((prev) => !prev)
+                }
+              }}
+            >
+              <button
+                type="button"
+                role="switch"
+                aria-checked={sendWarning}
+                aria-label="Gửi cảnh báo nhắc nhở đến người vi phạm"
+                className={`saas-toggle-switch saas-toggle-switch--sm${sendWarning ? " is-active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSendWarning((prev) => !prev)
+                }}
+              >
+                <span className="saas-toggle-thumb" />
+              </button>
+              <span className="saas-report-warning-toggle-label">
+                Gửi cảnh báo nhắc nhở đến người vi phạm
+              </span>
+            </div>
+
+            {/* Ô 2: Nội dung cảnh báo gửi người vi phạm (Chỉ hiển thị khi bật công tắc) */}
+            {sendWarning && (
+              <div className="saas-report-field-group saas-report-warning-field-block">
+                <label htmlFor="admin-report-warning-input" className="saas-report-field-label">
+                  Nội dung cảnh báo gửi người vi phạm
+                </label>
+                <textarea
+                  id="admin-report-warning-input"
+                  className="saas-report-textarea"
+                  rows={2}
+                  value={warningMessage}
+                  onChange={(event) => setWarningMessage(event.target.value)}
+                  placeholder="VD: Bài viết của bạn có dấu hiệu yêu cầu chuyển khoản cọc bất thường, vui lòng..."
+                />
+              </div>
+            )}
 
             {/* Footer */}
             <div className="saas-report-modal-footer">
