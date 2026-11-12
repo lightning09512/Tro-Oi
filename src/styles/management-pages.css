@@ -4134,4 +4134,10 @@
   margin-top: 12px !important;
 }
 
+/* Giao diện chuyên biệt cho màn hình "Quản lý Thành viên" (/admin/nguoi-dung) */
+.saas-users-page {
+  width: 100%;
+}
+
+
 
