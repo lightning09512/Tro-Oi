@@ -5,6 +5,7 @@ import {
   usePlatform,
   type CategoryRecord,
   type ContentStatus,
+  type ForumPost,
   type ListingStatus,
   type PlatformUser,
   type RentalListing,
@@ -74,6 +75,43 @@ function getUserDisplayInitials(name: string, fallback?: string): string {
   return fallback || "ND"
 }
 
+function parsePostContent(rawContent: string) {
+  const content = (rawContent || "").trim()
+  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean)
+  let title = lines[0] || "Bài viết cộng đồng"
+  let excerpt = lines.slice(1).join(" ").trim()
+
+  if (lines.length === 1) {
+    const bracketMatch = content.match(/^(\[[^\]]+\]\s*[^.\n]+)(?:[.\n]|$)/)
+    if (bracketMatch) {
+      title = bracketMatch[1]
+      excerpt = content.slice(title.length).trim() || content
+    } else {
+      const dotIndex = content.indexOf(". ")
+      if (dotIndex > 10 && dotIndex < 70) {
+        title = content.slice(0, dotIndex).trim()
+        excerpt = content.slice(dotIndex + 2).trim()
+      } else {
+        excerpt = content
+      }
+    }
+  }
+
+  let category = "Bài viết"
+  const lower = content.toLowerCase()
+  if (lower.includes("pass phòng") || lower.includes("chuyển nhượng") || lower.includes("sang nhượng")) {
+    category = "Pass phòng"
+  } else if (lower.includes("ở ghép") || lower.includes("tìm bạn")) {
+    category = "Tìm ở ghép"
+  } else if (lower.includes("review") || lower.includes("đánh giá")) {
+    category = "Review khu trọ"
+  } else if (lower.includes("kinh nghiệm") || lower.includes("mẹo") || lower.includes("chia sẻ") || lower.includes("hợp đồng")) {
+    category = "Kinh nghiệm"
+  }
+
+  return { title, excerpt: excerpt || content, category, fullContent: content }
+}
+
 export default function AdminResourcePage() {
   const { pathname } = useLocation()
   const resource = (
@@ -120,6 +158,11 @@ export default function AdminResourcePage() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
   const [isInspectorOpen, setIsInspectorOpen] = useState(true)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
+
+  const [forumStatusTab, setForumStatusTab] = useState<"all" | "active" | "hidden" | "with_comments">("all")
+  const [forumCategoryFilter, setForumCategoryFilter] = useState<string>("all")
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
+  const [communityPage, setCommunityPage] = useState(1)
 
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
   const [defaultCategoryType, setDefaultCategoryType] =
@@ -644,6 +687,101 @@ export default function AdminResourcePage() {
           post.id === "seed-forum-12",
       )
     return parentPost ? `/bai-viet/${parentPost.id}` : "/dien-dan"
+  }
+
+  // Thống kê số lượng bài viết cho các Tab ở màn hình Cộng đồng (/admin/dien-dan)
+  const forumTabCounts = useMemo(() => {
+    const all = posts.length
+    const active = posts.filter((p) => p.status === "active").length
+    const hidden = posts.filter((p) => p.status === "hidden").length
+    const withComments = posts.filter(
+      (p) => (p.comments?.length ?? p.commentsCount ?? 0) > 0,
+    ).length
+    return { all, active, hidden, withComments }
+  }, [posts])
+
+  // Danh mục động từ các bài viết cộng đồng
+  const forumCategories = useMemo(() => {
+    const standard = ["Pass phòng", "Tìm ở ghép", "Review khu trọ", "Kinh nghiệm"]
+    const set = new Set<string>(standard)
+    posts.forEach((p) => {
+      const { category } = parsePostContent(p.content)
+      if (category && category !== "Bài viết") set.add(category)
+    })
+    return Array.from(set)
+  }, [posts])
+
+  // Danh sách bài viết sau khi áp dụng bộ lọc Tab, Danh mục và Ô tìm kiếm
+  const filteredForumPosts = useMemo(() => {
+    return posts.filter((post) => {
+      const parsed = parsePostContent(post.content)
+
+      if (forumStatusTab === "active" && post.status !== "active") return false
+      if (forumStatusTab === "hidden" && post.status !== "hidden") return false
+      if (forumStatusTab === "with_comments") {
+        const cCount = post.comments?.length ?? post.commentsCount ?? 0
+        if (cCount <= 0) return false
+      }
+
+      if (forumCategoryFilter !== "all" && parsed.category !== forumCategoryFilter) {
+        return false
+      }
+
+      if (query.trim()) {
+        const q = query.trim().toLowerCase()
+        const inTitle = parsed.title.toLowerCase().includes(q)
+        const inAuthor = (post.name || "").toLowerCase().includes(q)
+        const inContent = (post.content || "").toLowerCase().includes(q)
+        const inComments = post.comments?.some(
+          (c) =>
+            (c.author || "").toLowerCase().includes(q) ||
+            (c.text || "").toLowerCase().includes(q),
+        )
+        if (!inTitle && !inAuthor && !inContent && !inComments) return false
+      }
+
+      return true
+    })
+  }, [posts, forumStatusTab, forumCategoryFilter, query])
+
+  useEffect(() => {
+    setCommunityPage(1)
+  }, [forumStatusTab, forumCategoryFilter, query])
+
+  const totalCommunityPages = Math.max(1, Math.ceil(filteredForumPosts.length / 5))
+  const safeCommunityPage = Math.min(communityPage, totalCommunityPages)
+
+  const pagedForumPosts = useMemo(() => {
+    const start = (safeCommunityPage - 1) * 5
+    return filteredForumPosts.slice(start, start + 5)
+  }, [filteredForumPosts, safeCommunityPage])
+
+  // Bài viết đang chọn trong Master-Detail
+  const selectedPost = useMemo(() => {
+    if (!filteredForumPosts.length) return null
+    if (selectedPostId) {
+      const found = filteredForumPosts.find((p) => p.id === selectedPostId)
+      if (found) return found
+    }
+    return filteredForumPosts[0]
+  }, [filteredForumPosts, selectedPostId])
+
+  const selectedPostParsed = useMemo(() => {
+    return selectedPost
+      ? parsePostContent(selectedPost.content)
+      : { title: "", excerpt: "", category: "Bài viết", fullContent: "" }
+  }, [selectedPost])
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    if (window.confirm("Xóa bình luận vi phạm này?")) {
+      try {
+        await deleteComment(postId, commentId)
+      } catch (caught: unknown) {
+        setActionError(
+          caught instanceof Error ? caught.message : "Không thể xóa bình luận.",
+        )
+      }
+    }
   }
 
   const saveEditor = async (event: FormEvent<HTMLFormElement>) => {
@@ -2929,6 +3067,464 @@ export default function AdminResourcePage() {
         </div>
 
         {editDialogNode}
+        {confirmDialogNode}
+      </main>
+    )
+  }
+
+  // Giao diện chuyên biệt cho màn hình "Cộng đồng" (/admin/dien-dan) - Bố cục 2 cột Master-Detail đồng bộ Tin cho thuê
+  if (resource === "forum") {
+    return (
+      <main className="admin-resource-page management-page management-admin admin-resource-page--forum saas-forum-page p-6 space-y-4 bg-slate-50 min-h-screen">
+        {actionError && (
+          <div
+            className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700"
+            role="alert"
+          >
+            {actionError}
+          </div>
+        )}
+
+        {/* 1. Thanh công cụ tích hợp trên Hàng đầu tiên (Top Toolbar) */}
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200">
+          {/* Bên trái (Status Tabs) */}
+          <div
+            className="flex items-center gap-6 -mb-[13px] overflow-x-auto"
+            role="tablist"
+            aria-label="Lọc trạng thái bài viết"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={forumStatusTab === "all"}
+              onClick={() => setForumStatusTab("all")}
+              className={
+                forumStatusTab === "all"
+                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
+                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
+              }
+            >
+              Tất cả bài viết ({forumTabCounts.all})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={forumStatusTab === "active"}
+              onClick={() => setForumStatusTab("active")}
+              className={
+                forumStatusTab === "active"
+                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
+                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
+              }
+            >
+              Đang hoạt động ({forumTabCounts.active})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={forumStatusTab === "hidden"}
+              onClick={() => setForumStatusTab("hidden")}
+              className={
+                forumStatusTab === "hidden"
+                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
+                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
+              }
+            >
+              Đã ẩn ({forumTabCounts.hidden})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={forumStatusTab === "with_comments"}
+              onClick={() => setForumStatusTab("with_comments")}
+              className={
+                forumStatusTab === "with_comments"
+                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
+                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
+              }
+            >
+              Có bình luận mới ({forumTabCounts.withComments})
+            </button>
+          </div>
+
+          {/* Bên phải (Search + Filter + Export) */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Ô tìm kiếm */}
+            <div className="relative">
+              <svg
+                className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-4-4" />
+              </svg>
+              <input
+                type="text"
+                aria-label="Tìm kiếm tiêu đề, tác giả, nội dung..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tìm kiếm tiêu đề, tác giả, nội dung..."
+                className="w-64 pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Dropdown lọc danh mục/trạng thái */}
+            <select
+              value={forumCategoryFilter}
+              onChange={(e) => setForumCategoryFilter(e.target.value)}
+              aria-label="Lọc theo danh mục"
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:border-emerald-600 focus:outline-none cursor-pointer"
+            >
+              <option value="all">Lọc theo danh mục</option>
+              {forumCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Nút Tải CSV */}
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(
+                  "cong-dong-tro-oi.csv",
+                  filteredForumPosts.map((p) => {
+                    const { title, category } = parsePostContent(p.content)
+                    return {
+                      id: p.id,
+                      title,
+                      detail: `${p.name} · ${category}`,
+                      status:
+                        p.status === "active"
+                          ? "Đang hoạt động"
+                          : p.status === "hidden"
+                            ? "Đã ẩn"
+                            : p.status,
+                      meta: `${p.likes ?? 0} lượt thích · ${p.comments?.length ?? p.commentsCount ?? 0} bình luận`,
+                    }
+                  })
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium shadow-2xs cursor-pointer transition-colors"
+            >
+              <svg
+                className="w-4 h-4 text-white shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="m7 10 5 5 5-5M12 15V3" />
+              </svg>
+              <span>Tải CSV</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Bố cục chính 2 Cột Master-Detail */}
+        <div className="grid grid-cols-12 gap-6 items-start mt-4">
+          {/* CỘT TRÁI (col-span-12 lg:col-span-7 space-y-3): Danh sách bài viết cộng đồng rút gọn */}
+          <div className="col-span-12 lg:col-span-7 space-y-3">
+            <h2 className="text-sm font-semibold text-slate-800">Danh sách bài viết cộng đồng</h2>
+
+            {filteredForumPosts.length === 0 ? (
+              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center shadow-2xs">
+                <Icon name="chat" size={32} />
+                <h3 className="text-sm font-bold text-slate-800 mt-2">
+                  Không tìm thấy bài viết phù hợp
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Thử thay đổi từ khóa tìm kiếm hoặc chọn tab lọc khác.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pagedForumPosts.map((post) => {
+                  const {
+                    title: postTitle,
+                    excerpt: postExcerpt,
+                    category: postCategory,
+                  } = parsePostContent(post.content)
+                  const isSelected = selectedPost?.id === post.id
+                  const likesCount = post.likes ?? 0
+                  const commentsCount =
+                    post.comments?.length ?? post.commentsCount ?? 0
+
+                  const postAvatarUrl =
+                    post.avatarUrl ||
+                    users.find(
+                      (u) =>
+                        u.id === post.authorId ||
+                        u.name.toLowerCase() === post.name.toLowerCase(),
+                    )?.avatarUrl
+
+                  return (
+                    <article
+                      key={post.id}
+                      onClick={() => setSelectedPostId(post.id)}
+                      className={`p-4 rounded-xl cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-emerald-50/40 border-2 border-emerald-600 shadow-2xs"
+                          : "bg-white border border-slate-200 hover:border-slate-300 shadow-2xs"
+                      }`}
+                    >
+                      {/* Hàng 1 */}
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {postAvatarUrl ? (
+                            <img
+                              src={postAvatarUrl}
+                              alt={post.name}
+                              className="w-7 h-7 rounded-full object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
+                              {post.initials || getUserDisplayInitials(post.name, "TV")}
+                            </div>
+                          )}
+                          <span className="text-xs font-semibold text-slate-900 truncate">
+                            {post.name}
+                          </span>
+                          <span className="text-slate-400 shrink-0">·</span>
+                          <span className="px-2 py-0.5 rounded-md bg-white border border-slate-300 text-[11px] font-medium text-slate-700 shrink-0">
+                            {postCategory}
+                          </span>
+                        </div>
+                        <div className="shrink-0">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                              post.status === "active"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {post.status === "active" ? "Đang hoạt động" : "Đã ẩn"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Hàng 2 (Tiêu đề) */}
+                      <h3 className="text-sm font-bold text-slate-900 line-clamp-1 mb-1">
+                        {postTitle}
+                      </h3>
+
+                      {/* Hàng 3 (Nội dung tóm tắt) */}
+                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-2">
+                        {postExcerpt}
+                      </p>
+
+                      {/* Hàng 4 (Chỉ số tương tác) */}
+                      <div className="text-[11px] font-medium text-slate-500">
+                        {likesCount} lượt thích · {commentsCount} bình luận
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Thanh Phân trang ở đáy Cột trái */}
+            {filteredForumPosts.length > 0 && (
+              <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
+                <span>
+                  Trang {safeCommunityPage} / {totalCommunityPages}
+                </span>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalCommunityPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCommunityPage(page)}
+                      className={`w-7 h-7 rounded-md border text-xs font-medium flex items-center justify-center transition-colors cursor-pointer ${
+                        page === safeCommunityPage
+                          ? "border-slate-800 text-slate-900 bg-white font-semibold shadow-2xs"
+                          : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* CỘT PHẢI (col-span-12 lg:col-span-5 lg:sticky lg:top-6 space-y-4): Chi tiết bài viết & Bình luận */}
+          <div className="col-span-12 lg:col-span-5 lg:sticky lg:top-6 space-y-4">
+            <h2 className="text-sm font-semibold text-slate-800">Chi tiết bài viết & Bình luận</h2>
+
+            {selectedPost ? (
+              <>
+                {/* Khung 1 — Nội dung đầy đủ của bài viết đang chọn */}
+                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
+                  {/* Header của khung chi tiết */}
+                  <div className="flex items-start justify-between gap-3 pb-3.5 mb-3.5 border-b border-slate-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {selectedPost.avatarUrl ||
+                      users.find(
+                        (u) =>
+                          u.id === selectedPost.authorId ||
+                          u.name.toLowerCase() === selectedPost.name.toLowerCase(),
+                      )?.avatarUrl ? (
+                        <img
+                          src={
+                            selectedPost.avatarUrl ||
+                            users.find(
+                              (u) =>
+                                u.id === selectedPost.authorId ||
+                                u.name.toLowerCase() === selectedPost.name.toLowerCase(),
+                            )?.avatarUrl
+                          }
+                          alt={selectedPost.name}
+                          className="w-10 h-10 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 text-sm font-bold flex items-center justify-center shrink-0">
+                          {selectedPost.initials ||
+                            getUserDisplayInitials(selectedPost.name, "TV")}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-slate-900 truncate">
+                          {selectedPost.name}
+                        </div>
+                        <span
+                          className={`inline-block mt-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                            selectedPost.status === "active"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {selectedPost.status === "active" ? "Đang hoạt động" : "Đã ẩn"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Cụm nút thao tác bài viết */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={busyId === selectedPost.id}
+                        onClick={() =>
+                          action(
+                            selectedPost.id,
+                            selectedPost.status === "active" ? "hidden" : "active",
+                          )
+                        }
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                      >
+                        {selectedPost.status === "hidden" ? "Hiện bài" : "Ẩn bài"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === selectedPost.id}
+                        onClick={() => remove(selectedPost.id, selectedPostParsed.title)}
+                        className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                      >
+                        Xóa bài
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Phần nội dung bài viết */}
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 leading-snug">
+                    {selectedPostParsed.title}
+                  </h3>
+                  <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-200/80 max-h-[280px] overflow-y-auto">
+                    {selectedPostParsed.fullContent}
+                  </div>
+                  {selectedPost.image && (
+                    <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+                      <img
+                        src={selectedPost.image}
+                        alt={selectedPostParsed.title}
+                        className="w-full max-h-52 object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-xs font-medium text-slate-500">
+                    {selectedPost.likes ?? 0} lượt thích ·{" "}
+                    {selectedPost.comments?.length ?? selectedPost.commentsCount ?? 0} bình luận
+                  </div>
+                </div>
+
+                {/* Khung 2 — Danh sách Bình luận cần kiểm duyệt */}
+                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
+                  <h3 className="text-sm font-bold text-slate-900 mb-3">
+                    Bình luận ({selectedPost.comments?.length ?? 0})
+                  </h3>
+
+                  {!selectedPost.comments || selectedPost.comments.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-4 text-center">
+                      Chưa có bình luận nào cho bài viết này.
+                    </p>
+                  ) : (
+                    <div className="divide-y divide-slate-200">
+                      {selectedPost.comments.map((comment) => {
+                        const commentAvatarUrl =
+                          comment.avatarUrl ||
+                          users.find(
+                            (u) =>
+                              u.id === comment.authorId ||
+                              u.name.toLowerCase() === comment.author.toLowerCase(),
+                          )?.avatarUrl
+
+                        return (
+                          <div
+                            key={comment.id}
+                            className="py-3 first:pt-0 last:pb-0 flex items-start gap-3"
+                          >
+                            {commentAvatarUrl ? (
+                              <img
+                                src={commentAvatarUrl}
+                                alt={comment.author}
+                                className="w-8 h-8 rounded-full object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
+                                {comment.initials ||
+                                  getUserDisplayInitials(comment.author, "BL")}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-xs font-bold text-slate-900 truncate">
+                                  {comment.author}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleDeleteComment(selectedPost.id, comment.id)
+                                  }
+                                  className="text-xs font-medium text-rose-600 hover:underline shrink-0 cursor-pointer"
+                                >
+                                  Xóa bình luận
+                                </button>
+                              </div>
+                              <p className="text-xs text-slate-600 leading-relaxed break-words">
+                                {comment.text}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-xs italic shadow-2xs">
+                Chọn một bài viết ở danh sách bên trái để xem chi tiết và kiểm duyệt bình luận.
+              </div>
+            )}
+          </div>
+        </div>
+
         {confirmDialogNode}
       </main>
     )
