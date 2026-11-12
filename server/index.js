@@ -60,8 +60,8 @@ if (process.env.NODE_ENV !== "production") {
 app.use(express.json({ limit: "1mb" }))
 app.use(express.urlencoded({ extended: false, limit: "1mb" }))
 
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau." } })
-const apiLimiter = rateLimit({ windowMs: 60_000, limit: 180, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn gửi quá nhiều yêu cầu. Vui lòng thử lại sau." } })
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: process.env.NODE_ENV === "production" ? 60 : 50_000, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau." } })
+const apiLimiter = rateLimit({ windowMs: 60_000, limit: process.env.NODE_ENV === "production" ? 180 : 50_000, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Bạn gửi quá nhiều yêu cầu. Vui lòng thử lại sau." } })
 const emailCodeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,

@@ -71,13 +71,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     [favoriteIds],
   )
   useEffect(() => {
-    if (!isApiMode || !user?.id) return
+    if (!isApiMode || !user?.id || user.role === "admin") return
     let alive = true
     apiRequest<{ items: { id: string }[] }>("favorites")
       .then(({ items }) => { if (alive) setFavoritesByUser((current) => ({ ...current, [user.id]: items.map((item) => item.id) })) })
       .catch(() => undefined)
     return () => { alive = false }
-  }, [user?.id])
+  }, [user?.id, user?.role])
 
   const toggleFavorite = useCallback(async (roomId: string) => {
     if (isApiMode) {

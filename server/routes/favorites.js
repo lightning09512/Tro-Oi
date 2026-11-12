@@ -4,7 +4,7 @@ import { pool } from "../config/db.js"
 import { requireAuth, requireRole } from "../middleware/auth.js"
 
 const router = Router()
-router.use(requireAuth, requireRole("renter", "landlord"))
+router.use(requireAuth, requireRole("renter", "landlord", "admin"))
 
 router.get("/", async (req, res) => {
   const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,

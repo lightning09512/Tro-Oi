@@ -66,4 +66,22 @@ router.get("/", requireAuth, async (req, res) => {
   })
 })
 
+router.get("/:id", async (req, res) => {
+  const { rows } = await pool.query("SELECT id, name, phone, role, status, avatar_url, created_at FROM users WHERE id=$1", [req.params.id])
+  if (!rows[0]) return res.status(404).json({ error: "Không tìm thấy người dùng." })
+  const row = rows[0]
+  res.json({
+    item: {
+      id: row.id,
+      name: row.name,
+      phone: row.phone ?? "",
+      role: row.role,
+      status: row.status,
+      avatarUrl: row.avatar_url ?? undefined,
+      initials: row.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase() || "TV",
+      createdAt: row.created_at,
+    },
+  })
+})
+
 export default router
