@@ -456,70 +456,8 @@ function Home() {
         </div>
       </section>
 
-      {/* Main Content Area in Branded Green Takeover Layout (Nhà Tốt Style) */}
-      <div className="home-takeover-wrapper">
-        {/* Floating Side Wings on Wide Screens */}
-        <div className="home-side-wings-layer" aria-hidden="true">
-          <aside className="home-side-wing home-side-wing-left">
-            <div className="wing-speech-bubble wing-yellow">
-              <span className="wing-speech-text">Đường này rộng rãi, xe hơi vào còn được</span>
-              <span className="wing-speech-sub">- Anh Lộc Shipper giao đồ ăn</span>
-            </div>
-
-            <div className="wing-badge-group">
-              <div className="wing-traffic-light">
-                <span className="traffic-dot red"></span>
-                <span className="traffic-dot yellow"></span>
-                <span className="traffic-dot green"></span>
-              </div>
-              <img src="/images/avatars/demo-renter-01.jpg" alt="" className="wing-badge-avatar" />
-              <span className="wing-badge-pill">Gần trung tâm hành chính</span>
-            </div>
-
-            <div className="wing-speech-bubble wing-yellow">
-              <span className="wing-speech-text">Chấp mưa to gió lớn, khu này chả ngập bao giờ</span>
-              <span className="wing-speech-sub">- Mai Phương · SV Ngoại Thương</span>
-            </div>
-
-            <div className="wing-pill-clean">
-              <span>Khu này đi đâu cũng tiện</span>
-            </div>
-          </aside>
-
-          <aside className="home-side-wing home-side-wing-right">
-            <div className="wing-speech-bubble wing-white">
-              <div className="wing-merchant-row">
-                <img src="/images/avatars/demo-owner-01.jpg" alt="" className="wing-bubble-avatar" />
-                <div>
-                  <span className="wing-speech-text">Khu này muốn mua gì cũng có, hong sợ thiếu gì</span>
-                  <span className="wing-speech-sub">- Cô Thủy, bán trái cây</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="wing-phone-mockup">
-              <div className="wing-phone-screen">
-                <div className="wing-phone-header">
-                  <span className="wing-phone-tag">✓ Đã xác minh</span>
-                  <strong className="wing-phone-title">Tổng quan Phường Thạnh Xuân</strong>
-                </div>
-                <div className="wing-phone-rating">
-                  4.2 ★★★★☆ <small>(285 lượt)</small>
-                </div>
-                <p className="wing-phone-desc">
-                  An ninh tốt, gần chợ, hẻm cụt yên tĩnh.
-                </p>
-                <div className="wing-phone-badge">
-                  REVIEW KHU VỰC BẠN BIẾT
-                </div>
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        <div className="home-takeover-content">
-          {/* Quick Navigation Cards & Utility Panels (Nhà Tốt Style) */}
-          <section className="hero-category-container">
+      {/* Quick Navigation Cards & Utility Panels (Nhà Tốt Style) */}
+      <section className="hero-category-container">
             <div className="hero-quick-cards-grid">
               <Link to="/tim-phong" className="hero-quick-card">
                 <div className="hero-quick-card-icon" style={{ background: "#eaf4ec", color: "#245f3b" }}>
@@ -739,8 +677,6 @@ function Home() {
               <div className="story-list">{latestPosts.slice(1).map((post) => <Link to={`/bai-viet/${post.id}`} key={post.id} className="story-item"><span className="story-avatar">{post.avatarUrl ? <img className="user-avatar-image" src={post.avatarUrl} alt=""/> : post.initials}</span><div className="story-item-body"><span className="story-item-author">{post.name}</span><p className="story-item-text">{post.content}</p><small className="story-item-meta">{post.time} · {post.commentsCount} bình luận</small></div></Link>)}</div>
             </div> : <div className="home-forum-empty"><p>{connectionState === "loading" ? "Đang tải bài viết cộng đồng…" : connectionState === "error" ? "Chưa kết nối được diễn đàn. Hãy thử lại sau." : "Chưa có bài viết. Hãy bắt đầu một cuộc trò chuyện cùng cộng đồng."}</p><button onClick={() => navigate("/dien-dan")}>Mở diễn đàn <Icon name="chevron" size={16}/></button></div>}
           </section>
-        </div>
-      </div>
 
       {/* Partner Program Modal */}
       <PartnerModal
