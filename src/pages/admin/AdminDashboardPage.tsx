@@ -24,46 +24,6 @@ const DEFAULT_FILTERS: TableFilters = {
   sortBy: "views_desc",
 }
 
-/**
- * Vòng tròn tiến độ nhỏ (SVG Circular Progress Ring w-12 h-12) cho Thẻ KPI 2 (Nguồn cung phòng trọ)
- */
-function KpiRadialRing({ percent }: { percent: number }) {
-  const safePct = Math.min(100, Math.max(0, percent))
-  const radius = 19
-  const circumference = 2 * Math.PI * radius
-  const dashOffset = circumference - (safePct / 100) * circumference
-
-  return (
-    <div
-      className="saas-kpi-radial"
-      title={`${safePct}% tin phòng đang mở hiển thị trên tổng nguồn cung`}
-    >
-      <svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true">
-        <circle
-          cx="24"
-          cy="24"
-          r={radius}
-          fill="transparent"
-          stroke="#E2E8F0"
-          strokeWidth="4.5"
-        />
-        <circle
-          cx="24"
-          cy="24"
-          r={radius}
-          fill="transparent"
-          stroke="#10B981"
-          strokeWidth="4.5"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          transform="rotate(-90 24 24)"
-        />
-      </svg>
-      <span className="saas-kpi-radial-text">{safePct}%</span>
-    </div>
-  )
-}
 
 /**
  * Component Donut Chart SVG thuần dành riêng cho Cơ cấu vai trò người dùng
@@ -594,11 +554,11 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TẦNG 1: HÀNG 4 THẺ CHỈ SỐ KPI (Lấp đầy khoảng trống bên phải con số lớn bằng Stacked Mini-Metrics & Radial Ring) */}
-      <section className="dashboard-kpi-grid saas-kpi-grid" aria-busy={isLoading}>
+      {/* TẦNG 1: HÀNG 4 THẺ CHỈ SỐ KPI (Chuẩn 2 tông màu Slate + Emerald, cấu trúc chia ô đều nhau) */}
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" aria-busy={isLoading}>
         {/* Thẻ 1: Thành viên hệ thống */}
         <div
-          className="dashboard-kpi-card saas-kpi-card"
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
           onClick={() =>
             navigate(
               metrics.lockedUsersCount > 0
@@ -617,49 +577,53 @@ export default function AdminDashboardPage() {
             )
           }
         >
-          <div className="saas-kpi-header">
-            <div className="saas-kpi-header-left">
-              <span className="saas-kpi-icon is-blue">
+          {/* Tầng 1: Header */}
+          <div className="flex items-center justify-between gap-2 mb-3.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <Icon name="users" size={18} />
               </span>
-              <span className="saas-kpi-title">Thành viên hệ thống</span>
+              <span className="text-sm font-bold text-slate-900 truncate">
+                Thành viên hệ thống · {isLoading ? "—" : metrics.totalUsers.toLocaleString("vi-VN")}
+              </span>
             </div>
-            <span
-              className={`saas-kpi-pill ${
-                metrics.lockedUsersCount > 0 ? "is-danger" : "is-blue"
-              }`}
-            >
-              {metrics.activeUsersCount} hoạt động
-              {metrics.lockedUsersCount > 0 ? ` · ${metrics.lockedUsersCount} khóa` : ""}
+            <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
+              Quản lý →
             </span>
           </div>
 
-          <div className="saas-kpi-middle">
-            <strong className="saas-kpi-number">
-              {isLoading ? "—" : metrics.totalUsers.toLocaleString("vi-VN")}
-            </strong>
-            <div className="saas-kpi-stack">
-              <span className="saas-mini-tag is-slate">
-                Chủ trọ: <b>{metrics.landlordsCount}</b> ({metrics.landlordPct}%)
+          {/* Tầng 2: Lưới các ô số liệu (3 ô chia đều) */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.rentersCount}
               </span>
-              <span className="saas-mini-tag is-slate">
-                Người thuê: <b>{metrics.rentersCount}</b> ({metrics.renterPct}%)
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Người thuê
               </span>
             </div>
-          </div>
-
-          <div className="saas-kpi-footer">
-            <span>
-              <b>{metrics.rentersCount}</b> người thuê · <b>{metrics.landlordsCount}</b> chủ trọ ·{" "}
-              <b>{metrics.adminsCount}</b> quản trị
-            </span>
-            <span className="saas-kpi-link is-blue">Quản lý →</span>
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.landlordsCount}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Chủ trọ
+              </span>
+            </div>
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.adminsCount}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Quản trị
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Thẻ 2: Nguồn cung phòng trọ */}
         <div
-          className="dashboard-kpi-card saas-kpi-card"
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
           onClick={() =>
             navigate(
               metrics.pendingRooms.length > 0
@@ -678,37 +642,45 @@ export default function AdminDashboardPage() {
             )
           }
         >
-          <div className="saas-kpi-header">
-            <div className="saas-kpi-header-left">
-              <span className="saas-kpi-icon is-emerald">
+          {/* Tầng 1: Header */}
+          <div className="flex items-center justify-between gap-2 mb-3.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <Icon name="building" size={18} />
               </span>
-              <span className="saas-kpi-title">Nguồn cung phòng trọ</span>
+              <span className="text-sm font-bold text-slate-900 truncate">
+                Nguồn cung phòng trọ · {isLoading ? "—" : metrics.totalListings.toLocaleString("vi-VN")}
+              </span>
             </div>
-            <span className="saas-kpi-pill is-emerald">
-              {metrics.activeRooms.length} đang mở
+            <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
+              Xem tin →
             </span>
           </div>
 
-          <div className="saas-kpi-middle">
-            <strong className="saas-kpi-number">
-              {isLoading ? "—" : metrics.totalListings.toLocaleString("vi-VN")}
-            </strong>
-            <KpiRadialRing percent={metrics.activeRoomPct} />
-          </div>
-
-          <div className="saas-kpi-footer">
-            <span>
-              <b>{metrics.activeRooms.length}</b> đang hiển thị ·{" "}
-              <b>{metrics.pendingRooms.length}</b> chờ duyệt
-            </span>
-            <span className="saas-kpi-link is-emerald">Xem tin →</span>
+          {/* Tầng 2: Lưới các ô số liệu (2 ô chia đều) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.activeRooms.length}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Đang hiển thị
+              </span>
+            </div>
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.pendingRooms.length}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Chờ duyệt
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Thẻ 3: Thảo luận cộng đồng */}
         <div
-          className="dashboard-kpi-card saas-kpi-card"
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
           onClick={() =>
             navigate(
               metrics.pendingPosts.length > 0
@@ -727,44 +699,45 @@ export default function AdminDashboardPage() {
             )
           }
         >
-          <div className="saas-kpi-header">
-            <div className="saas-kpi-header-left">
-              <span className="saas-kpi-icon is-indigo">
+          {/* Tầng 1: Header */}
+          <div className="flex items-center justify-between gap-2 mb-3.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <Icon name="chat" size={18} />
               </span>
-              <span className="saas-kpi-title">Thảo luận cộng đồng</span>
+              <span className="text-sm font-bold text-slate-900 truncate">
+                Thảo luận cộng đồng · {isLoading ? "—" : posts.length.toLocaleString("vi-VN")}
+              </span>
             </div>
-            <span className="saas-kpi-pill is-indigo">
-              {metrics.activePosts.length} bài viết
+            <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
+              Diễn đàn →
             </span>
           </div>
 
-          <div className="saas-kpi-middle">
-            <strong className="saas-kpi-number">
-              {isLoading ? "—" : posts.length.toLocaleString("vi-VN")}
-            </strong>
-            <div className="saas-kpi-stack">
-              <span className="saas-mini-tag is-indigo">
-                💬 <b>{metrics.totalComments}</b> bình luận
+          {/* Tầng 2: Lưới các ô số liệu (2 ô chia đều) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.activePosts.length}
               </span>
-              <span className="saas-mini-tag is-rose">
-                ♥ <b>{metrics.totalLikes}</b> lượt thích
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Bài hiển thị
               </span>
             </div>
-          </div>
-
-          <div className="saas-kpi-footer">
-            <span>
-              <b>{metrics.activePosts.length}</b> bài hiển thị · <b>{metrics.totalComments}</b> bình
-              luận
-            </span>
-            <span className="saas-kpi-link is-indigo">Diễn đàn →</span>
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.totalComments}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Bình luận
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Thẻ 4: Hàng đợi kiểm duyệt */}
         <div
-          className="dashboard-kpi-card saas-kpi-card"
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
           onClick={() =>
             navigate(
               metrics.pendingReports.length > 0
@@ -789,45 +762,39 @@ export default function AdminDashboardPage() {
             )
           }
         >
-          <div className="saas-kpi-header">
-            <div className="saas-kpi-header-left">
-              <span className="saas-kpi-icon is-teal">
+          {/* Tầng 1: Header */}
+          <div className="flex items-center justify-between gap-2 mb-3.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <Icon name="shield-check" size={18} />
               </span>
-              <span className="saas-kpi-title">Hàng đợi kiểm duyệt</span>
-            </div>
-            {metrics.pendingTasksCount === 0 ? (
-              <span className="saas-kpi-pill is-clean">✓ Đã sạch hoàn toàn</span>
-            ) : (
-              <span className="saas-kpi-pill is-warning">
-                {metrics.pendingTasksCount} cần xử lý
+              <span className="text-sm font-bold text-slate-900 truncate">
+                Hàng đợi kiểm duyệt · {isLoading ? "—" : metrics.pendingTasksCount}
               </span>
-            )}
-          </div>
-
-          <div className="saas-kpi-middle">
-            <strong className="saas-kpi-number">
-              {isLoading ? "—" : metrics.pendingTasksCount}
-            </strong>
-            {metrics.pendingTasksCount === 0 ? (
-              <div className="saas-kpi-shield-box is-safe">
-                <Icon name="shield-check" size={15} />
-                <span>100% đã xử lý</span>
-              </div>
-            ) : (
-              <div className="saas-kpi-shield-box is-pending">
-                <Icon name="shield" size={15} />
-                <span>Cần duyệt ngay</span>
-              </div>
-            )}
-          </div>
-
-          <div className="saas-kpi-footer">
-            <span>
-              <b>{metrics.pendingContentCount}</b> tin chờ duyệt ·{" "}
-              <b>{metrics.pendingReports.length}</b> báo cáo
+            </div>
+            <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
+              Kiểm duyệt →
             </span>
-            <span className="saas-kpi-link is-teal">Kiểm duyệt →</span>
+          </div>
+
+          {/* Tầng 2: Lưới các ô số liệu (2 ô chia đều) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.pendingRooms.length}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Tin chờ duyệt
+              </span>
+            </div>
+            <div className="bg-slate-100/80 rounded-xl py-3 px-2 text-center flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : metrics.pendingReports.length}
+              </span>
+              <span className="text-xs font-medium text-slate-600 mt-1 whitespace-nowrap">
+                Báo cáo
+              </span>
+            </div>
           </div>
         </div>
       </section>
