@@ -1,6 +1,6 @@
 /* Public discovery: a quiet green frame, useful photography and readable facts. */
 .public-home {
-  background: #25663d linear-gradient(180deg, #2F7A4B 0%, #25663d 400px, #1a4d2c 100%);
+  background: #1b4d2e linear-gradient(180deg, #2F7A4B 0%, #1e5631 350px, #153e22 100%);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
@@ -738,9 +738,9 @@
 .hero-nhatot-banner {
   position: relative;
   width: 100%;
-  min-height: 480px;
-  background: #2F7A4B url('/images/banners/hero-trooi-green-clean-bg.jpg') center 40% / cover no-repeat;
-  padding: 44px 20px 64px;
+  min-height: 380px;
+  background: #2F7A4B url('/images/banners/hero-trooi-green-clean-bg.jpg') center top / cover no-repeat;
+  padding: 40px 20px 52px;
   overflow: hidden;
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08);
 }
@@ -1047,37 +1047,13 @@
   margin-top: 1px;
 }
 
-.hero-quote-left-top {
-  top: 175px;
-  left: 24px;
-}
-
-.hero-quote-left-bottom {
-  top: 265px;
-  left: 36px;
-}
-
-.hero-quote-right-top {
-  top: 175px;
-  right: 24px;
-}
-
-.hero-quote-right-bottom {
-  top: 265px;
-  right: 36px;
-}
-
-.hero-quotes-layer {
-  display: none !important;
-}
-
 /* ==========================================================================
    NHÀ TỐT-STYLE BRANDED GREEN TAKEOVER LAYOUT & SIDE WINGS
    ========================================================================== */
 .home-takeover-wrapper {
   position: relative;
   width: 100%;
-  max-width: 1540px;
+  max-width: 1560px;
   margin: 0 auto;
 }
 
@@ -1093,22 +1069,22 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 210px;
+  width: 215px;
   pointer-events: auto;
   z-index: 15;
 }
 
 .home-side-wing-left {
   float: left;
-  margin-left: 16px;
+  margin-left: 18px;
 }
 
 .home-side-wing-right {
   float: right;
-  margin-right: 16px;
+  margin-right: 18px;
 }
 
-@media (max-width: 1480px) {
+@media (max-width: 1479px) {
   .home-side-wings-layer {
     display: none !important;
   }
