@@ -59,6 +59,21 @@ function downloadCsv(filename: string, rows: AdminRow[]) {
   URL.revokeObjectURL(link.href)
 }
 
+function getUserDisplayInitials(name: string, fallback?: string): string {
+  const clean = name.trim()
+  if (clean === "Quản trị viên") return "QT"
+  if (fallback && fallback.length >= 2 && fallback !== "AD") return fallback
+  const words = clean.split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    const lastTwo = words.slice(-2)
+    return (lastTwo[0][0] + lastTwo[1][0]).toUpperCase()
+  }
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase()
+  }
+  return fallback || "ND"
+}
+
 export default function AdminResourcePage() {
   const { pathname } = useLocation()
   const resource = (
@@ -97,6 +112,8 @@ export default function AdminResourcePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [filter, setFilter] = useState(() => searchParams.get("status") ?? "all")
+  const [userRoleFilter, setUserRoleFilter] = useState<"all" | "landlord" | "tenant" | "admin">("all")
+  const [userSortBy, setUserSortBy] = useState<"newest" | "name_asc">("newest")
   const [areaFilter, setAreaFilter] = useState<ListingAreaFilter>("all")
   const [sortBy, setSortBy] = useState<ListingSortOption>("newest")
   const [currentPage, setCurrentPage] = useState(1)
@@ -343,7 +360,7 @@ export default function AdminResourcePage() {
   // Tự động đưa về trang 1 khi thay đổi từ khóa tìm kiếm, tab trạng thái, khu vực hoặc sắp xếp
   useEffect(() => {
     setCurrentPage(1)
-  }, [query, filter, areaFilter, sortBy, resource])
+  }, [query, filter, areaFilter, sortBy, resource, userRoleFilter, userSortBy])
 
   const LISTINGS_PAGE_SIZE = 5
   const totalFilteredListings = filteredListings.length
@@ -389,6 +406,79 @@ export default function AdminResourcePage() {
     const owner = users.find((u) => u.id === selectedListing.ownerId)
     return owner?.phone ?? ""
   }, [selectedListing, users])
+
+  // Lọc và sắp xếp thành viên (/admin/nguoi-dung)
+  const filteredUsers = useMemo(() => {
+    if (resource !== "users") return []
+    const normalizedQuery = query.trim().toLocaleLowerCase("vi")
+
+    let list = users.filter((u) => {
+      // 1. Lọc theo vai trò (Role)
+      if (userRoleFilter === "landlord" && u.role !== "landlord") return false
+      if (
+        userRoleFilter === "tenant" &&
+        u.role !== "tenant" &&
+        (u.role as string) !== "renter"
+      ) {
+        return false
+      }
+      if (userRoleFilter === "admin" && u.role !== "admin") return false
+
+      // 2. Lọc theo trạng thái (Status)
+      if (filter !== "all" && u.status !== filter) return false
+
+      // 3. Tìm kiếm theo từ khóa (Tên, email, số điện thoại, ID)
+      if (normalizedQuery) {
+        const searchable = `${u.name} ${u.email} ${u.phone} ${u.id}`.toLocaleLowerCase("vi")
+        if (!searchable.includes(normalizedQuery)) return false
+      }
+
+      return true
+    })
+
+    // Sắp xếp
+    list = [...list].sort((a, b) => {
+      if (userSortBy === "name_asc") {
+        return a.name.localeCompare(b.name, "vi")
+      }
+      const timeDiff =
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      if (timeDiff !== 0) return timeDiff
+      if (a.role === "admin") return -1
+      if (b.role === "admin") return 1
+      return 0
+    })
+
+    return list
+  }, [resource, users, userRoleFilter, filter, query, userSortBy])
+
+  const USERS_PAGE_SIZE = 5
+  const totalFilteredUsers = filteredUsers.length
+  const totalUserPages = Math.max(1, Math.ceil(totalFilteredUsers / USERS_PAGE_SIZE))
+  const safeCurrentUserPage = Math.min(currentPage, totalUserPages)
+  const userStartIndex =
+    totalFilteredUsers === 0 ? 0 : (safeCurrentUserPage - 1) * USERS_PAGE_SIZE + 1
+  const userEndIndex = Math.min(safeCurrentUserPage * USERS_PAGE_SIZE, totalFilteredUsers)
+
+  const paginatedUsers = useMemo(() => {
+    const start = (safeCurrentUserPage - 1) * USERS_PAGE_SIZE
+    return filteredUsers.slice(start, start + USERS_PAGE_SIZE)
+  }, [filteredUsers, safeCurrentUserPage])
+
+  const userCounts = useMemo(() => {
+    const total = users.length
+    const landlord = users.filter((u) => u.role === "landlord").length
+    const tenant = users.filter(
+      (u) => u.role === "tenant" || (u.role as string) === "renter",
+    ).length
+    const admin = users.filter((u) => u.role === "admin").length
+
+    const active = users.filter((u) => u.status === "active").length
+    const pending = users.filter((u) => (u.status as string) === "pending").length
+    const locked = users.filter((u) => u.status === "locked").length
+
+    return { total, landlord, tenant, admin, active, pending, locked }
+  }, [users])
 
   const openEdit = (
     item?: PlatformUser | CategoryRecord,
@@ -2370,6 +2460,475 @@ export default function AdminResourcePage() {
           )}
         </section>
 
+        {confirmDialogNode}
+      </main>
+    )
+  }
+
+  // Giao diện chuyên biệt cho màn hình "Quản lý Thành viên" (/admin/nguoi-dung)
+  if (resource === "users") {
+    return (
+      <main className="admin-resource-page management-page management-admin admin-resource-page--users saas-users-page p-6 space-y-4 bg-slate-50 min-h-screen">
+        {actionError && (
+          <div
+            className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700"
+            role="alert"
+          >
+            {actionError}
+          </div>
+        )}
+
+        {/* 1. Hàng điều khiển đầu tiên (Top Action & Role Tabs Bar) */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Cụm trái (Segmented Role Tabs) */}
+          <div
+            className="inline-flex p-1 bg-slate-200/70 rounded-lg border border-slate-200/80"
+            role="tablist"
+            aria-label="Lọc theo vai trò"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={userRoleFilter === "all"}
+              onClick={() => setUserRoleFilter("all")}
+              className={
+                userRoleFilter === "all"
+                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
+                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
+              }
+            >
+              Tất cả ({userCounts.total})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={userRoleFilter === "landlord"}
+              onClick={() => setUserRoleFilter("landlord")}
+              className={
+                userRoleFilter === "landlord"
+                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
+                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
+              }
+            >
+              Chủ trọ ({userCounts.landlord})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={userRoleFilter === "tenant"}
+              onClick={() => setUserRoleFilter("tenant")}
+              className={
+                userRoleFilter === "tenant"
+                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
+                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
+              }
+            >
+              Người thuê ({userCounts.tenant})
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={userRoleFilter === "admin"}
+              onClick={() => setUserRoleFilter("admin")}
+              className={
+                userRoleFilter === "admin"
+                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
+                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
+              }
+            >
+              Quản trị viên ({userCounts.admin})
+            </button>
+          </div>
+
+          {/* Cụm phải (Summary Pills + Action Buttons) */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
+              Hoạt động: <strong className="text-slate-900 font-semibold">{userCounts.active}</strong>
+            </div>
+            <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
+              Chờ duyệt: <strong className="text-slate-900 font-semibold">{userCounts.pending}</strong>
+            </div>
+            <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
+              Đã khóa: <strong className="text-rose-600 font-semibold">{userCounts.locked}</strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv(
+                  "thanh-vien-tro-oi.csv",
+                  filteredUsers.map((u) => ({
+                    id: u.id,
+                    title: u.name,
+                    detail: u.email,
+                    status: statusText[u.status] || u.status,
+                    meta: `${u.role === "landlord" ? "Chủ trọ" : u.role === "admin" ? "Quản trị viên" : "Người thuê"} · ${u.phone}`,
+                  })),
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-sm font-medium shadow-2xs transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4 text-slate-600 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="1.75"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="m7 10 5 5 5-5M12 15V3" />
+              </svg>
+              <span>Tải CSV</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openEdit()}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-2xs transition-colors cursor-pointer"
+            >
+              <svg
+                className="w-4 h-4 text-white shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span>+ Thêm thành viên</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Hàng thứ hai: Thanh Tìm kiếm & Bộ lọc (Search & Filter Bar) */}
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center gap-3">
+          {/* Ô tìm kiếm */}
+          <div className="flex-1 min-w-[260px] relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.75"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg>
+            <input
+              type="text"
+              aria-label="Tìm theo tên, email, số điện thoại..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Tìm theo tên, email, số điện thoại..."
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:outline-none transition-all"
+            />
+          </div>
+
+          {/* Dropdown trạng thái */}
+          <select
+            value={filter}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            aria-label="Lọc trạng thái người dùng"
+            className="px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:border-emerald-600 focus:outline-none cursor-pointer"
+          >
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="locked">Đã khóa</option>
+          </select>
+
+          {/* Dropdown sắp xếp */}
+          <select
+            value={userSortBy}
+            onChange={(e) => setUserSortBy(e.target.value as "newest" | "name_asc")}
+            aria-label="Sắp xếp người dùng"
+            className="px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:border-emerald-600 focus:outline-none cursor-pointer"
+          >
+            <option value="newest">Sắp xếp: Mới nhất</option>
+            <option value="name_asc">Sắp xếp: Tên A-Z</option>
+          </select>
+        </div>
+
+        {/* 3. Bảng Danh sách Thành viên — Lưới 5 Cột có vạch ngăn dọc (Zero Dead Whitespace) */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          {/* Header của bảng */}
+          <div className="grid grid-cols-12 divide-x divide-slate-200 items-center bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+            <div className="col-span-3 px-4 py-3">Thành viên</div>
+            <div className="col-span-3 px-4 py-3">Thông tin liên hệ</div>
+            <div className="col-span-2 px-4 py-3">Vai trò & Hoạt động</div>
+            <div className="col-span-2 px-4 py-3">Trạng thái</div>
+            <div className="col-span-2 px-4 py-3 text-right">Thao tác</div>
+          </div>
+
+          {/* Danh sách các dòng dữ liệu */}
+          {paginatedUsers.length > 0 ? (
+            <div className="divide-y divide-slate-200">
+              {paginatedUsers.map((user, index) => {
+                const userListingCount = listings.filter(
+                  (l) =>
+                    l.ownerId === user.id ||
+                    l.ownerName?.toLowerCase() === user.name.toLowerCase(),
+                ).length
+                const userPostCount = posts.filter(
+                  (p) =>
+                    p.authorId === user.id ||
+                    p.name?.toLowerCase() === user.name.toLowerCase(),
+                ).length
+
+                const rowOrderNumber = String(
+                  (safeCurrentUserPage - 1) * USERS_PAGE_SIZE + index + 1,
+                ).padStart(2, "0")
+                const userInitials = getUserDisplayInitials(user.name, user.initials)
+
+                return (
+                  <div
+                    key={user.id}
+                    className="grid grid-cols-12 divide-x divide-slate-200 items-stretch hover:bg-slate-50/60 transition-colors"
+                  >
+                    {/* Cột 1: Thành viên */}
+                    <div className="col-span-3 px-4 py-3.5 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-semibold text-sm flex items-center justify-center shrink-0">
+                        {userInitials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className="text-sm font-semibold text-slate-900 truncate"
+                          title={user.name}
+                        >
+                          {user.name}
+                        </div>
+                        <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[11px] font-medium font-mono">
+                          #{rowOrderNumber}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Cột 2: Thông tin liên hệ */}
+                    <div className="col-span-3 px-4 py-3.5 space-y-1 flex flex-col justify-center">
+                      <div
+                        className="flex items-center gap-2 text-xs text-slate-700 truncate"
+                        title={user.email}
+                      >
+                        <svg
+                          className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                        >
+                          <rect width="20" height="16" x="2" y="4" rx="2" />
+                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                        </svg>
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <svg
+                          className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                        >
+                          <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 3a2 2 0 0 1-.5 2.1L8 10.1a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c1 .3 2 .6 3 .7a2 2 0 0 1 1.6 1.9Z" />
+                        </svg>
+                        <span>{user.phone || "Chưa cập nhật"}</span>
+                      </div>
+                    </div>
+
+                    {/* Cột 3: Vai trò & Hoạt động */}
+                    <div className="col-span-2 px-4 py-3.5 flex flex-col items-start justify-center gap-1.5">
+                      {user.role === "admin" ? (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
+                          <svg
+                            className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                          >
+                            <rect width="20" height="14" x="2" y="7" rx="2" />
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                          </svg>
+                          <span>Quản trị viên</span>
+                        </div>
+                      ) : user.role === "landlord" ? (
+                        <>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
+                            <svg
+                              className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="1.75"
+                            >
+                              <path d="m3 11 9-8 9 8" />
+                              <path d="M5 10v11h14V10M9 21v-7h6v7" />
+                            </svg>
+                            <span>
+                              Chủ trọ{userListingCount > 0 ? ` · ${userListingCount} tin đăng` : ""}
+                            </span>
+                          </div>
+                          {userPostCount > 0 && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
+                              <svg
+                                className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="1.75"
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                              </svg>
+                              <span>
+                                Diễn đàn · {userPostCount} bài viết
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
+                          <svg
+                            className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="1.75"
+                          >
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                          <span>
+                            Người thuê{userPostCount > 0 ? ` · ${userPostCount} bài viết` : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cột 4: Trạng thái */}
+                    <div className="col-span-2 px-4 py-3.5 flex items-center">
+                      {user.status === "active" ? (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1 text-xs font-semibold inline-flex items-center">
+                          Đang hoạt động
+                        </span>
+                      ) : (user.status as string) === "pending" ? (
+                        <span className="bg-slate-800 text-white rounded-full px-2.5 py-1 text-xs font-semibold inline-flex items-center">
+                          Chờ duyệt
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-500 border border-slate-200 rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center">
+                          Đã khóa
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Cột 5: Thao tác */}
+                    <div className="col-span-2 px-4 py-3.5 flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium shadow-2xs transition-colors cursor-pointer"
+                        onClick={() => openEdit(user)}
+                      >
+                        <svg
+                          className="w-3 h-3 text-slate-500 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="1.75"
+                        >
+                          <path d="m15 5 4 4" />
+                          <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+                        </svg>
+                        <span>Sửa</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium shadow-2xs transition-colors cursor-pointer"
+                        onClick={() => action(user.id, user.status)}
+                      >
+                        {user.status === "locked" ? "Mở khóa" : "Khóa"}
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center px-2 py-1.5 text-rose-600 hover:bg-rose-50 rounded-md text-xs font-medium transition-colors cursor-pointer"
+                        onClick={() => remove(user.id, user.name)}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-slate-500">
+              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.8M16 3.2a4 4 0 0 1 0 7.6" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-slate-800">
+                Không tìm thấy thành viên nào
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc vai trò/trạng thái.
+              </p>
+            </div>
+          )}
+
+          {/* 4. Thanh Phân trang ở đáy bảng (Pagination Bar) */}
+          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
+            <span className="text-xs text-slate-500">
+              {totalFilteredUsers === 0
+                ? "Hiển thị 0 trên 0 thành viên"
+                : `Hiển thị ${userStartIndex}–${userEndIndex} trên ${totalFilteredUsers} thành viên`}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={safeCurrentUserPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Trước
+              </button>
+              {Array.from({ length: totalUserPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={
+                    safeCurrentUserPage === pageNum
+                      ? "bg-emerald-600 text-white border border-emerald-600 rounded-md px-2.5 py-1 text-xs font-semibold shadow-2xs cursor-pointer"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+                  }
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={safeCurrentUserPage >= totalUserPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalUserPages, p + 1))}
+                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {editDialogNode}
         {confirmDialogNode}
       </main>
     )
