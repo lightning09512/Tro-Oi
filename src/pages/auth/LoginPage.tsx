@@ -6,6 +6,7 @@ import useAuth from "@/hooks/useAuth"
 import { useToast } from "@/contexts/ToastContext"
 import type { UserRole } from "@/types/auth"
 import { authService } from "@/services/authService"
+import { mockUsers } from "@/mocks/users"
 
 interface DemoAccount {
   role: UserRole
@@ -228,11 +229,18 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
                       title={`Bấm để chọn tài khoản ${acc.roleLabel}`}
                     >
                       <td>
-                        <div className="demo-role-cell">
-                          <span className={`demo-role-badge ${acc.roleBadgeClass}`}>
-                            {acc.roleLabel}
-                          </span>
-                          <span className="demo-user-name">{acc.name}</span>
+                        <div className="demo-role-cell flex items-center gap-2.5">
+                          <img
+                            src={mockUsers[acc.role]?.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                            alt={acc.name}
+                            className="size-8 rounded-full object-cover shrink-0 border border-[#e2e8f0] shadow-sm"
+                          />
+                          <div className="flex flex-col">
+                            <span className={`demo-role-badge ${acc.roleBadgeClass}`}>
+                              {acc.roleLabel}
+                            </span>
+                            <span className="demo-user-name">{acc.name}</span>
+                          </div>
                         </div>
                       </td>
                       <td>

@@ -332,7 +332,12 @@ export default function PublicProfilePage() {
                     onError={() => setAvatarFailed(true)}
                   />
                 ) : (
-                  <span className="nhatot-avatar-fallback">{profile.initials}</span>
+                  <img
+                    src="/images/avatars/default-brand-avatar.png"
+                    alt={profile.name}
+                    className="nhatot-avatar-image"
+                    loading="lazy"
+                  />
                 )}
                 
               </div>

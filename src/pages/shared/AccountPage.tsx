@@ -324,11 +324,7 @@ export default function AccountPage({
             }}
           >
             <span className="avatar xlarge account-avatar-display">
-              {avatarUrl ? (
-                <img className="user-avatar-image" src={avatarUrl} alt="" />
-              ) : (
-                user?.initials
-              )}
+              <img className="user-avatar-image" src={avatarUrl || "/images/avatars/default-brand-avatar.png"} alt="" />
             </span>
             <span className="account-avatar-camera-badge" aria-hidden="true">
               <Icon name="camera" size={14} />
@@ -872,11 +868,7 @@ export default function AccountPage({
               <div className="avatar-modal-current-wrap">
                 <div className="avatar-modal-preview">
                   <span className="avatar xlarge account-avatar-display avatar-modal-img">
-                    {avatarUrl ? (
-                      <img className="user-avatar-image" src={avatarUrl} alt={user?.name ?? ""} />
-                    ) : (
-                      user?.initials
-                    )}
+                    <img className="user-avatar-image" src={avatarUrl || "/images/avatars/default-brand-avatar.png"} alt={user?.name ?? ""} />
                   </span>
                   {uploadingAvatar && (
                     <div className="avatar-modal-spinner" role="status">

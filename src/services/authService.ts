@@ -14,7 +14,15 @@ const seedAccounts = (): AccountRecord[] => Object.values(mockUsers).map((user) 
 const getAccounts = (): AccountRecord[] => {
   try {
     const saved = window.localStorage.getItem(ACCOUNTS_KEY)
-    return saved ? JSON.parse(saved) as AccountRecord[] : seedAccounts()
+    if (!saved) return seedAccounts()
+    const accounts = JSON.parse(saved) as AccountRecord[]
+    return accounts.map((acc) => {
+      const mock = mockUsers[acc.role]
+      if (mock && acc.id === mock.id) {
+        return { ...acc, avatarUrl: mock.avatarUrl }
+      }
+      return { ...acc, avatarUrl: acc.avatarUrl || "/images/avatars/default-brand-avatar.png" }
+    })
   } catch {
     return seedAccounts()
   }
@@ -30,7 +38,14 @@ export const authService = {
     if (isApiMode && !window.localStorage.getItem("trooi_access_token") && !window.sessionStorage.getItem("trooi_access_token")) return null
     const stored = window.localStorage.getItem(STORAGE_KEY) ?? window.sessionStorage.getItem(STORAGE_KEY)
     if (!stored) return null
-    try { return JSON.parse(stored) as AuthUser } catch { return null }
+    try {
+      const user = JSON.parse(stored) as AuthUser
+      if (user && !user.avatarUrl) {
+        const mock = mockUsers[user.role]
+        user.avatarUrl = (mock && user.id === mock.id) ? mock.avatarUrl : "/images/avatars/default-brand-avatar.png"
+      }
+      return user
+    } catch { return null }
   },
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     if (isApiMode) {
@@ -46,7 +61,15 @@ export const authService = {
     if (!account || account.password !== credentials.password) throw new Error("Thông tin đăng nhập chưa chính xác.")
     if (credentials.role === "admin" && account.role !== "admin") throw new Error("Tài khoản này không có quyền quản trị.")
     if (account.status === "locked") throw new Error("Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.")
-    const user: AuthUser = { id: account.id, name: account.name, email: account.email, phone: account.phone, role: account.role, initials: account.initials }
+    const user: AuthUser = {
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      phone: account.phone,
+      role: account.role,
+      initials: account.initials,
+      avatarUrl: account.avatarUrl || "/images/avatars/default-brand-avatar.png",
+    }
     const storage = credentials.remember ? window.localStorage : window.sessionStorage
     window.localStorage.removeItem(STORAGE_KEY)
     window.sessionStorage.removeItem(STORAGE_KEY)
@@ -56,6 +79,9 @@ export const authService = {
   async register(payload: RegisterPayload): Promise<AuthUser> {
     if (isApiMode) {
       const result = await apiRequest<{ user: AuthUser; token: string }>("auth/register", { method: "POST", body: JSON.stringify(payload) })
+      if (!result.user.avatarUrl) {
+        result.user.avatarUrl = "/images/avatars/default-brand-avatar.png"
+      }
       storeApiSession(result.user, result.token, true)
       return result.user
     }
@@ -72,8 +98,13 @@ export const authService = {
       throw new Error("Email hoặc số điện thoại đã được đăng ký.")
     }
     const user: AuthUser = {
-      id: `user-${Date.now()}`, name: payload.name.trim(), email, phone: payload.phone.trim(), role: payload.role,
+      id: `user-${Date.now()}`,
+      name: payload.name.trim(),
+      email,
+      phone: payload.phone.trim(),
+      role: payload.role,
       initials: payload.name.trim().split(" ").slice(-2).map((part) => part[0]).join("").toUpperCase(),
+      avatarUrl: "/images/avatars/default-brand-avatar.png",
     }
     saveAccounts([...accounts, { ...user, password: payload.password, status: "active" }])
     window.sessionStorage.removeItem(REGISTER_KEY)
