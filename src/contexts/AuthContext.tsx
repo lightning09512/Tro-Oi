@@ -23,25 +23,43 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() =>
-    authService.getStoredUser(),
-  )
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const stored = authService.getStoredUser()
+    if (stored && (!stored.avatarUrl || stored.avatarUrl.trim() === "")) {
+      stored.avatarUrl = "/images/avatars/default-brand-avatar.png"
+    }
+    return stored
+  })
   useEffect(() => {
     if (!isApiMode || !authService.getStoredUser()) return
     let alive = true
     apiRequest<{ user: AuthUser }>("auth/me")
-      .then((result) => { if (alive) setUser(result.user) })
+      .then((result) => {
+        if (alive) {
+          const u = result.user
+          if (u && (!u.avatarUrl || u.avatarUrl.trim() === "")) {
+            u.avatarUrl = "/images/avatars/default-brand-avatar.png"
+          }
+          setUser(u)
+        }
+      })
       .catch(() => { if (alive) setUser(null) })
     return () => { alive = false }
   }, [])
   const login = useCallback(async (credentials: LoginCredentials) => {
     const nextUser = await authService.login(credentials)
+    if (nextUser && (!nextUser.avatarUrl || nextUser.avatarUrl.trim() === "")) {
+      nextUser.avatarUrl = "/images/avatars/default-brand-avatar.png"
+    }
     setUser(nextUser)
     return nextUser
   }, [])
   const requestRegistrationCode = useCallback((email: string) => authService.requestRegistrationCode(email), [])
   const register = useCallback(async (payload: RegisterPayload) => {
     const nextUser = await authService.register(payload)
+    if (nextUser && (!nextUser.avatarUrl || nextUser.avatarUrl.trim() === "")) {
+      nextUser.avatarUrl = "/images/avatars/default-brand-avatar.png"
+    }
     setUser(nextUser)
     return nextUser
   }, [])

@@ -1464,13 +1464,15 @@ export default function AdminDashboardPage() {
                     <div className="saas-post-head">
                       <div className="saas-post-author">
                         <div className="post-author-avatar">
-                          {post.avatarUrl ? (
-                            <img src={post.avatarUrl} alt={post.name} loading="lazy" />
-                          ) : (
-                            <span>
-                              {post.initials || post.name?.slice(0, 2).toUpperCase() || "TV"}
-                            </span>
-                          )}
+                          <img
+                            src={post.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                            alt={post.name}
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                            }}
+                          />
                         </div>
                         <div className="saas-post-author-meta">
                           <strong>{post.name}</strong>

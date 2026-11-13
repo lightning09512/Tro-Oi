@@ -25,7 +25,15 @@ export default function BottomNavigation() {
       <NavLink to={user?.role === "admin" ? "/admin/ho-so" : user ? "/trang-ca-nhan" : "/dang-nhap"}>
         {user ? (
           <span className="avatar">
-            <img className="user-avatar-image" src={user.avatarUrl || "/images/avatars/default-brand-avatar.png"} alt="" />
+            <img
+              className="user-avatar-image"
+              src={user.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+              alt=""
+              onError={(e) => {
+                e.currentTarget.onerror = null
+                e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+              }}
+            />
           </span>
         ) : (
           <Icon name="users" />

@@ -171,7 +171,7 @@ const initialUsers: PlatformUser[] = [
     phone: "0901 234 568",
     role: "renter",
     initials: "NA",
-    avatarUrl: "/images/avatars/demo-owner-05.jpg",
+    avatarUrl: "/images/avatars/demo-renter-02.jpg",
   },
   {
     id: "user-renter-03",
@@ -206,6 +206,14 @@ const initialUsers: PlatformUser[] = [
   status: "active",
   createdAt: savedAt,
 }))
+
+const hydrateUsers = (loadedUsers: PlatformUser[]): PlatformUser[] => {
+  const avatarMap = new Map(initialUsers.map((u) => [u.id, u.avatarUrl]))
+  return loadedUsers.map((u) => ({
+    ...u,
+    avatarUrl: avatarMap.get(u.id) || u.avatarUrl || "/images/avatars/default-brand-avatar.png",
+  }))
+}
 
 const initialReviews: RoomReview[] = []
 
@@ -419,7 +427,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [listings, setListings] = useState(() => isApiMode ? [] as RentalListing[] : loadListings())
   const [feedPosts, setFeedPosts] = useState(() => isApiMode ? [] as ForumPost[] : loadFeedPosts())
-  const [users, setUsers] = useState(() => isApiMode ? [] as PlatformUser[] : storage("users", initialUsers))
+  const [users, setUsers] = useState(() => isApiMode ? [] as PlatformUser[] : hydrateUsers(storage("users", initialUsers)))
   const [reports, setReports] = useState(() => isApiMode ? [] as ReportRecord[] : loadReports())
   const [messages, setMessages] = useState(() => isApiMode ? [] as MessageRecord[] : loadMessages())
   const [reviews, setReviews] = useState(() => isApiMode ? [] as RoomReview[] : storage("reviews", initialReviews).filter((review) => review.id !== "review-1" && !legacyDemoListingIds.has(review.listingId)))
@@ -444,7 +452,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       if (!event.key?.startsWith("phongtroplus_")) return
       if (event.key === "phongtroplus_listings") setListings(loadListings())
       if (event.key === "phongtroplus_posts") setFeedPosts(loadFeedPosts())
-      if (event.key === "phongtroplus_users") setUsers(storage("users", initialUsers))
+      if (event.key === "phongtroplus_users") setUsers(hydrateUsers(storage("users", initialUsers)))
       if (event.key === "phongtroplus_reports") {
         setReports(loadReports())
       }

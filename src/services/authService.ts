@@ -10,19 +10,71 @@ const DEMO_PASSWORD = "PhongTro@123"
 type AccountRecord = AuthUser & { password: string; status: "active" | "locked" }
 const wait = (duration = 220) => new Promise((resolve) => window.setTimeout(resolve, duration))
 
-const seedAccounts = (): AccountRecord[] => Object.values(mockUsers).map((user) => ({ ...user, password: DEMO_PASSWORD, status: "active" }))
+const DEMO_EXTRA_ACCOUNTS: AccountRecord[] = [
+  {
+    id: "user-renter-04",
+    name: "Quang Minh",
+    email: "quangminh@example.com",
+    phone: "0901 234 570",
+    role: "renter",
+    initials: "QM",
+    avatarUrl: "/images/avatars/demo-owner-06.jpg",
+    password: DEMO_PASSWORD,
+    status: "active",
+  },
+  {
+    id: "user-landlord-02",
+    name: "Anh Khoa",
+    email: "anhkhoa@example.com",
+    phone: "0987 654 322",
+    role: "landlord",
+    initials: "AK",
+    avatarUrl: "/images/avatars/demo-owner-04.jpg",
+    password: DEMO_PASSWORD,
+    status: "active",
+  },
+  {
+    id: "user-renter-02",
+    name: "Nguyễn An",
+    email: "nguyenan@example.com",
+    phone: "0901 234 568",
+    role: "renter",
+    initials: "NA",
+    avatarUrl: "/images/avatars/demo-renter-02.jpg",
+    password: DEMO_PASSWORD,
+    status: "active",
+  },
+]
+
+const DEMO_AVATAR_MAP: Record<string, string> = {
+  "user-renter-01": "/images/avatars/demo-owner-01.jpg",
+  "user-renter-02": "/images/avatars/demo-renter-02.jpg",
+  "user-renter-03": "/images/avatars/demo-owner-02.jpg",
+  "user-renter-04": "/images/avatars/demo-owner-06.jpg",
+  "user-landlord-01": "/images/avatars/demo-owner-03.jpg",
+  "user-landlord-02": "/images/avatars/demo-owner-04.jpg",
+  "user-admin-01": "/images/avatars/demo-owner-05.jpg",
+}
+
+const seedAccounts = (): AccountRecord[] => [
+  ...Object.values(mockUsers).map((user) => ({ ...user, password: DEMO_PASSWORD, status: "active" as const })),
+  ...DEMO_EXTRA_ACCOUNTS,
+]
+
 const getAccounts = (): AccountRecord[] => {
   try {
     const saved = window.localStorage.getItem(ACCOUNTS_KEY)
     if (!saved) return seedAccounts()
     const accounts = JSON.parse(saved) as AccountRecord[]
-    return accounts.map((acc) => {
-      const mock = mockUsers[acc.role]
-      if (mock && acc.id === mock.id) {
-        return { ...acc, avatarUrl: mock.avatarUrl }
-      }
-      return { ...acc, avatarUrl: acc.avatarUrl || "/images/avatars/default-brand-avatar.png" }
-    })
+    const existingIds = new Set(accounts.map((a) => a.id))
+    const merged = [
+      ...accounts,
+      ...DEMO_EXTRA_ACCOUNTS.filter((extra) => !existingIds.has(extra.id)),
+    ]
+    return merged.map((acc) => ({
+      ...acc,
+      avatarUrl: DEMO_AVATAR_MAP[acc.id] || acc.avatarUrl || "/images/avatars/default-brand-avatar.png",
+    }))
   } catch {
     return seedAccounts()
   }
@@ -40,7 +92,9 @@ export const authService = {
     if (!stored) return null
     try {
       const user = JSON.parse(stored) as AuthUser
-      if (user && !user.avatarUrl) {
+      if (user && DEMO_AVATAR_MAP[user.id]) {
+        user.avatarUrl = DEMO_AVATAR_MAP[user.id]
+      } else if (user && (!user.avatarUrl || user.avatarUrl.trim() === "")) {
         const mock = mockUsers[user.role]
         user.avatarUrl = (mock && user.id === mock.id) ? mock.avatarUrl : "/images/avatars/default-brand-avatar.png"
       }
@@ -50,6 +104,9 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     if (isApiMode) {
       const result = await apiRequest<{ user: AuthUser; token: string }>("auth/login", { method: "POST", body: JSON.stringify(credentials) })
+      if (!result.user.avatarUrl || result.user.avatarUrl.trim() === "") {
+        result.user.avatarUrl = "/images/avatars/default-brand-avatar.png"
+      }
       storeApiSession(result.user, result.token, credentials.remember)
       return result.user
     }

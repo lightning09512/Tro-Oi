@@ -135,15 +135,16 @@ export function RoomCard({ room, onClick }: RoomCardProps) {
           </span>
         </div>
         <div className="seller">
-          {room.ownerAvatarUrl ? (
-            <img
-              className="mini-avatar seller-avatar-image"
-              src={room.ownerAvatarUrl}
-              alt=""
-            />
-          ) : (
-            <span className="mini-avatar">{initials}</span>
-          )}
+          <img
+            className="mini-avatar seller-avatar-image"
+            src={room.ownerAvatarUrl || "/images/avatars/default-brand-avatar.png"}
+            alt=""
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+            }}
+          />
           <span>
             {sellerName}{" "}
             {isTransfer && <span className="seller-transfer-tag">Người pass</span>}

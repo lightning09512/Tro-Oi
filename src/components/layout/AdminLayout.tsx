@@ -271,7 +271,14 @@ export default function AdminLayout() {
                 aria-haspopup="menu"
               >
                 <span className="saas-account-avatar">
-                  <img src={user?.avatarUrl || "/images/avatars/default-brand-avatar.png"} alt={user?.name || "Admin"} />
+                  <img
+                    src={user?.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                    alt={user?.name || "Admin"}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null
+                      e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                    }}
+                  />
                 </span>
                 <strong className="saas-account-name">
                   {user?.name === "Quản trị viên" ? "Admin" : (user?.name ?? "Admin")}

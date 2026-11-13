@@ -17,6 +17,7 @@ interface DemoAccount {
   password: string
   roleBadgeClass: string
   purpose: string
+  avatarUrl: string
 }
 
 const DEMO_ACCOUNTS: DemoAccount[] = [
@@ -28,7 +29,19 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     phone: "0901 234 567",
     password: authService.demoPassword,
     roleBadgeClass: "demo-role-renter",
-    purpose: "Tìm phòng, lưu tin, nhắn tin",
+    purpose: "Nữ sinh viên tìm phòng & ở ghép",
+    avatarUrl: "/images/avatars/demo-owner-01.jpg",
+  },
+  {
+    role: "renter",
+    roleLabel: "Người thuê",
+    name: "Quang Minh",
+    email: "quangminh@example.com",
+    phone: "0901 234 570",
+    password: authService.demoPassword,
+    roleBadgeClass: "demo-role-renter",
+    purpose: "Nam sinh viên thuê trọ, trao đổi",
+    avatarUrl: "/images/avatars/demo-owner-06.jpg",
   },
   {
     role: "landlord",
@@ -38,7 +51,19 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     phone: "0987 654 321",
     password: authService.demoPassword,
     roleBadgeClass: "demo-role-landlord",
-    purpose: "Đăng tin cho thuê, quản lý phòng",
+    purpose: "Chủ căn hộ mini & phòng trọ",
+    avatarUrl: "/images/avatars/demo-owner-03.jpg",
+  },
+  {
+    role: "landlord",
+    roleLabel: "Chủ trọ",
+    name: "Anh Khoa",
+    email: "anhkhoa@example.com",
+    phone: "0987 654 322",
+    password: authService.demoPassword,
+    roleBadgeClass: "demo-role-landlord",
+    purpose: "Chủ nhà nguyên căn & dãy trọ",
+    avatarUrl: "/images/avatars/demo-owner-04.jpg",
   },
   {
     role: "admin",
@@ -49,6 +74,7 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     password: authService.demoPassword,
     roleBadgeClass: "demo-role-admin",
     purpose: "Quản trị hệ thống, duyệt tin",
+    avatarUrl: "/images/avatars/demo-owner-05.jpg",
   },
 ]
 
@@ -231,9 +257,13 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
                       <td>
                         <div className="demo-role-cell flex items-center gap-2.5">
                           <img
-                            src={mockUsers[acc.role]?.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                            src={acc.avatarUrl || mockUsers[acc.role]?.avatarUrl || "/images/avatars/default-brand-avatar.png"}
                             alt={acc.name}
                             className="size-8 rounded-full object-cover shrink-0 border border-[#e2e8f0] shadow-sm"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                            }}
                           />
                           <div className="flex flex-col">
                             <span className={`demo-role-badge ${acc.roleBadgeClass}`}>

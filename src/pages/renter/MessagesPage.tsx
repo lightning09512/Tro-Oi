@@ -20,7 +20,20 @@ function PersonAvatar({
   active?: boolean
   className?: string
 }) {
-  return <span className={`avatar ${className}`.trim()}>{avatarUrl ? <img className="user-avatar-image" src={avatarUrl} alt="" /> : initials}{active && <i/>}</span>
+  return (
+    <span className={`avatar ${className}`.trim()}>
+      <img
+        className="user-avatar-image"
+        src={avatarUrl || "/images/avatars/default-brand-avatar.png"}
+        alt=""
+        onError={(e) => {
+          e.currentTarget.onerror = null
+          e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+        }}
+      />
+      {active && <i />}
+    </span>
+  )
 }
 
 interface FriendUser {

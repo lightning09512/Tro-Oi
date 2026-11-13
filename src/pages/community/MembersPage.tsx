@@ -462,12 +462,15 @@ export default function MembersPage() {
 
                       {/* Overlapping Avatar */}
                       <div className="fb-user-avatar-wrap">
-                        {item.avatarUrl ? (
-                          <img src={item.avatarUrl} alt={item.name} className="fb-user-avatar-img" />
-                        ) : (
-                          <span className="fb-user-avatar-initials">{item.initials}</span>
-                        )}
-                        
+                        <img
+                          src={item.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                          alt={item.name}
+                          className="fb-user-avatar-img"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                          }}
+                        />
                       </div>
 
                       {/* Card Info */}
@@ -553,11 +556,15 @@ export default function MembersPage() {
                       <article className="fb-user-card" key={item.id}>
                         <div className="fb-user-cover suggestions" />
                         <div className="fb-user-avatar-wrap">
-                          {item.avatarUrl ? (
-                            <img src={item.avatarUrl} alt={item.name} className="fb-user-avatar-img" />
-                          ) : (
-                            <span className="fb-user-avatar-initials">{item.initials}</span>
-                          )}
+                          <img
+                            src={item.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                            alt={item.name}
+                            className="fb-user-avatar-img"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                            }}
+                          />
                         </div>
 
                         <div className="fb-user-body">
@@ -669,12 +676,15 @@ export default function MembersPage() {
                     <article className="fb-user-card" key={friend.id}>
                       <div className="fb-user-cover friends" />
                       <div className="fb-user-avatar-wrap">
-                        {friend.avatarUrl ? (
-                          <img src={friend.avatarUrl} alt={friend.name} className="fb-user-avatar-img" />
-                        ) : (
-                          <span className="fb-user-avatar-initials">{friend.initials}</span>
-                        )}
-                        
+                        <img
+                          src={friend.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                          alt={friend.name}
+                          className="fb-user-avatar-img"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null
+                            e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                          }}
+                        />
                       </div>
 
                       <div className="fb-user-body">
@@ -844,11 +854,16 @@ export default function MembersPage() {
                         return (
                           <article className="fb-user-card" key={member.id} style={{ flexDirection: "row", padding: "16px", alignItems: "center", gap: "20px" }}>
                             <div className="fb-user-avatar-wrap" style={{ margin: 0 }}>
-                              {member.avatarUrl ? (
-                                <img src={member.avatarUrl} alt={member.name} className="fb-user-avatar-img" style={{ width: "72px", height: "72px" }} />
-                              ) : (
-                                <span className="fb-user-avatar-initials" style={{ width: "72px", height: "72px", fontSize: "24px" }}>{member.initials}</span>
-                              )}
+                              <img
+                                src={member.avatarUrl || "/images/avatars/default-brand-avatar.png"}
+                                alt={member.name}
+                                className="fb-user-avatar-img"
+                                style={{ width: "72px", height: "72px" }}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null
+                                  e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                                }}
+                              />
                             </div>
 
                             <div className="fb-user-body" style={{ padding: 0, flex: 1 }}>

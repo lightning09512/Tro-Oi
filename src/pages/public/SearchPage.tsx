@@ -254,8 +254,8 @@ export default function SearchPage() {
 
     const list = Array.from(map.values()).sort((a, b) => b.count - a.count)
     const seedDefaults = [
-      { id: "user-broker-01", name: "Hồ Phan Huy Châu", avatarUrl: "/images/avatars/demo-owner-01.jpg", count: 17 },
-      { id: "user-broker-02", name: "BĐS Kim Ngọc", avatarUrl: "/images/avatars/demo-owner-02.jpg", count: 3 },
+      { id: "user-broker-01", name: "Hồ Phan Huy Châu", avatarUrl: "/images/avatars/demo-broker-01.jpg", count: 17 },
+      { id: "user-broker-02", name: "BĐS Kim Ngọc", avatarUrl: "/images/avatars/demo-broker-02.jpg", count: 3 },
       { id: "user-broker-03", name: "Nguyễn Trọng Tuấn", avatarUrl: "/images/avatars/demo-tenant-01.jpg", count: 1 },
     ]
     const merged = [...list, ...seedDefaults.filter((d) => !list.some((item) => item.name === d.name))]
@@ -570,12 +570,12 @@ export default function SearchPage() {
                   >
                     <img
                       className="nhatot-broker-avatar"
-                      src={broker.avatarUrl || "/images/avatars/demo-owner-01.jpg"}
+                      src={broker.avatarUrl || "/images/avatars/default-brand-avatar.png"}
                       alt={broker.name}
                       loading="lazy"
                       onError={(e) => {
                         e.currentTarget.onerror = null
-                        e.currentTarget.src = "/images/avatars/demo-owner-01.jpg"
+                        e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
                       }}
                     />
                     <div>

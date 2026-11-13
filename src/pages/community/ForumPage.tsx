@@ -27,23 +27,33 @@ function ProfileAvatar({
   avatarUrl,
   className = "",
 }: {
-  initials: string
+  initials?: string
   avatarUrl?: string
   className?: string
 }) {
+  const defaultAvatar = "/images/avatars/default-brand-avatar.png"
+  const [src, setSrc] = useState(
+    avatarUrl && avatarUrl.trim() !== "" ? avatarUrl : defaultAvatar,
+  )
+
+  useEffect(() => {
+    setSrc(avatarUrl && avatarUrl.trim() !== "" ? avatarUrl : defaultAvatar)
+  }, [avatarUrl])
+
   return (
     <span className={`avatar ${className}`.trim()}>
-      {avatarUrl ? (
-        <img
-          className="user-avatar-image"
-          src={avatarUrl}
-          alt=""
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        initials
-      )}
+      <img
+        className="user-avatar-image"
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onError={() => {
+          if (src !== defaultAvatar) {
+            setSrc(defaultAvatar)
+          }
+        }}
+      />
     </span>
   )
 }
@@ -120,10 +130,11 @@ function PostCard({
 
   const role = author?.role
 
-  const authorAvatarUrl = post.avatarUrl ?? author?.avatarUrl
+  const authorAvatarUrl =
+    post.avatarUrl || author?.avatarUrl || "/images/avatars/default-brand-avatar.png"
 
   const currentUserAvatarUrl =
-    user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
+    user?.avatarUrl || users.find((item) => item.id === user?.id)?.avatarUrl || "/images/avatars/default-brand-avatar.png"
 
   const isLong =
     post.content.length > 220 || post.content.split("\n").length > 4
@@ -258,7 +269,8 @@ function PostCard({
 
     const commentUser = users.find((member) => member.id === item.authorId)
 
-    const commentAvatar = item.avatarUrl ?? commentUser?.avatarUrl
+    const commentAvatar =
+      item.avatarUrl || commentUser?.avatarUrl || "/images/avatars/default-brand-avatar.png"
 
     return (
       <div
@@ -946,7 +958,7 @@ export default function ForumPage() {
     navigate("/dang-nhap", { state: { from: window.location.pathname } })
 
   const currentUserAvatarUrl =
-    user?.avatarUrl ?? users.find((item) => item.id === user?.id)?.avatarUrl
+    user?.avatarUrl || users.find((item) => item.id === user?.id)?.avatarUrl || "/images/avatars/default-brand-avatar.png"
 
   const PAGE_SIZE = 5
 

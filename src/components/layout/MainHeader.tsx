@@ -280,7 +280,15 @@ export default function MainHeader() {
                 >
                   <span className="inline-grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">
                     {user.avatarUrl ? (
-                      <img className="size-full object-cover" src={user.avatarUrl} alt="" />
+                      <img
+                        className="size-full object-cover"
+                        src={user.avatarUrl}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.onerror = null
+                          e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                        }}
+                      />
                     ) : (
                       <img className="size-full object-cover" src="/images/avatars/default-brand-avatar.png" alt="" />
                     )}
@@ -292,7 +300,15 @@ export default function MainHeader() {
                     <div className="mb-1.5 flex items-center gap-3 border-b border-[#e5ece6] px-2 py-2.5">
                       <span className="inline-grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e9f2eb] text-[13px] font-bold text-[#245f3b]">
                         {user.avatarUrl ? (
-                          <img className="size-full object-cover" src={user.avatarUrl} alt="" />
+                          <img
+                            className="size-full object-cover"
+                            src={user.avatarUrl}
+                            alt=""
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
+                            }}
+                          />
                         ) : (
                           <img className="size-full object-cover" src="/images/avatars/default-brand-avatar.png" alt="" />
                         )}
