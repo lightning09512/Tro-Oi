@@ -26,6 +26,7 @@ import memberRoutes from "./routes/members.js"
 import reviewRoutes from "./routes/reviews.js"
 import friendRoutes from "./routes/friends.js"
 import aiSearchRouter from "./routes/ai-search.js"
+import aiChatRouter from "./routes/ai-chat.js";
 import { requireAuth } from "./middleware/auth.js"
 import { flushNotificationOutbox } from "./services/notificationService.js"
 
@@ -98,6 +99,7 @@ app.use("/api/members", requirePostgres, memberRoutes)
 app.use("/api/reviews", requirePostgres, reviewRoutes)
 app.use("/api/friends", requirePostgres, friendRoutes)
 app.use("/api/ai", requirePostgres, aiSearchRouter)
+app.use("/api/ai", aiChatRouter);
 const distPath = path.resolve(serverDirectory, '../dist')
 if (process.env.NODE_ENV === 'production' && fs.existsSync(distPath)) {
   app.use(express.static(distPath))
