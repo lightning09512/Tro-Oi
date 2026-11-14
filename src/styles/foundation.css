@@ -381,42 +381,6 @@ input, textarea { caret-color: var(--teal-dark); }
   flex-shrink: 0;
 }
 
-.admin-shell.saas-admin-shell .saas-global-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 268px;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  transition: all 150ms ease;
-}
-
-.admin-shell.saas-admin-shell .saas-global-search:focus-within {
-  background: #ffffff;
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.15);
-  color: #0f172a;
-}
-
-.admin-shell.saas-admin-shell .saas-global-search input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
-  outline: none;
-  font-size: 13px;
-  color: #0f172a;
-  padding: 0;
-}
-
-.admin-shell.saas-admin-shell .saas-global-search input::placeholder {
-  color: #64748b;
-}
-
 .admin-shell.saas-admin-shell .saas-notif-btn {
   position: relative;
   width: 36px;
@@ -673,7 +637,6 @@ input, textarea { caret-color: var(--teal-dark); }
   .room-info { padding: 16px; }
   .dialog-backdrop { padding: 12px; }
   .dialog-backdrop .action-dialog { max-height: calc(100dvh - 24px); padding: 24px 20px; }
-  .admin-shell.saas-admin-shell .saas-global-search { display: none; }
   .admin-shell.saas-admin-shell .admin-content.saas-admin-content { padding: 16px; }
   .admin-shell .admin-main > header { padding-inline: 16px; }
   .site-header { height: 64px; }

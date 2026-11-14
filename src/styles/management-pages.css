@@ -510,7 +510,19 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.admin-dashboard-pro .dashboard-col-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.admin-dashboard-pro .dashboard-col-main > .dashboard-card,
+.admin-dashboard-pro .dashboard-col-main > .saas-pending-card {
+  margin-bottom: 0;
 }
 
 .admin-dashboard-pro .dashboard-card {
@@ -528,7 +540,10 @@
 
 .admin-dashboard-pro .saas-table-card {
   padding: 0;
-  overflow: visible;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
 }
 
 .admin-dashboard-pro .saas-table-card-top {
@@ -818,13 +833,45 @@
 /* Bảng dữ liệu (Data Table) */
 .admin-dashboard-pro .dashboard-table-wrap {
   width: 100%;
+  flex: 1 1 0px;
+  min-height: 0;
   overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
   .admin-dashboard-pro .dashboard-table-wrap {
-    overflow: visible;
+    height: 0;
+    min-height: 360px;
   }
+}
+
+@media (max-width: 1199px) {
+  .admin-dashboard-pro .dashboard-table-wrap {
+    flex: 0 0 auto;
+    min-height: 360px;
+    max-height: 540px;
+  }
+}
+
+.admin-dashboard-pro .dashboard-table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-dashboard-pro .dashboard-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-dashboard-pro .dashboard-table-wrap::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 9999px;
+}
+
+.admin-dashboard-pro .dashboard-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
 }
 
 .admin-dashboard-pro .dashboard-table.saas-data-table {
@@ -835,27 +882,31 @@
   text-align: left;
 }
 
-.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(1) { width: 44%; min-width: 300px; }
-.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(2) { width: 15%; }
-.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(3) { width: 12%; }
+.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(1) { width: 38%; min-width: 260px; }
+.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(2) { width: 18%; }
+.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(3) { width: 11%; }
 .admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(4) { width: 9%; }
-.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(5) { width: 10%; }
-.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(6) { width: 10%; }
+.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(5) { width: 11%; }
+.admin-dashboard-pro .dashboard-table.saas-data-table th:nth-child(6) { width: 13%; }
 
 .admin-dashboard-pro .dashboard-table.saas-data-table th {
-  padding: 11px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 11px 12px;
   font-size: 11.5px;
   font-weight: 600;
   color: #64748b;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
+  box-shadow: inset 0 1px 0 #e2e8f0, inset 0 -1px 0 #e2e8f0;
   white-space: nowrap;
   vertical-align: middle;
 }
 
 .admin-dashboard-pro .dashboard-table.saas-data-table td {
-  padding: 13px 14px;
+  padding: 13px 12px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -869,7 +920,7 @@
 }
 
 .admin-dashboard-pro .dashboard-table td.dash-room-cell {
-  width: 44%;
+  width: 38%;
   max-width: 0;
 }
 
@@ -1033,20 +1084,6 @@
   text-align: right;
 }
 
-/* Pill Badge Giá thuê màu Tím Indigo (#EEF2FF / #4F46E5 / #C7D2FE) */
-.admin-dashboard-pro .room-price-tag {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 600;
-  font-size: 11.5px;
-  color: #4338ca;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  padding: 2px 9px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
 .admin-dashboard-pro .room-owner {
   display: inline-block;
   max-width: 100%;
@@ -1108,23 +1145,8 @@
   gap: 6px;
 }
 
-.admin-dashboard-pro .saas-row-icon-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #475569;
-  display: inline-grid;
-  place-items: center;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.admin-dashboard-pro .saas-row-icon-btn:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0f172a;
+.admin-dashboard-pro .saas-table-card .dashboard-action-group button {
+  min-height: 0;
 }
 
 /* CỘT PHẢI (1/3): 3 Khối tách biệt trong Card Cơ cấu nguồn cung & Thảo luận mới */
@@ -1473,7 +1495,7 @@
 
 /* Hàng đợi ưu tiên, Duyệt nhanh & Feedback Banners */
 .admin-dashboard-pro .saas-pending-card {
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .admin-dashboard-pro .saas-pending-card .saas-pending-title {

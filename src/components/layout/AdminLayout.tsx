@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
@@ -11,47 +11,17 @@ interface NavItemConfig {
   badgeCount?: number
 }
 
-const ADMIN_HEADER_META: Record<string, { label: string; searchTarget: string }> = {
-  "/admin": {
-    label: "Bảng quản trị",
-    searchTarget: "/admin/tin-cho-thue",
-  },
-  "/admin/nguoi-dung": {
-    label: "Thành viên",
-    searchTarget: "/admin/nguoi-dung",
-  },
-  "/admin/tin-cho-thue": {
-    label: "Tin cho thuê",
-    searchTarget: "/admin/tin-cho-thue",
-  },
-  "/admin/dien-dan": {
-    label: "Cộng đồng",
-    searchTarget: "/admin/dien-dan",
-  },
-  "/admin/danh-muc": {
-    label: "Danh mục & Tiện ích",
-    searchTarget: "/admin/danh-muc",
-  },
-  "/admin/bao-cao": {
-    label: "Kiểm duyệt",
-    searchTarget: "/admin/bao-cao",
-  },
-  "/admin/thong-ke": {
-    label: "Báo cáo & Thống kê",
-    searchTarget: "/admin/tin-cho-thue",
-  },
-  "/admin/ho-so": {
-    label: "Cài đặt & Hồ sơ",
-    searchTarget: "/admin/tin-cho-thue",
-  },
-  "/admin/doi-mat-khau": {
-    label: "Đổi mật khẩu",
-    searchTarget: "/admin/tin-cho-thue",
-  },
-  "/admin/thong-bao": {
-    label: "Thông báo hệ thống",
-    searchTarget: "/admin/tin-cho-thue",
-  },
+const ADMIN_HEADER_META: Record<string, { label: string }> = {
+  "/admin": { label: "Bảng quản trị" },
+  "/admin/nguoi-dung": { label: "Thành viên" },
+  "/admin/tin-cho-thue": { label: "Tin cho thuê" },
+  "/admin/dien-dan": { label: "Cộng đồng" },
+  "/admin/danh-muc": { label: "Danh mục & Tiện ích" },
+  "/admin/bao-cao": { label: "Kiểm duyệt" },
+  "/admin/thong-ke": { label: "Báo cáo & Thống kê" },
+  "/admin/ho-so": { label: "Cài đặt & Hồ sơ" },
+  "/admin/doi-mat-khau": { label: "Đổi mật khẩu" },
+  "/admin/thong-bao": { label: "Thông báo hệ thống" },
 }
 
 export default function AdminLayout() {
@@ -60,11 +30,9 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const [quickQuery, setQuickQuery] = useState("")
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [mobileSideOpen, setMobileSideOpen] = useState(false)
 
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
   const accountMenuRef = useRef<HTMLDivElement | null>(null)
 
   const pendingReports = useMemo(
@@ -99,13 +67,10 @@ export default function AdminLayout() {
     [pendingReports],
   )
 
-  // Phím tắt toàn cục Ctrl+K / Cmd+K để focus vào ô Tìm kiếm nhanh
+  // Đóng menu tài khoản hoặc sidebar mobile khi nhấn phím Escape
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault()
-        searchInputRef.current?.focus()
-      } else if (event.key === "Escape") {
+      if (event.key === "Escape") {
         setAccountMenuOpen(false)
         setMobileSideOpen(false)
       }
@@ -130,13 +95,6 @@ export default function AdminLayout() {
     setAccountMenuOpen(false)
     setMobileSideOpen(false)
   }, [pathname])
-
-  const handleQuickSearchSubmit = (event: FormEvent) => {
-    event.preventDefault()
-    const trimmed = quickQuery.trim()
-    if (!trimmed) return
-    navigate(`${headerMeta.searchTarget}?q=${encodeURIComponent(trimmed)}`)
-  }
 
   const handleLogout = () => {
     setAccountMenuOpen(false)
@@ -219,25 +177,6 @@ export default function AdminLayout() {
           </div>
 
           <div className="saas-topbar-right">
-            {/* Ô tìm kiếm toàn cục (Tìm kiếm nhanh... (⌘K)) */}
-            <form
-              className="saas-global-search"
-              onSubmit={handleQuickSearchSubmit}
-              role="search"
-            >
-              <Icon name="search" size={15} />
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={quickQuery}
-                onChange={(event) => setQuickQuery(event.target.value)}
-                placeholder="Tìm kiếm nhanh... (⌘K)"
-                aria-label="Tìm kiếm nhanh"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </form>
-
             {/* Nút chuông thông báo có chấm đỏ thông báo mới */}
             <button
               type="button"
