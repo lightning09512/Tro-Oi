@@ -85,11 +85,12 @@ Nhấn **Save**. Nếu đã có database `trooi`, hãy dùng lại, không tạo
    JWT_EXPIRES_IN=8h
    DATABASE_URL=postgres://postgres:THAY_BANG_MAT_KHAU_POSTGRES@127.0.0.1:5432/trooi
    MONGODB_URI=mongodb://127.0.0.1:27017/trooi
+   GEMINI_API_KEY=THAY_BANG_GEMINI_API_KEY
    ~~~
 
    Thay THAY_BANG_MAT_KHAU_POSTGRES bằng mật khẩu PostgreSQL của máy đó. Thay JWT_SECRET bằng một chuỗi ngẫu nhiên riêng, tối thiểu 32 ký tự. Không giữ nguyên các chữ hướng dẫn trong ví dụ.
 
-   Nếu mật khẩu PostgreSQL có ký tự đặc biệt như `@`, `:`, `/`, `#` hoặc `?`, hãy URL-encode mật khẩu trong `DATABASE_URL`. Giữ các dòng SMTP và Cloudinary trong file mẫu nếu chưa cấu hình các dịch vụ tùy chọn.
+   Nếu mật khẩu PostgreSQL có ký tự đặc biệt như `@`, `:`, `/`, `#` hoặc `?`, hãy URL-encode mật khẩu trong `DATABASE_URL`. Thay `GEMINI_API_KEY` bằng API key Gemini nếu tính năng AI cần sử dụng Gemini. Giữ các dòng SMTP và Cloudinary trong file mẫu nếu chưa cấu hình các dịch vụ tùy chọn.
 
 **Không đưa `.env` lên GitHub.** File này chứa mật khẩu và khóa riêng; Git của project đã bỏ qua file đó.
 
