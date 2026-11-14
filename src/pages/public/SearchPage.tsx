@@ -286,7 +286,13 @@ export default function SearchPage() {
     setLoadingRooms(true)
     setRequestError("")
     if (remotePage === 1) { setRemoteRooms([]); setRemoteTotal(0) }
-    apiRequest<{ items: RentalListing[]; total: number }>(`listings?${params.toString()}`)
+    const request = keyword
+      ? apiRequest<{ items: RentalListing[]; total: number }>("ai/search", {
+        method: "POST",
+        body: JSON.stringify({ query: keyword }),
+      })
+      : apiRequest<{ items: RentalListing[]; total: number }>(`listings?${params.toString()}`)
+    request
       .then((result) => {
         if (!current) return
         setRemoteRooms((items) => remotePage === 1 ? result.items : [...items, ...result.items])
@@ -467,7 +473,7 @@ export default function SearchPage() {
           </div>
           <section className="results" aria-busy={loadingRooms}>
             {filterError && !filterOpen && <p className="public-filter-error" role="alert">{filterError}</p>}
-            {keyword && <div className="public-search-term">Kết quả cho <strong>“{keyword}”</strong><button type="button" aria-label="Xóa từ khóa tìm kiếm" onClick={() => { const next = new URLSearchParams(searchParams); next.delete("q"); setSearchParams(next) }}><Icon name="close" size={16}/></button></div>}
+            {keyword && <div className="public-search-term">Kết quả AI cho <strong>“{keyword}”</strong><button type="button" aria-label="Xóa từ khóa tìm kiếm" onClick={() => { const next = new URLSearchParams(searchParams); next.delete("q"); setSearchParams(next) }}><Icon name="close" size={16}/></button></div>}
             <div className="results-head">
               <div>
                 <h1>Phòng trọ tại {locationLabel}</h1>

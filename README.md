@@ -172,6 +172,14 @@ pnpm dev:all
 
 Mở website tại [http://localhost:8443](http://localhost:8443). API chạy tại cổng 3001; Vite chuyển tiếp các yêu cầu /api và /socket.io đến API.
 
+Tìm kiếm AI cần thêm Python service. Cài dependency một lần trong môi trường ảo:
+
+~~~powershell
+ai-service\.venv\Scripts\python.exe -m pip install -r ai-service\requirements.txt
+~~~
+
+Sau đó `pnpm dev:all` sẽ khởi động thêm AI service tại `http://127.0.0.1:8000`. Trong trang tìm phòng, nhập câu mô tả tự nhiên rồi chọn **Tìm bằng AI**. AI chỉ phân tích bộ lọc và xếp hạng; giá, trạng thái phòng và tiện ích bắt buộc vẫn được lọc bằng PostgreSQL.
+
 `pnpm dev` hoặc `npm run dev` chỉ chạy giao diện, không khởi động backend. Nếu giao diện đã chạy riêng, mở terminal thứ hai tại thư mục gốc và chạy:
 
 ~~~powershell

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "node --watch server/index.js",
-    "dev:all": "concurrently -k \"pnpm dev:api\" \"pnpm dev\"",
+    "dev:ai": "ai-service\\.venv\\Scripts\\python.exe -m uvicorn main:app --app-dir ai-service --host 127.0.0.1 --port 8000",
+    "dev:all": "concurrently -k \"pnpm dev:api\" \"pnpm dev\" \"pnpm dev:ai\"",
     "start:api": "node server/index.js",
     "build": "vite build",
     "preview": "vite preview",
