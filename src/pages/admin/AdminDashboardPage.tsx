@@ -24,6 +24,115 @@ const DEFAULT_FILTERS: TableFilters = {
   sortBy: "views_desc",
 }
 
+const ITEMS_PER_PAGE = 2
+
+function ChevronLeftIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  )
+}
+
+function CheckCircle2Icon({ className = "w-7 h-7 text-emerald-600 mb-1.5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  )
+}
+
+function TaskCategoryIcon({ category }: { category: "Bài viết" | "Tin phòng" | "Bình luận" }) {
+  if (category === "Tin phòng") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="w-4 h-4 text-slate-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+        <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </svg>
+    )
+  }
+
+  if (category === "Bình luận") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="w-4 h-4 text-slate-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="w-4 h-4 text-slate-600"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M7 9h5" />
+      <path d="M7 13h3" />
+      <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+    </svg>
+  )
+}
+
 
 /**
  * Component Donut Chart SVG thuần dành riêng cho Cơ cấu vai trò người dùng
@@ -112,6 +221,7 @@ export default function AdminDashboardPage() {
   // Tab chuyển nhanh trên bảng Tin cho thuê: 'featured' | 'pending'
   const [roomTab, setRoomTab] = useState<"featured" | "pending">("featured")
   const [tableSearch, setTableSearch] = useState("")
+  const [actionPage, setActionPage] = useState(1)
 
   // State Popover/Dropdown Bộ lọc nâng cao (chỉ lọc khi nhấn Áp dụng hoặc Đặt lại)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -273,10 +383,10 @@ export default function AdminDashboardPage() {
       return {
         id: item.id,
         kind: "report" as const,
+        categoryLabel: item.targetType,
         isUrgent,
-        type: isUrgent ? "Báo cáo · Khẩn cấp" : "Báo cáo",
         title: item.targetTitle,
-        detail: `${item.reason} · Người báo: ${item.reporter}`,
+        detail: `Lý do: ${item.reason} · Người báo: ${item.reporter}`,
         link: `/admin/bao-cao?status=pending&q=${encodeURIComponent(item.targetTitle)}`,
       }
     })
@@ -286,28 +396,43 @@ export default function AdminDashboardPage() {
     const roomTasks = metrics.pendingRooms.map((item) => ({
       id: item.id,
       kind: "room" as const,
+      categoryLabel: "Tin phòng" as const,
       isUrgent: false,
-      type: "Tin phòng",
       title: item.title,
-      detail: `${item.ownerName} · ${item.location}`,
+      detail: `Chủ trọ: ${item.ownerName} · Khu vực: ${item.location}`,
       link: `/admin/tin-cho-thue?status=pending&q=${encodeURIComponent(item.title)}`,
     }))
 
     const postTasks = metrics.pendingPosts.map((item) => ({
       id: item.id,
       kind: "post" as const,
+      categoryLabel: "Bài viết" as const,
       isUrgent: false,
-      type: "Bài viết",
       title: item.content,
-      detail: item.name,
+      detail: `Người đăng: ${item.name}`,
       link: `/admin/dien-dan?status=pending&q=${encodeURIComponent(item.name)}`,
     }))
 
     return [...reportTasks, ...roomTasks, ...postTasks]
   }, [metrics.pendingRooms, metrics.pendingPosts, metrics.pendingReports])
 
-  const tasks = useMemo(() => allTasks.slice(0, 5), [allTasks])
-  const remainingTasksCount = Math.max(0, allTasks.length - tasks.length)
+  const totalActionPages = Math.max(1, Math.ceil(allTasks.length / ITEMS_PER_PAGE))
+  const currentActionPage = Math.min(actionPage, totalActionPages)
+
+  useEffect(() => {
+    if (actionPage > totalActionPages) {
+      setActionPage(totalActionPages)
+    }
+  }, [actionPage, totalActionPages])
+
+  const visibleTasks = useMemo(
+    () =>
+      allTasks.slice(
+        (currentActionPage - 1) * ITEMS_PER_PAGE,
+        currentActionPage * ITEMS_PER_PAGE,
+      ),
+    [allTasks, currentActionPage],
+  )
 
   // 3. Danh sách hiển thị trên bảng theo Tab + Tìm kiếm nhanh + Bộ lọc Popover đã áp dụng
   const displayedRooms = useMemo(() => {
@@ -555,7 +680,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* TẦNG 1: HÀNG 4 THẺ CHỈ SỐ KPI (Chuẩn 2 tông màu Slate + Emerald, cấu trúc chia ô đều nhau) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" aria-busy={isLoading}>
+      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 saas-kpi-section" aria-busy={isLoading}>
         {/* Thẻ 1: Thành viên hệ thống */}
         <div
           className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer group flex flex-col justify-between"
@@ -801,127 +926,124 @@ export default function AdminDashboardPage() {
 
       {/* TẦNG 2: LƯỚI 2 CỘT BẤT ĐỐI XỨNG (2/3 Trái - 1/3 Phải) */}
       <div className="dashboard-main-grid saas-main-grid">
-        {/* CỘT TRÁI (2/3): Hàng đợi ưu tiên (nếu có) + Bảng "Danh sách & Hiệu suất tin đăng" */}
+        {/* CỘT TRÁI (2/3): Hàng đợi ưu tiên + Bảng "Danh sách & Hiệu suất tin đăng" */}
         <div className="dashboard-col-main">
-          {tasks.length > 0 && (
-            <section className="dashboard-card dashboard-pending-box">
-              <div className="dashboard-card-header">
-                <div>
-                  <h3>Việc cần xử lý ngay ({metrics.pendingTasksCount})</h3>
-                  <p>
-                    Báo cáo khẩn cấp được ưu tiên lên đầu. Mẹo: Nhấn <b>Shift + A</b> khi trỏ vào mục chờ để duyệt nhanh.
-                  </p>
-                </div>
-                <div className="dashboard-header-controls">
-                  {metrics.pendingRooms.length > 1 && (
-                    <button
-                      type="button"
-                      className="btn-batch-approve"
-                      disabled={isBatchApproving}
-                      onClick={handleBatchApprovePendingRooms}
-                    >
-                      {isBatchApproving
-                        ? "Đang duyệt hàng loạt..."
-                        : `Duyệt tất cả tin chờ (${metrics.pendingRooms.length})`}
-                    </button>
-                  )}
-                  <span className="dashboard-pending-count-pill">
-                    {metrics.pendingTasksCount} mục chờ
-                  </span>
-                </div>
-              </div>
-              <div className="dashboard-task-list">
-                {tasks.map((task) => {
-                  const isBusy = busyIds.includes(task.id)
-                  return (
-                    <div
-                      key={`${task.kind}-${task.id}`}
-                      className="dashboard-task-item"
-                      onClick={() => navigate(task.link)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          navigate(task.link)
-                        } else if (e.shiftKey && (e.key === "A" || e.key === "a")) {
-                          e.preventDefault()
-                          if (task.kind === "room") void handleQuickApproveRoom(task.id, e)
-                          if (task.kind === "post") void handleQuickApprovePost(task.id, e)
-                        }
-                      }}
-                    >
-                      <span
-                        className={`task-type-badge ${
-                          task.isUrgent ? "is-urgent" : `is-${task.kind}`
-                        }`}
-                      >
-                        {task.type}
-                      </span>
-                      <div className="task-text-col">
-                        <strong title={task.title}>{task.title}</strong>
-                        <span title={task.detail}>{task.detail}</span>
-                      </div>
-                      <div className="dashboard-action-group">
-                        {task.kind === "room" && (
-                          <button
-                            type="button"
-                            className="btn-quick-approve"
-                            disabled={isBusy}
-                            onClick={(e) => handleQuickApproveRoom(task.id, e)}
-                            title="Duyệt hiển thị tin phòng này ngay (Phím tắt: Shift + A)"
-                          >
-                            {isBusy ? "Đang duyệt..." : "Duyệt nhanh"}
-                          </button>
-                        )}
-                        {task.kind === "post" && (
-                          <button
-                            type="button"
-                            className="btn-quick-approve"
-                            disabled={isBusy}
-                            onClick={(e) => handleQuickApprovePost(task.id, e)}
-                            title="Duyệt hiển thị bài viết này ngay (Phím tắt: Shift + A)"
-                          >
-                            {isBusy ? "Đang duyệt..." : "Duyệt nhanh"}
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="task-action-btn"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(task.link)
-                          }}
-                        >
-                          <span>{task.kind === "report" ? "Xử lý" : "Chi tiết"}</span>
-                          <Icon name="chevron" size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+          <section className="saas-pending-card bg-white rounded-xl border border-slate-200 p-5 shadow-2xs mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <h3 className="saas-pending-title text-base font-bold text-slate-900">
+                Việc cần xử lý · {allTasks.length}
+              </h3>
 
-              {remainingTasksCount > 0 && (
-                <div className="dashboard-queue-more">
-                  <span>
-                    Còn <b>{remainingTasksCount}</b> mục khác đang chờ trong hàng đợi kiểm duyệt
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="saas-pending-viewall text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+                  onClick={() =>
+                    navigate(
+                      metrics.pendingReports.length > 0
+                        ? "/admin/bao-cao?status=pending"
+                        : metrics.pendingRooms.length > 0
+                          ? "/admin/tin-cho-thue?status=pending"
+                          : metrics.pendingPosts.length > 0
+                            ? "/admin/dien-dan?status=pending"
+                            : "/admin/bao-cao",
+                    )
+                  }
+                >
+                  Xem tất cả →
+                </button>
+                <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-500 tabular-nums">
+                    Trang {currentActionPage} / {totalActionPages}
                   </span>
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(
-                        metrics.pendingReports.length > 0
-                          ? "/admin/bao-cao?status=pending"
-                          : "/admin/tin-cho-thue?status=pending",
-                      )
-                    }
+                    className="saas-pending-page-btn w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                    disabled={currentActionPage <= 1}
+                    onClick={() => setActionPage((prev) => Math.max(1, prev - 1))}
+                    aria-label="Trang trước"
                   >
-                    Xem tất cả ({metrics.pendingTasksCount}) →
+                    <ChevronLeftIcon className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="saas-pending-page-btn w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                    disabled={currentActionPage >= totalActionPages}
+                    onClick={() =>
+                      setActionPage((prev) => Math.min(totalActionPages, prev + 1))
+                    }
+                    aria-label="Trang sau"
+                  >
+                    <ChevronRightIcon className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              )}
-            </section>
-          )}
+              </div>
+            </div>
+
+            {allTasks.length === 0 ? (
+              <div className="h-[164px] min-h-[164px] max-h-[164px] flex flex-col items-center justify-center text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 mt-3">
+                <CheckCircle2Icon className="w-7 h-7 text-emerald-600 mb-1.5" />
+                <div className="text-sm font-semibold text-slate-800">
+                  Tất cả báo cáo và tin chờ duyệt đã được xử lý hoàn tất
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5">
+                  Hệ thống hiện không có mục nào tồn đọng
+                </div>
+              </div>
+            ) : (
+              <div className="h-[164px] min-h-[164px] max-h-[164px] flex flex-col justify-start">
+                {visibleTasks.map((task) => (
+                  <div
+                    key={`${task.kind}-${task.id}`}
+                    className="h-[82px] first:border-t-0 border-t border-slate-100 flex items-center justify-between gap-4 cursor-pointer shrink-0"
+                    onClick={() => navigate(task.link)}
+                  >
+                    <div className="w-16 h-14 rounded-xl bg-slate-100 border border-slate-200/70 flex flex-col items-center justify-center gap-1 shrink-0 text-slate-700">
+                      <TaskCategoryIcon category={task.categoryLabel} />
+                      <span className="text-[11px] font-semibold text-slate-700 leading-none">
+                        {task.categoryLabel}
+                      </span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className="text-sm font-bold text-slate-900 truncate"
+                        title={task.title}
+                      >
+                        {task.title}
+                      </div>
+                      <div
+                        className="text-xs text-slate-600 mt-1 truncate"
+                        title={task.detail}
+                      >
+                        {task.detail}
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      <button
+                        type="button"
+                        className="saas-pending-action-btn bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(task.link)
+                        }}
+                      >
+                        Xử lý →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {visibleTasks.length === 1 && (
+                  <div className="h-[82px] border-t border-dashed border-slate-100 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                    Không còn mục chờ nào khác trong trang này
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
 
           {/* Card Bảng dữ liệu: "Danh sách & Hiệu suất tin đăng" */}
           <section className="dashboard-card dashboard-listings-card saas-table-card">

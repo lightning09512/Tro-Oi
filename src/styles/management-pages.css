@@ -217,6 +217,10 @@
 }
 
 /* TẦNG 1: HÀNG 4 THẺ CHỈ SỐ KPI (Số liệu phân rã thực tế 100%, không dùng Sparkline giả) */
+.admin-dashboard-pro .saas-kpi-section {
+  margin-bottom: 24px;
+}
+
 .admin-dashboard-pro .dashboard-kpi-grid.saas-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1468,6 +1472,51 @@
 }
 
 /* Hàng đợi ưu tiên, Duyệt nhanh & Feedback Banners */
+.admin-dashboard-pro .saas-pending-card {
+  margin-bottom: 24px;
+}
+
+.admin-dashboard-pro .saas-pending-card .saas-pending-title {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.admin-dashboard-pro .saas-pending-card button {
+  min-height: 0;
+}
+
+.admin-dashboard-pro .saas-pending-card .saas-pending-viewall {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.admin-dashboard-pro .saas-pending-card .saas-pending-page-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+}
+
+.admin-dashboard-pro .saas-pending-card .saas-pending-page-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.admin-dashboard-pro .saas-pending-card .saas-pending-action-btn {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 0.875rem;
+  cursor: pointer;
+}
+
 .admin-dashboard-pro .dashboard-card-header {
   display: flex;
   align-items: flex-start;
