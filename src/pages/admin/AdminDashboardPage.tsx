@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react"
-import { useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import { usePlatform } from "@/contexts/PlatformContext"
 
@@ -435,7 +435,7 @@ export default function AdminDashboardPage() {
   )
 
   // 3. Danh sách hiển thị trên bảng theo Tab + Tìm kiếm nhanh + Bộ lọc Popover đã áp dụng
-  const displayedRooms = useMemo(() => {
+  const filteredListings = useMemo(() => {
     let source =
       roomTab === "pending" ? [...metrics.pendingRooms] : [...metrics.activeRooms]
 
@@ -495,7 +495,7 @@ export default function AdminDashboardPage() {
       return (b.views || 0) - (a.views || 0)
     })
 
-    return source.slice(0, 6)
+    return source
   }, [metrics.activeRooms, metrics.pendingRooms, roomTab, appliedFilters, tableSearch])
 
   // 4. Thảo luận cộng đồng mới nhất
@@ -925,10 +925,10 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* TẦNG 2: LƯỚI 2 CỘT BẤT ĐỐI XỨNG (2/3 Trái - 1/3 Phải) */}
-      <div className="dashboard-main-grid saas-main-grid">
+      <div className="dashboard-main-grid saas-main-grid items-stretch">
         {/* CỘT TRÁI (2/3): Hàng đợi ưu tiên + Bảng "Danh sách & Hiệu suất tin đăng" */}
-        <div className="dashboard-col-main">
-          <section className="saas-pending-card bg-white rounded-xl border border-slate-200 p-5 shadow-2xs mb-6">
+        <div className="dashboard-col-main flex flex-col gap-6">
+          <section className="saas-pending-card bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <h3 className="saas-pending-title text-base font-bold text-slate-900">
                 Việc cần xử lý · {allTasks.length}
@@ -1046,8 +1046,8 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Card Bảng dữ liệu: "Danh sách & Hiệu suất tin đăng" */}
-          <section className="dashboard-card dashboard-listings-card saas-table-card">
-            <div className="saas-table-card-top">
+          <section className="dashboard-card dashboard-listings-card saas-table-card flex-1 flex flex-col overflow-hidden">
+            <div className="saas-table-card-top shrink-0 pb-4">
               <div className="saas-table-title-row">
                 <div>
                   <h3>Danh sách & Hiệu suất tin đăng</h3>
@@ -1250,9 +1250,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="dashboard-table-wrap">
+            <div className="dashboard-table-wrap flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               <table className="dashboard-table saas-data-table">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-slate-50 border-y border-slate-200">
                   <tr>
                     <th>Thông tin phòng trọ & Khu vực</th>
                     <th className="col-nowrap">Giá thuê</th>
@@ -1271,7 +1271,7 @@ export default function AdminDashboardPage() {
                         </td>
                       </tr>
                     ))
-                  ) : displayedRooms.length === 0 ? (
+                  ) : filteredListings.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="empty-table-cell">
                         <div className="dashboard-empty-box">
@@ -1294,13 +1294,15 @@ export default function AdminDashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    displayedRooms.map((room) => {
+                    filteredListings.map((room) => {
                       const isBusy = busyIds.includes(room.id)
                       const rawPrice =
                         room.price || `${room.priceValue?.toLocaleString("vi-VN")}đ`
-                      const priceDisplay = rawPrice.includes("/tháng")
-                        ? rawPrice
-                        : `${rawPrice.replace(/\s+đ$/i, "đ")}/tháng`
+                      const priceAmount = rawPrice
+                        .replace(/\/tháng$/i, "")
+                        .replace(/\s+đ$/i, "đ")
+                        .trim()
+                      const priceDisplay = `${priceAmount}/tháng`
 
                       return (
                         <tr
@@ -1360,7 +1362,8 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                           <td className="col-nowrap">
-                            <span className="room-price-tag">{priceDisplay}</span>
+                            <span className="text-sm font-bold text-slate-900">{priceAmount}</span>
+                            <span className="text-xs font-normal text-slate-500">/tháng</span>
                           </td>
                           <td className="col-nowrap">
                             <span className="room-owner" title={room.ownerName}>
@@ -1400,7 +1403,7 @@ export default function AdminDashboardPage() {
                               )}
                               <button
                                 type="button"
-                                className="saas-row-icon-btn"
+                                className="bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors whitespace-nowrap"
                                 onClick={() =>
                                   navigate(
                                     `/admin/tin-cho-thue?status=${room.status}&q=${encodeURIComponent(
@@ -1408,25 +1411,8 @@ export default function AdminDashboardPage() {
                                     )}`,
                                   )
                                 }
-                                title="Tùy chọn & Kiểm duyệt"
-                                aria-label="Tùy chọn tin đăng"
                               >
-                                <Icon name="more" size={15} />
-                              </button>
-                              <button
-                                type="button"
-                                className="saas-row-icon-btn"
-                                onClick={() =>
-                                  navigate(
-                                    `/admin/tin-cho-thue?status=${room.status}&q=${encodeURIComponent(
-                                      room.title,
-                                    )}`,
-                                  )
-                                }
-                                title="Xem và chỉnh sửa chi tiết"
-                                aria-label="Chỉnh sửa chi tiết"
-                              >
-                                <Icon name="edit" size={14} />
+                                Chi tiết →
                               </button>
                             </div>
                           </td>
@@ -1437,11 +1423,25 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
+
+            <div className="px-5 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 mt-auto shrink-0">
+              <span>Hiển thị {filteredListings.length} tin đăng · Cuộn để xem thêm</span>
+              <Link
+                to={
+                  roomTab === "pending"
+                    ? "/admin/tin-cho-thue?status=pending"
+                    : "/admin/tin-cho-thue"
+                }
+                className="font-semibold text-slate-700 hover:text-emerald-700 transition-colors"
+              >
+                Quản lý tất cả tin đăng →
+              </Link>
+            </div>
           </section>
         </div>
 
         {/* CỘT PHẢI (1/3): 2 Card xếp chồng dọc (Giữ nguyên 100%) */}
-        <div className="dashboard-col-side saas-side-stack">
+        <div className="dashboard-col-side saas-side-stack flex flex-col gap-6">
           {/* Card 1: "Cơ cấu nguồn cung & Lưu lượng" (Tách bạch rõ ràng 3 Phần A - B - C) */}
           <section className="dashboard-card dashboard-telemetry-card saas-side-card">
             <h3 className="saas-side-card-title">Cơ cấu nguồn cung & Lưu lượng</h3>
