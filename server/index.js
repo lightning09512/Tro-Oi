@@ -25,6 +25,7 @@ import uploadRoutes from "./routes/uploads.js"
 import memberRoutes from "./routes/members.js"
 import reviewRoutes from "./routes/reviews.js"
 import friendRoutes from "./routes/friends.js"
+import aiSearchRouter from "./routes/ai-search.js"
 import { requireAuth } from "./middleware/auth.js"
 import { flushNotificationOutbox } from "./services/notificationService.js"
 
@@ -96,6 +97,7 @@ app.use("/api/uploads", requirePostgres, uploadRoutes)
 app.use("/api/members", requirePostgres, memberRoutes)
 app.use("/api/reviews", requirePostgres, reviewRoutes)
 app.use("/api/friends", requirePostgres, friendRoutes)
+app.use("/api/ai", requirePostgres, aiSearchRouter)
 const distPath = path.resolve(serverDirectory, '../dist')
 if (process.env.NODE_ENV === 'production' && fs.existsSync(distPath)) {
   app.use(express.static(distPath))

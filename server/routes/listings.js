@@ -13,7 +13,7 @@ const listingSelect = `SELECT l.*, u.name AS owner_name, u.phone AS owner_phone,
   l.area_m2::float AS area_value,
   COALESCE((SELECT json_agg(r) FROM (SELECT id, author_id, stars, text, created_at FROM reviews WHERE listing_id=l.id ORDER BY created_at DESC) r), '[]'::json) AS reviews
   FROM listings l LEFT JOIN users u ON u.id=l.owner_id`
-const asListing = (row, includePhone = false) => ({
+export const asListing = (row, includePhone = false) => ({
   id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value,
   location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery,
   badge: row.status === "active" ? "Đang hiển thị" : row.status, mapX: 50, mapY: 50, latitude: row.latitude ?? undefined, longitude: row.longitude ?? undefined,
@@ -36,8 +36,10 @@ const hasInlineImage = (value) => [value.image, ...(value.gallery ?? [])].some((
 const lookup = async (id) => pool.query(`${listingSelect} WHERE l.id=$1 LIMIT 1`, [id])
 const canManage = (req, row) => req.user.role === "admin" || row.owner_id === req.user.id
 
-router.get("/", async (req, res) => {
-  const query = z.object({ q: z.string().optional(), location: z.string().optional(), type: z.string().optional(), amenities: z.string().optional(), minPrice: z.coerce.number().optional(), maxPrice: z.coerce.number().optional(), minArea: z.coerce.number().optional(), maxArea: z.coerce.number().optional(), lat: z.coerce.number().optional(), lng: z.coerce.number().optional(), radiusKm: z.coerce.number().min(1).max(100).optional(), sort: z.enum(["newest", "price_asc", "price_desc", "area_desc", "nearby"]).default("newest"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(60).default(24) }).parse(req.query)
+const listingSearchQuery = z.object({ q: z.string().optional(), location: z.string().optional(), type: z.string().optional(), amenities: z.string().optional(), minPrice: z.coerce.number().optional(), maxPrice: z.coerce.number().optional(), minArea: z.coerce.number().optional(), maxArea: z.coerce.number().optional(), lat: z.coerce.number().optional(), lng: z.coerce.number().optional(), radiusKm: z.coerce.number().min(1).max(100).optional(), sort: z.enum(["newest", "price_asc", "price_desc", "area_desc", "nearby"]).default("newest"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(60).default(24) })
+
+export const searchListings = async (input) => {
+  const query = listingSearchQuery.parse(input)
   const filters = ["l.status='active'", "l.room_type <> 'Chuyển nhượng'"]
   const values = []
   let nearbyLngIndex
@@ -72,7 +74,12 @@ router.get("/", async (req, res) => {
   const offset = (query.page - 1) * query.limit
   values.push(query.limit, offset)
   const result = await pool.query(`${listingSelect} WHERE ${filters.join(" AND ")} ORDER BY ${order}, l.created_at DESC LIMIT $${values.length - 1} OFFSET $${values.length}`, values)
-  res.json({ items: result.rows.map(asListing), page: query.page, limit: query.limit, total: countResult.rows[0].total })
+  return { rows: result.rows, page: query.page, limit: query.limit, total: countResult.rows[0].total }
+}
+
+router.get("/", async (req, res) => {
+  const result = await searchListings(req.query)
+  res.json({ items: result.rows.map(asListing), page: result.page, limit: result.limit, total: result.total })
 })
 
 router.get("/mine", requireAuth, requireRole("landlord", "admin"), async (req, res) => {
