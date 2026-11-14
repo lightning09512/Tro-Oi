@@ -37,6 +37,33 @@ const ROOM_FALLBACK_SVG =
     '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120" fill="none"><rect width="160" height="120" rx="8" fill="#F1F5F9"/><path d="M54 68L80 46L106 68V92H88V74H72V92H54V68Z" stroke="#64748B" stroke-width="3" fill="#E2E8F0"/></svg>',
   )
 
+const MEMBER_PORTRAIT_FALLBACKS = [
+  "/images/avatars/demo-owner-01.jpg",
+  "/images/avatars/demo-owner-02.jpg",
+  "/images/avatars/demo-owner-03.jpg",
+  "/images/avatars/demo-owner-04.jpg",
+  "/images/avatars/demo-owner-06.jpg",
+  "/images/avatars/demo-renter-02.jpg",
+  "/images/avatars/demo-broker-01.jpg",
+  "/images/avatars/demo-broker-02.jpg",
+]
+
+function getMemberAvatarUrl(user: PlatformUser): string {
+  const url = user.avatarUrl?.trim()
+  if (url && !url.includes("default-brand-avatar")) {
+    return url
+  }
+  if (user.role === "admin") {
+    return "/images/avatars/demo-owner-05.jpg"
+  }
+  const seed = `${user.id}:${user.email}:${user.name}`
+  let hash = 0
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
+  }
+  return MEMBER_PORTRAIT_FALLBACKS[hash % MEMBER_PORTRAIT_FALLBACKS.length]
+}
+
 function formatListingPrice(item: RentalListing): string {
   const rawPrice = item.price || `${(item.priceValue || 0).toLocaleString("vi-VN")}đ`
   return rawPrice.includes("/tháng")
@@ -495,7 +522,7 @@ export default function AdminResourcePage() {
     return list
   }, [resource, users, userRoleFilter, filter, query, userSortBy])
 
-  const USERS_PAGE_SIZE = 5
+  const USERS_PAGE_SIZE = 8
   const totalFilteredUsers = filteredUsers.length
   const totalUserPages = Math.max(1, Math.ceil(totalFilteredUsers / USERS_PAGE_SIZE))
   const safeCurrentUserPage = Math.min(currentPage, totalUserPages)
@@ -2733,7 +2760,7 @@ export default function AdminResourcePage() {
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              <span>+ Thêm thành viên</span>
+              <span>Thêm thành viên</span>
             </button>
           </div>
         </div>
@@ -2786,221 +2813,332 @@ export default function AdminResourcePage() {
           </select>
         </div>
 
-        {/* 3. Bảng Danh sách Thành viên — Lưới 5 Cột có vạch ngăn dọc (Zero Dead Whitespace) */}
+        {/* 3. Bảng Danh sách Thành viên — Lưới 12 Cột (5 Cột lớn đồng đều thị giác) */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          {/* Header của bảng */}
-          <div className="grid grid-cols-12 divide-x divide-slate-200 items-center bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-            <div className="col-span-3 px-4 py-3">Thành viên</div>
-            <div className="col-span-3 px-4 py-3">Thông tin liên hệ</div>
-            <div className="col-span-2 px-4 py-3">Vai trò & Hoạt động</div>
-            <div className="col-span-2 px-4 py-3">Trạng thái</div>
-            <div className="col-span-2 px-4 py-3 text-right">Thao tác</div>
-          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[1300px]">
+              {/* Header của bảng */}
+              <div className="grid grid-cols-12 divide-x divide-slate-200 bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                <div className="col-span-3 px-4 py-3.5 flex items-center justify-center text-center">
+                  Thành viên
+                </div>
+                <div className="col-span-2 px-4 py-3.5 flex items-center justify-center text-center">
+                  Thông tin liên hệ
+                </div>
+                <div className="col-span-4 px-4 py-3.5 flex items-center justify-center text-center">
+                  Lịch sử hoạt động
+                </div>
+                <div className="col-span-1 px-4 py-3.5 flex items-center justify-center text-center">
+                  Ngày tham gia
+                </div>
+                <div className="col-span-2 px-4 py-3.5 flex items-center justify-center text-center">
+                  Thao tác
+                </div>
+              </div>
 
-          {/* Danh sách các dòng dữ liệu */}
-          {paginatedUsers.length > 0 ? (
-            <div className="divide-y divide-slate-200">
-              {paginatedUsers.map((user, index) => {
-                const userListingCount = listings.filter(
-                  (l) =>
-                    l.ownerId === user.id ||
-                    l.ownerName?.toLowerCase() === user.name.toLowerCase(),
-                ).length
-                const userPostCount = posts.filter(
-                  (p) =>
-                    p.authorId === user.id ||
-                    p.name?.toLowerCase() === user.name.toLowerCase(),
-                ).length
+              {/* Danh sách các dòng dữ liệu */}
+              {paginatedUsers.length > 0 && (
+                <div>
+                  {paginatedUsers.map((user) => {
+                    const userListings = listings.filter(
+                      (l) =>
+                        l.ownerId === user.id ||
+                        l.ownerName?.toLowerCase() === user.name.toLowerCase(),
+                    )
+                    const userListingCount = userListings.length
 
-                const rowOrderNumber = String(
-                  (safeCurrentUserPage - 1) * USERS_PAGE_SIZE + index + 1,
-                ).padStart(2, "0")
-                const userInitials = getUserDisplayInitials(user.name, user.initials)
+                    const userPosts = posts.filter(
+                      (p) =>
+                        p.authorId === user.id ||
+                        p.name?.toLowerCase() === user.name.toLowerCase(),
+                    )
+                    const userPostCount = userPosts.length
 
-                return (
-                  <div
-                    key={user.id}
-                    className="grid grid-cols-12 divide-x divide-slate-200 items-stretch hover:bg-slate-50/60 transition-colors"
-                  >
-                    {/* Cột 1: Thành viên */}
-                    <div className="col-span-3 px-4 py-3.5 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-semibold text-sm flex items-center justify-center shrink-0">
-                        {userInitials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div
-                          className="text-sm font-semibold text-slate-900 truncate"
-                          title={user.name}
-                        >
-                          {user.name}
-                        </div>
-                        <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[11px] font-medium font-mono">
-                          #{rowOrderNumber}
-                        </span>
-                      </div>
-                    </div>
+                    const reportsAgainstUser = reports.filter((r) => {
+                      if (r.targetType === "Tin phòng") {
+                        return userListings.some(
+                          (l) =>
+                            l.id === r.targetId ||
+                            l.title.trim().toLowerCase() ===
+                              r.targetTitle.trim().toLowerCase(),
+                        )
+                      }
+                      if (r.targetType === "Bài viết") {
+                        return userPosts.some(
+                          (p) =>
+                            p.id === r.targetId ||
+                            parsePostContent(p.content).title.trim().toLowerCase() ===
+                              r.targetTitle.trim().toLowerCase(),
+                        )
+                      }
+                      if (r.targetType === "Bình luận") {
+                        return posts.some((p) =>
+                          (p.comments ?? []).some(
+                            (c) =>
+                              c.id === r.targetId &&
+                              (c.authorId === user.id ||
+                                c.author?.toLowerCase() === user.name.toLowerCase()),
+                          ),
+                        )
+                      }
+                      return false
+                    })
+                    const acceptedViolations = reportsAgainstUser.filter(
+                      (r) => r.status === "accepted",
+                    ).length
 
-                    {/* Cột 2: Thông tin liên hệ */}
-                    <div className="col-span-3 px-4 py-3.5 space-y-1 flex flex-col justify-center">
+                    const submittedReports = reports.filter(
+                      (r) =>
+                        r.reporterId === user.id ||
+                        r.reporter?.toLowerCase() === user.name.toLowerCase(),
+                    )
+                    const submittedReportsCount = submittedReports.length
+                    const acceptedSubmittedReportsCount = submittedReports.filter(
+                      (r) => r.status === "accepted",
+                    ).length
+
+                    const joinDate = user.createdAt ? new Date(user.createdAt) : null
+                    const hasValidJoinDate = Boolean(
+                      joinDate && !Number.isNaN(joinDate.getTime()),
+                    )
+                    const joinDateFormatted =
+                      hasValidJoinDate && joinDate
+                        ? `${String(joinDate.getDate()).padStart(2, "0")}/${String(joinDate.getMonth() + 1).padStart(2, "0")}/${joinDate.getFullYear()}`
+                        : "Chưa rõ"
+
+                    const activityText =
+                      user.role === "admin"
+                        ? "Toàn quyền"
+                        : user.role === "landlord"
+                          ? `${userListingCount} tin đăng`
+                          : `${userPostCount} bài viết`
+
+                    const roleLabel =
+                      user.role === "admin"
+                        ? "Quản trị viên"
+                        : user.role === "landlord"
+                          ? "Chủ trọ"
+                          : "Người thuê"
+
+                    return (
                       <div
-                        className="flex items-center gap-2 text-xs text-slate-700 truncate"
-                        title={user.email}
+                        key={user.id}
+                        className="grid grid-cols-12 divide-x divide-slate-200 items-stretch hover:bg-slate-50/60 transition-colors border-b border-slate-200 last:border-b-0"
                       >
-                        <svg
-                          className="w-3.5 h-3.5 text-slate-400 shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                        >
-                          <rect width="20" height="16" x="2" y="4" rx="2" />
-                          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                        </svg>
-                        <span className="truncate">{user.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <svg
-                          className="w-3.5 h-3.5 text-slate-400 shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                        >
-                          <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 3a2 2 0 0 1-.5 2.1L8 10.1a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c1 .3 2 .6 3 .7a2 2 0 0 1 1.6 1.9Z" />
-                        </svg>
-                        <span>{user.phone || "Chưa cập nhật"}</span>
-                      </div>
-                    </div>
+                        {/* Cột 1: Thành viên (Chia đôi 50/50 — Avatar + Tên | Badge Vai trò cố định w-[120px]) */}
+                        <div className="col-span-3 grid grid-cols-2 divide-x divide-slate-200 items-center w-full h-full">
+                          <div className="px-3.5 py-3 flex items-center gap-3 min-w-0 h-full">
+                            <img
+                              src={getMemberAvatarUrl(user)}
+                              alt={user.name}
+                              onError={(e) => {
+                                e.currentTarget.src = "/images/avatars/default-avatar.jpg"
+                              }}
+                              className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-100"
+                            />
+                            <div
+                              className="text-sm font-bold text-slate-900 truncate"
+                              title={user.name}
+                            >
+                              {user.name}
+                            </div>
+                          </div>
 
-                    {/* Cột 3: Vai trò & Hoạt động */}
-                    <div className="col-span-2 px-4 py-3.5 flex flex-col items-start justify-center gap-1.5">
-                      {user.role === "admin" ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
-                          <svg
-                            className="w-3.5 h-3.5 text-slate-500 shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="1.75"
-                          >
-                            <rect width="20" height="14" x="2" y="7" rx="2" />
-                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                          </svg>
-                          <span>Quản trị viên</span>
+                          <div className="px-3 py-3 flex items-center justify-center h-full">
+                            <div className="inline-flex items-center justify-center gap-1.5 w-[120px] py-1 rounded-full bg-white border border-slate-300 text-xs font-semibold text-slate-700 shadow-2xs whitespace-nowrap">
+                              {user.role === "admin" ? (
+                                <svg
+                                  className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="1.75"
+                                >
+                                  <rect width="20" height="14" x="2" y="7" rx="2" />
+                                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                                </svg>
+                              ) : user.role === "landlord" ? (
+                                <svg
+                                  className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="1.75"
+                                >
+                                  <path d="m3 11 9-8 9 8" />
+                                  <path d="M5 10v11h14V10M9 21v-7h6v7" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth="1.75"
+                                >
+                                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
+                                </svg>
+                              )}
+                              <span>{roleLabel}</span>
+                            </div>
+                          </div>
                         </div>
-                      ) : user.role === "landlord" ? (
-                        <>
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
+
+                        {/* Cột 2: Thông tin liên hệ */}
+                        <div className="col-span-2 px-4 py-3 flex flex-col justify-center gap-1 min-w-0">
+                          <div className="flex items-center gap-2 text-sm font-medium text-slate-800 truncate">
                             <svg
-                              className="w-3.5 h-3.5 text-slate-500 shrink-0"
+                              className="w-3.5 h-3.5 text-slate-400 shrink-0"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
                               strokeWidth="1.75"
                             >
-                              <path d="m3 11 9-8 9 8" />
-                              <path d="M5 10v11h14V10M9 21v-7h6v7" />
+                              <rect width="20" height="16" x="2" y="4" rx="2" />
+                              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
                             </svg>
-                            <span>
-                              Chủ trọ{userListingCount > 0 ? ` · ${userListingCount} tin đăng` : ""}
+                            <span className="truncate" title={user.email}>
+                              {user.email}
                             </span>
                           </div>
-                          {userPostCount > 0 && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
-                              <svg
-                                className="w-3.5 h-3.5 text-slate-500 shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth="1.75"
-                              >
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                                <polyline points="10 9 9 9 8 9" />
-                              </svg>
-                              <span>
-                                Diễn đàn · {userPostCount} bài viết
+                          <div className="flex items-center gap-2 text-sm font-medium text-slate-600 truncate">
+                            <svg
+                              className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="1.75"
+                            >
+                              <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 3a2 2 0 0 1-.5 2.1L8 10.1a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c1 .3 2 .6 3 .7a2 2 0 0 1 1.6 1.9Z" />
+                            </svg>
+                            <span className="truncate">
+                              {user.phone || "Chưa cập nhật"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cột 3: Lịch sử hoạt động (chia 3 rãnh đều nhau — đồng bộ 100% Pill w-[112px]) */}
+                        <div className="col-span-4 grid grid-cols-3 divide-x divide-slate-200 items-center w-full h-full">
+                          {/* Rãnh con 1: Hoạt động */}
+                          <div className="px-2 py-3 flex items-center justify-center h-full">
+                            <span className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                              {activityText}
+                            </span>
+                          </div>
+
+                          {/* Rãnh con 2: Vi phạm */}
+                          <div className="px-2 py-3 flex items-center justify-center h-full">
+                            {acceptedViolations > 0 ? (
+                              <span className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-600 whitespace-nowrap">
+                                {acceptedViolations} vi phạm
                               </span>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-300 text-xs font-medium text-slate-700 shadow-2xs">
-                          <svg
-                            className="w-3.5 h-3.5 text-slate-500 shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="1.75"
-                          >
-                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                          </svg>
-                          <span>
-                            Người thuê{userPostCount > 0 ? ` · ${userPostCount} bài viết` : ""}
+                            ) : (
+                              <span className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                                0 vi phạm
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Rãnh con 3: Báo cáo */}
+                          <div className="px-2 py-3 flex items-center justify-center h-full">
+                            <span
+                              className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 whitespace-nowrap"
+                              title={
+                                submittedReportsCount > 0
+                                  ? `Đã gửi ${submittedReportsCount} báo cáo${acceptedSubmittedReportsCount > 0 ? ` (${acceptedSubmittedReportsCount} được chấp nhận)` : ""}`
+                                  : "Chưa gửi báo cáo nào"
+                              }
+                            >
+                              {submittedReportsCount} báo cáo
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cột 4: Ngày tham gia */}
+                        <div className="col-span-1 px-3 py-3 flex items-center justify-center text-center">
+                          <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                            {joinDateFormatted}
                           </span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Cột 4: Trạng thái */}
-                    <div className="col-span-2 px-4 py-3.5 flex items-center">
-                      {user.status === "active" ? (
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-1 text-xs font-semibold inline-flex items-center">
-                          Đang hoạt động
-                        </span>
-                      ) : (user.status as string) === "pending" ? (
-                        <span className="bg-slate-800 text-white rounded-full px-2.5 py-1 text-xs font-semibold inline-flex items-center">
-                          Chờ duyệt
-                        </span>
-                      ) : (
-                        <span className="bg-slate-100 text-slate-500 border border-slate-200 rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center">
-                          Đã khóa
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Cột 5: Thao tác */}
-                    <div className="col-span-2 px-4 py-3.5 flex items-center justify-end gap-1.5">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium shadow-2xs transition-colors cursor-pointer"
-                        onClick={() => openEdit(user)}
-                      >
-                        <svg
-                          className="w-3 h-3 text-slate-500 shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                        >
-                          <path d="m15 5 4 4" />
-                          <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z" />
-                        </svg>
-                        <span>Sửa</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium shadow-2xs transition-colors cursor-pointer"
-                        onClick={() => action(user.id, user.status)}
-                      >
-                        {user.status === "locked" ? "Mở khóa" : "Khóa"}
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-2 py-1.5 text-rose-600 hover:bg-rose-50 rounded-md text-xs font-medium transition-colors cursor-pointer"
-                        onClick={() => remove(user.id, user.name)}
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+                        {/* Cột 5: Thao tác */}
+                        <div className="col-span-2 px-2.5 py-3 flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 px-2 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer"
+                            onClick={() => openEdit(user)}
+                          >
+                            <svg
+                              className="w-3 h-3 text-slate-500 shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="1.75"
+                            >
+                              <path d="m15 5 4 4" />
+                              <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+                            </svg>
+                            <span>Sửa</span>
+                          </button>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={user.status === "active"}
+                            aria-label={
+                              user.status === "locked"
+                                ? `Mở khóa tài khoản ${user.name}`
+                                : `Khóa tài khoản ${user.name}`
+                            }
+                            title={
+                              user.status === "locked"
+                                ? "Đã khóa — Nhấn để mở khóa tài khoản"
+                                : (user.status as string) === "pending"
+                                  ? "Chờ duyệt — Nhấn để khóa tài khoản"
+                                  : "Đang hoạt động — Nhấn để khóa tài khoản"
+                            }
+                            onClick={() => action(user.id, user.status)}
+                            className={
+                              user.status === "active"
+                                ? "inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 border border-emerald-200 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
+                                : "inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200/70 text-slate-500 border border-slate-200 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
+                            }
+                          >
+                            <span
+                              aria-hidden="true"
+                              className={`w-5 h-3 rounded-full p-0.5 flex items-center shrink-0 transition-colors ${
+                                user.status === "active"
+                                  ? "bg-emerald-600 justify-end"
+                                  : "bg-slate-400 justify-start"
+                              }`}
+                            >
+                              <span className="w-2 h-2 rounded-full bg-white shadow-2xs" />
+                            </span>
+                            <span>
+                              {user.status === "active"
+                                ? "Hoạt động"
+                                : (user.status as string) === "pending"
+                                  ? "Chờ duyệt"
+                                  : "Đã khóa"}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center px-1.5 py-1.5 text-rose-600 hover:bg-rose-50 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer"
+                            onClick={() => remove(user.id, user.name)}
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          ) : (
+          </div>
+
+          {paginatedUsers.length === 0 && (
             <div className="p-12 text-center text-slate-500">
               <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
                 <svg
