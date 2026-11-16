@@ -4272,5 +4272,90 @@
   background-color: #94a3b8;
 }
 
+/* Giao diện chuyên biệt cho màn hình "Hồ sơ & Bảo mật" (/admin/ho-so) */
+.admin-shell.saas-admin-shell.is-seamless-profile,
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-admin-main,
+.admin-shell.saas-admin-shell.is-seamless-profile .admin-content.saas-admin-content {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+}
 
+.admin-shell.saas-admin-shell.is-seamless-profile .admin-side.saas-admin-sidebar {
+  background: #f8fafc !important;
+  border-right-color: transparent;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .admin-main > header.saas-topbar {
+  background: #f8fafc !important;
+  border-bottom-color: transparent;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-nav-item {
+  border-radius: 9999px;
+  padding-inline: 14px;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-nav-item:hover {
+  background: #eef2f6;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-nav-item.active {
+  background: #e6f4ea;
+  color: #134e2a;
+  font-weight: 600;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-nav-item.active .saas-nav-item-left svg {
+  color: #059669;
+}
+
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-notif-btn:hover,
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-notif-btn.is-active,
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-account-trigger:hover,
+.admin-shell.saas-admin-shell.is-seamless-profile .saas-account-trigger.is-active {
+  background: #eef2f6;
+}
+
+@media (max-width: 1024px) {
+  .admin-shell.saas-admin-shell.is-seamless-profile .admin-side.saas-admin-sidebar {
+    background: #ffffff !important;
+    border-right: 1px solid #e2e8f0;
+  }
+}
+
+.admin-shell.saas-admin-shell .admin-content.saas-admin-content:has(> .saas-admin-profile-page) {
+  padding: 0;
+  background-color: #f8fafc !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.saas-admin-profile-page {
+  width: 100%;
+  flex: 1;
+}
+
+.saas-admin-profile-page h1.text-2xl {
+  font-family: var(--font-ui);
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.saas-admin-profile-page button {
+  min-height: 0;
+}
+
+.saas-admin-profile-page button,
+.saas-admin-profile-page input {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.saas-admin-profile-page input:focus-visible {
+  outline: none;
+}
 
