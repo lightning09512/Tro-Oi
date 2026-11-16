@@ -289,9 +289,6 @@ export default function ChatbotWidget() {
                   <h4 className="font-bold text-sm text-[#0F5132]">
                     Xin chào! Mình là Trợ lý Trọ Ơi
                   </h4>
-                  <p className="mt-1 text-xs text-gray-600 leading-relaxed">
-                    Bạn cần tìm trọ khu vực nào, tầm giá bao nhiêu hoặc có yêu cầu gì không? Hãy nhắn cho mình nhé!
-                  </p>
                 </div>
 
                 {/* Quick Prompts with Category Tags (No Emojis / No Icons) */}
