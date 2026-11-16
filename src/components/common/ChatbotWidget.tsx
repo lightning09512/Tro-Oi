@@ -246,7 +246,7 @@ export default function ChatbotWidget() {
                   Trợ lý AI Trọ Ơi
                 </h3>
                 <p className="text-[11px] text-emerald-100 mt-0.5">
-                  Trực tuyến • Hỗ trợ tìm phòng
+                  Trực tuyến
                 </p>
               </div>
             </div>
