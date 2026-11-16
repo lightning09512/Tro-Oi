@@ -19,7 +19,7 @@ const ADMIN_HEADER_META: Record<string, { label: string }> = {
   "/admin/danh-muc": { label: "Danh mục & Tiện ích" },
   "/admin/bao-cao": { label: "Kiểm duyệt" },
   "/admin/thong-ke": { label: "Báo cáo & Thống kê" },
-  "/admin/ho-so": { label: "Cài đặt & Hồ sơ" },
+  "/admin/ho-so": { label: "Hồ sơ & Bảo mật" },
   "/admin/doi-mat-khau": { label: "Đổi mật khẩu" },
   "/admin/thong-bao": { label: "Thông báo hệ thống" },
 }
@@ -62,7 +62,7 @@ export default function AdminLayout() {
       { to: "/admin/nguoi-dung", icon: "users", label: "Thành viên" },
       { to: "/admin/dien-dan", icon: "chat", label: "Cộng đồng" },
       { to: "/admin/thong-ke", icon: "chart", label: "Báo cáo" },
-      { to: "/admin/ho-so", icon: "settings", label: "Cài đặt" },
+      { to: "/admin/ho-so", icon: "user", label: "Hồ sơ & Bảo mật" },
     ],
     [pendingReports],
   )
@@ -104,7 +104,9 @@ export default function AdminLayout() {
   }
 
   return (
-    <main className="admin-layout admin-shell saas-admin-shell">
+    <main
+      className={`admin-layout admin-shell saas-admin-shell${isProfileActive ? " is-seamless-profile" : ""}`}
+    >
       {/* Lớp phủ màn hình nhỏ khi mở Sidebar */}
       {mobileSideOpen && (
         <div
@@ -173,7 +175,7 @@ export default function AdminLayout() {
             >
               <Icon name="menu" size={20} />
             </button>
-            <h1 className="saas-topbar-title">{headerMeta.label}</h1>
+            {!isProfileActive && <h1 className="saas-topbar-title">{headerMeta.label}</h1>}
           </div>
 
           <div className="saas-topbar-right">
