@@ -59,7 +59,7 @@ input, textarea { caret-color: var(--teal-dark); }
 :where(input, textarea)::placeholder { color: #6e7c72; opacity: 1; }
 :where(button):disabled { cursor: not-allowed; }
 :where(h1, h2, h3, p, button, a) { overflow-wrap: break-word; }
-:where(h1, h2, h3) { text-wrap: balance; }
+:where(h1, h2, h3):not(.truncate):not(.line-clamp-2) { text-wrap: balance; }
 :where(main, section, article, form) { min-width: 0; }
 :where(img) { max-width: 100%; }
 :where(table, .room-price, .key-info, .stat-number) { font-variant-numeric: tabular-nums; }

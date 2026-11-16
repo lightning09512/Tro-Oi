@@ -6,7 +6,6 @@ import { ToastProvider } from "@/contexts/ToastContext"
 import { router } from "@/routes"
 import PlatformStatusBanner from "@/components/layout/PlatformStatusBanner"
 import ErrorBoundary from "@/components/common/ErrorBoundary"
-import ChatbotWidget from "./components/common/ChatbotWidget"
 
 export default function App() {
   return (
@@ -17,7 +16,6 @@ export default function App() {
           <ToastProvider>
             <FavoritesProvider>
               <RouterProvider router={router} />
-              <ChatbotWidget />
             </FavoritesProvider>
           </ToastProvider>
         </PlatformProvider>

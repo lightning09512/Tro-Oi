@@ -102,24 +102,93 @@ function getUserDisplayInitials(name: string, fallback?: string): string {
   return fallback || "ND"
 }
 
+/** Định dạng ngày đăng bài viết cộng đồng theo chuẩn DD/MM/YYYY. */
+function formatForumPostDate(createdAt?: string, fallbackTime?: string): string {
+  if (createdAt) {
+    const parsed = new Date(createdAt)
+    if (!Number.isNaN(parsed.getTime())) {
+      const dd = String(parsed.getDate()).padStart(2, "0")
+      const mm = String(parsed.getMonth() + 1).padStart(2, "0")
+      return `${dd}/${mm}/${parsed.getFullYear()}`
+    }
+  }
+  if (fallbackTime) {
+    const match = fallbackTime.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/)
+    if (match) {
+      return `${match[1].padStart(2, "0")}/${match[2].padStart(2, "0")}/${match[3]}`
+    }
+    return fallbackTime
+  }
+  return "Chưa rõ"
+}
+
+/** Định dạng thời gian bình luận theo chuẩn HH:mm DD/MM/YYYY. */
+function formatForumCommentTime(createdAt?: string): string {
+  if (!createdAt) return ""
+  const parsed = new Date(createdAt)
+  if (Number.isNaN(parsed.getTime())) return ""
+  const hh = String(parsed.getHours()).padStart(2, "0")
+  const min = String(parsed.getMinutes()).padStart(2, "0")
+  const dd = String(parsed.getDate()).padStart(2, "0")
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0")
+  return `${hh}:${min} ${dd}/${mm}/${parsed.getFullYear()}`
+}
+
+/** Rút gọn tiền tố đóng ngoặc vuông ở đầu tiêu đề cho danh sách thẻ ngang bên trái. */
+function stripLeadingBracketTag(title: string): string {
+  const stripped = title.replace(/^\[[^\]]+\]\s*/, "").trim()
+  return stripped || title
+}
+
 function parsePostContent(rawContent: string) {
   const content = (rawContent || "").trim()
   const lines = content.split("\n").map((l) => l.trim()).filter(Boolean)
   let title = lines[0] || "Bài viết cộng đồng"
   let excerpt = lines.slice(1).join(" ").trim()
+  let bodyContent = content
 
-  if (lines.length === 1) {
+  if (lines.length > 1) {
+    // Giữ nguyên ngắt đoạn của phần nội dung và loại bỏ dòng đầu tiên nếu trùng với tiêu đề
+    const rawLines = content.split(/\r?\n/)
+    const firstNonEmptyIdx = rawLines.findIndex((l) => l.trim().length > 0)
+    if (firstNonEmptyIdx !== -1 && rawLines[firstNonEmptyIdx].trim() === title) {
+      const rest = rawLines.slice(firstNonEmptyIdx + 1).join("\n").trim()
+      if (rest) {
+        bodyContent = rest
+      }
+    }
+  } else if (lines.length === 1) {
     const bracketMatch = content.match(/^(\[[^\]]+\]\s*[^.\n]+)(?:[.\n]|$)/)
     if (bracketMatch) {
       title = bracketMatch[1]
-      excerpt = content.slice(title.length).trim() || content
+      const rest = content.slice(title.length).replace(/^[.\s]+/, "").trim()
+      excerpt = rest || content
+      bodyContent = rest || content
     } else {
       const dotIndex = content.indexOf(". ")
       if (dotIndex > 10 && dotIndex < 70) {
         title = content.slice(0, dotIndex).trim()
-        excerpt = content.slice(dotIndex + 2).trim()
+        const rest = content.slice(dotIndex + 2).trim()
+        excerpt = rest || content
+        bodyContent = rest || content
       } else {
-        excerpt = content
+        const colonIndex = content.indexOf(": ")
+        if (colonIndex > 20 && colonIndex < 85 && content.length - (colonIndex + 2) >= 40) {
+          title = content.slice(0, colonIndex).trim()
+          const rest = content.slice(colonIndex + 2).trim()
+          excerpt = rest || content
+          bodyContent = rest || content
+        } else {
+          const leadInMatch = content.match(/^(.{15,85}?(?:!|\?|👋|⚠️))\s+(.{40,})$/u)
+          if (leadInMatch) {
+            title = leadInMatch[1].trim()
+            const rest = leadInMatch[2].trim()
+            excerpt = rest || content
+            bodyContent = rest || content
+          } else {
+            excerpt = content
+          }
+        }
       }
     }
   }
@@ -136,7 +205,14 @@ function parsePostContent(rawContent: string) {
     category = "Kinh nghiệm"
   }
 
-  return { title, excerpt: excerpt || content, category, fullContent: content }
+  return {
+    title,
+    compactTitle: stripLeadingBracketTag(title),
+    excerpt: excerpt || content,
+    category,
+    fullContent: content,
+    bodyContent,
+  }
 }
 
 export default function AdminResourcePage() {
@@ -190,6 +266,7 @@ export default function AdminResourcePage() {
   const [forumCategoryFilter, setForumCategoryFilter] = useState<string>("all")
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null)
   const [communityPage, setCommunityPage] = useState(1)
+  const [failedThumbUrls, setFailedThumbUrls] = useState<Record<string, true>>({})
 
   const [editing, setEditing] = useState<PlatformUser | CategoryRecord | null>(null)
   const [defaultCategoryType, setDefaultCategoryType] =
@@ -775,12 +852,16 @@ export default function AdminResourcePage() {
     setCommunityPage(1)
   }, [forumStatusTab, forumCategoryFilter, query])
 
-  const totalCommunityPages = Math.max(1, Math.ceil(filteredForumPosts.length / 5))
+  const FORUM_POSTS_PER_PAGE = 6
+  const totalCommunityPages = Math.max(
+    1,
+    Math.ceil(filteredForumPosts.length / FORUM_POSTS_PER_PAGE),
+  )
   const safeCommunityPage = Math.min(communityPage, totalCommunityPages)
 
   const pagedForumPosts = useMemo(() => {
-    const start = (safeCommunityPage - 1) * 5
-    return filteredForumPosts.slice(start, start + 5)
+    const start = (safeCommunityPage - 1) * FORUM_POSTS_PER_PAGE
+    return filteredForumPosts.slice(start, start + FORUM_POSTS_PER_PAGE)
   }, [filteredForumPosts, safeCommunityPage])
 
   // Bài viết đang chọn trong Master-Detail
@@ -796,8 +877,33 @@ export default function AdminResourcePage() {
   const selectedPostParsed = useMemo(() => {
     return selectedPost
       ? parsePostContent(selectedPost.content)
-      : { title: "", excerpt: "", category: "Bài viết", fullContent: "" }
+      : {
+          title: "",
+          compactTitle: "",
+          excerpt: "",
+          category: "Bài viết",
+          fullContent: "",
+          bodyContent: "",
+        }
   }, [selectedPost])
+
+  const markThumbFailed = (url: string) => {
+    setFailedThumbUrls((prev) => (prev[url] ? prev : { ...prev, [url]: true }))
+  }
+
+  const resolveMemberAvatar = (
+    authorId?: string,
+    authorName?: string,
+    explicitAvatarUrl?: string,
+  ): string | undefined => {
+    if (explicitAvatarUrl?.trim()) return explicitAvatarUrl.trim()
+    const matched = users.find(
+      (u) =>
+        (authorId && u.id === authorId) ||
+        (authorName && u.name.toLowerCase() === authorName.toLowerCase()),
+    )
+    return matched?.avatarUrl?.trim() || undefined
+  }
 
   const handleDeleteComment = async (postId: string, commentId: string) => {
     if (window.confirm("Xóa bình luận vi phạm này?")) {
@@ -3210,10 +3316,21 @@ export default function AdminResourcePage() {
     )
   }
 
-  // Giao diện chuyên biệt cho màn hình "Cộng đồng" (/admin/dien-dan) - Bố cục 2 cột Master-Detail đồng bộ Tin cho thuê
+  // Giao diện chuyên biệt cho màn hình "Cộng đồng" (/admin/dien-dan) - Bố cục 3 Khối Thẻ Lớn Full-Viewport
   if (resource === "forum") {
+    const forumTabs: Array<{
+      id: "all" | "active" | "hidden" | "with_comments"
+      label: string
+      count: number
+    }> = [
+      { id: "all", label: "Tất cả bài viết", count: forumTabCounts.all },
+      { id: "active", label: "Đang hoạt động", count: forumTabCounts.active },
+      { id: "hidden", label: "Đã ẩn", count: forumTabCounts.hidden },
+      { id: "with_comments", label: "Có bình luận mới", count: forumTabCounts.withComments },
+    ]
+
     return (
-      <main className="admin-resource-page management-page management-admin admin-resource-page--forum saas-forum-page p-6 space-y-4 bg-slate-50 min-h-screen">
+      <main className="admin-resource-page management-page management-admin admin-resource-page--forum saas-forum-page space-y-4">
         {actionError && (
           <div
             className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700"
@@ -3223,72 +3340,54 @@ export default function AdminResourcePage() {
           </div>
         )}
 
-        {/* 1. Thanh công cụ tích hợp trên Hàng đầu tiên (Top Toolbar) */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-slate-200">
-          {/* Bên trái (Status Tabs) */}
+        {/* 1. Thanh công cụ tích hợp trên Hàng đầu tiên (Đồng bộ lưới 12 cột với 2 khối thẻ bên dưới) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Bên trái (lg:col-span-7): 4 Nút Pill Độc Lập đồng đều kích thước */}
           <div
-            className="flex items-center gap-6 -mb-[13px] overflow-x-auto"
+            className="lg:col-span-7 min-w-0 flex flex-wrap min-[1440px]:grid min-[1440px]:grid-cols-4 items-center gap-2"
             role="tablist"
             aria-label="Lọc trạng thái bài viết"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={forumStatusTab === "all"}
-              onClick={() => setForumStatusTab("all")}
-              className={
-                forumStatusTab === "all"
-                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
-                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
-              }
-            >
-              Tất cả bài viết ({forumTabCounts.all})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={forumStatusTab === "active"}
-              onClick={() => setForumStatusTab("active")}
-              className={
-                forumStatusTab === "active"
-                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
-                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
-              }
-            >
-              Đang hoạt động ({forumTabCounts.active})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={forumStatusTab === "hidden"}
-              onClick={() => setForumStatusTab("hidden")}
-              className={
-                forumStatusTab === "hidden"
-                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
-                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
-              }
-            >
-              Đã ẩn ({forumTabCounts.hidden})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={forumStatusTab === "with_comments"}
-              onClick={() => setForumStatusTab("with_comments")}
-              className={
-                forumStatusTab === "with_comments"
-                  ? "text-emerald-700 font-semibold border-b-2 border-emerald-600 pb-2.5 text-sm cursor-pointer transition-colors shrink-0"
-                  : "text-slate-600 hover:text-slate-900 pb-2.5 text-sm font-medium cursor-pointer transition-colors shrink-0"
-              }
-            >
-              Có bình luận mới ({forumTabCounts.withComments})
-            </button>
+            {forumTabs.map((tab) => {
+              const isTabActive = forumStatusTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isTabActive}
+                  onClick={() => setForumStatusTab(tab.id)}
+                  className={
+                    isTabActive
+                      ? "h-9 flex-auto min-w-fit min-[1440px]:min-w-0 bg-white border-2 border-emerald-600 text-slate-900 font-bold px-2.5 rounded-xl text-xs inline-flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                      : "h-9 flex-auto min-w-fit min-[1440px]:min-w-0 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium px-2.5 rounded-xl text-xs inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                  }
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      isTabActive ? "bg-emerald-500" : "bg-slate-300"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span>{tab.label}</span>
+                  <span
+                    className={
+                      isTabActive
+                        ? "bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-md text-[11px] font-bold tabular-nums"
+                        : "bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded-md text-[11px] font-semibold tabular-nums"
+                    }
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
-          {/* Bên phải (Search + Filter + Export) */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Bên phải (lg:col-span-5): Search giãn ngang thẳng mép Thẻ Thông tin chi tiết + Filter + Export */}
+          <div className="lg:col-span-5 min-w-0 flex flex-wrap lg:flex-nowrap items-center gap-2.5">
             {/* Ô tìm kiếm */}
-            <div className="relative">
+            <div className="relative flex-1 min-w-[160px] lg:min-w-0">
               <svg
                 className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
                 fill="none"
@@ -3305,18 +3404,18 @@ export default function AdminResourcePage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm kiếm tiêu đề, tác giả, nội dung..."
-                className="w-64 pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none transition-colors"
+                className="w-full h-9 pl-8 pr-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none transition-colors"
               />
             </div>
 
-            {/* Dropdown lọc danh mục/trạng thái */}
+            {/* Dropdown lọc danh mục */}
             <select
               value={forumCategoryFilter}
               onChange={(e) => setForumCategoryFilter(e.target.value)}
               aria-label="Lọc theo danh mục"
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:border-emerald-600 focus:outline-none cursor-pointer"
+              className="shrink-0 h-9 px-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:border-emerald-600 focus:outline-none cursor-pointer"
             >
-              <option value="all">Lọc theo danh mục</option>
+              <option value="all">Tất cả danh mục</option>
               {forumCategories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
@@ -3347,7 +3446,7 @@ export default function AdminResourcePage() {
                   })
                 )
               }
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium shadow-2xs cursor-pointer transition-colors"
+              className="shrink-0 h-9 inline-flex items-center gap-1.5 px-3.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium shadow-2xs cursor-pointer transition-colors"
             >
               <svg
                 className="w-4 h-4 text-white shrink-0"
@@ -3364,186 +3463,255 @@ export default function AdminResourcePage() {
           </div>
         </div>
 
-        {/* 2. Bố cục chính 2 Cột Master-Detail */}
-        <div className="grid grid-cols-12 gap-6 items-start mt-4">
-          {/* CỘT TRÁI (col-span-12 lg:col-span-7 space-y-3): Danh sách bài viết cộng đồng rút gọn */}
-          <div className="col-span-12 lg:col-span-7 space-y-3">
-            <h2 className="text-sm font-semibold text-slate-800">Danh sách bài viết cộng đồng</h2>
-
-            {filteredForumPosts.length === 0 ? (
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center shadow-2xs">
-                <Icon name="chat" size={32} />
-                <h3 className="text-sm font-bold text-slate-800 mt-2">
-                  Không tìm thấy bài viết phù hợp
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Thử thay đổi từ khóa tìm kiếm hoặc chọn tab lọc khác.
-                </p>
+        {/* 2. Bố cục lưới 2 Cột Full-Viewport: 1 Thẻ Lớn bên trái + 2 Thẻ xếp dọc bên phải */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch lg:h-[calc(100vh-165px)] lg:min-h-[680px]">
+          {/* CỘT TRÁI (lg:col-span-7 h-full): 1 Thẻ Trắng Lớn "Danh sách bài đăng" */}
+          <div className="lg:col-span-7 lg:h-full min-w-0">
+            <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs h-full flex flex-col justify-between overflow-hidden">
+              {/* Header của Thẻ Lớn */}
+              <div className="shrink-0 pb-3.5 mb-3.5 border-b border-slate-100 flex items-center justify-between gap-3">
+                <h2 className="text-base font-bold text-slate-900">Danh sách bài đăng</h2>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {pagedForumPosts.map((post) => {
-                  const {
-                    title: postTitle,
-                    excerpt: postExcerpt,
-                    category: postCategory,
-                  } = parsePostContent(post.content)
-                  const isSelected = selectedPost?.id === post.id
-                  const likesCount = post.likes ?? 0
-                  const commentsCount =
-                    post.comments?.length ?? post.commentsCount ?? 0
 
-                  const postAvatarUrl =
-                    post.avatarUrl ||
-                    users.find(
-                      (u) =>
-                        u.id === post.authorId ||
-                        u.name.toLowerCase() === post.name.toLowerCase(),
-                    )?.avatarUrl
-
-                  return (
-                    <article
-                      key={post.id}
-                      onClick={() => setSelectedPostId(post.id)}
-                      className={`p-4 rounded-xl cursor-pointer transition-all ${
-                        isSelected
-                          ? "bg-emerald-50/40 border-2 border-emerald-600 shadow-2xs"
-                          : "bg-white border border-slate-200 hover:border-slate-300 shadow-2xs"
-                      }`}
-                    >
-                      {/* Hàng 1 */}
-                      <div className="flex items-center justify-between gap-2 mb-1.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {postAvatarUrl ? (
-                            <img
-                              src={postAvatarUrl}
-                              alt={post.name}
-                              className="w-7 h-7 rounded-full object-cover shrink-0"
-                            />
-                          ) : (
-                            <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
-                              {post.initials || getUserDisplayInitials(post.name, "TV")}
-                            </div>
-                          )}
-                          <span className="text-xs font-semibold text-slate-900 truncate">
-                            {post.name}
-                          </span>
-                          <span className="text-slate-400 shrink-0">·</span>
-                          <span className="px-2 py-0.5 rounded-md bg-white border border-slate-300 text-[11px] font-medium text-slate-700 shrink-0">
-                            {postCategory}
-                          </span>
-                        </div>
-                        <div className="shrink-0">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                              post.status === "active"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {post.status === "active" ? "Đang hoạt động" : "Đã ẩn"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Hàng 2 (Tiêu đề) */}
-                      <h3 className="text-sm font-bold text-slate-900 line-clamp-1 mb-1">
-                        {postTitle}
-                      </h3>
-
-                      {/* Hàng 3 (Nội dung tóm tắt) */}
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-2">
-                        {postExcerpt}
-                      </p>
-
-                      {/* Hàng 4 (Chỉ số tương tác) */}
-                      <div className="text-[11px] font-medium text-slate-500">
-                        {likesCount} lượt thích · {commentsCount} bình luận
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Thanh Phân trang ở đáy Cột trái */}
-            {filteredForumPosts.length > 0 && (
-              <div className="flex items-center justify-between pt-2 text-xs text-slate-500">
-                <span>
-                  Trang {safeCommunityPage} / {totalCommunityPages}
-                </span>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalCommunityPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      onClick={() => setCommunityPage(page)}
-                      className={`w-7 h-7 rounded-md border text-xs font-medium flex items-center justify-center transition-colors cursor-pointer ${
-                        page === safeCommunityPage
-                          ? "border-slate-800 text-slate-900 bg-white font-semibold shadow-2xs"
-                          : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+              {/* Danh sách các Thẻ Bài Đăng Con ở giữa */}
+              {filteredForumPosts.length === 0 ? (
+                <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 text-center">
+                  <Icon name="chat" size={32} />
+                  <h3 className="text-sm font-bold text-slate-800 mt-2">
+                    Không tìm thấy bài viết phù hợp
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Thử thay đổi từ khóa tìm kiếm hoặc chọn tab lọc khác.
+                  </p>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex-1 min-h-0 grid grid-rows-[repeat(6,minmax(86px,1fr))] gap-2.5 overflow-y-auto py-0.5 pl-0.5 pr-1 scrollbar-thin">
+                  {pagedForumPosts.map((post) => {
+                    const {
+                      title: postTitle,
+                      compactTitle,
+                      category: postCategory,
+                    } = parsePostContent(post.content)
+                    const isSelected = selectedPost?.id === post.id
+                    const likesCount = post.likes ?? 0
+                    const commentsCount =
+                      post.comments?.length ?? post.commentsCount ?? 0
+                    const postAvatarUrl = resolveMemberAvatar(
+                      post.authorId,
+                      post.name,
+                      post.avatarUrl,
+                    )
+                    const postDateLabel = formatForumPostDate(post.createdAt, post.time)
+                    const thumbUrl = post.image?.trim()
+                    const hasValidThumb = Boolean(thumbUrl && !failedThumbUrls[thumbUrl])
+
+                    return (
+                      <article
+                        key={post.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isSelected}
+                        onClick={() => setSelectedPostId(post.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            setSelectedPostId(post.id)
+                          }
+                        }}
+                        className={`min-h-[86px] h-full rounded-xl border px-3.5 py-2.5 flex items-center gap-3.5 cursor-pointer transition-all overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 ${
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-50/15 ring-1 ring-emerald-500/20"
+                            : "border-slate-200 bg-white hover:bg-slate-50/70"
+                        }`}
+                      >
+                        {/* Bên trái: Ảnh Thumbnail Vuông 56×56px (hoặc Placeholder icon) */}
+                        {hasValidThumb && thumbUrl ? (
+                          <img
+                            src={thumbUrl}
+                            alt={compactTitle}
+                            loading="lazy"
+                            onError={() => markThumbFailed(thumbUrl)}
+                            className="w-14 h-14 rounded-lg object-cover border border-slate-100 shrink-0 bg-slate-100"
+                          />
+                        ) : (
+                          <div
+                            className="w-14 h-14 rounded-lg bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400 shrink-0"
+                            aria-hidden="true"
+                          >
+                            {thumbUrl ? (
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="1.75"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                <circle cx="9" cy="9" r="2" />
+                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="1.75"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                                <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                                <path d="M10 9H8" />
+                                <path d="M16 13H8" />
+                                <path d="M16 17H8" />
+                              </svg>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Bên phải: Tác giả, Tiêu đề 1 dòng & Chỉ số tương tác */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between min-h-[62px] gap-1">
+                          {/* Dòng 1: Meta & Trạng thái */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 min-w-0">
+                              {postAvatarUrl ? (
+                                <img
+                                  src={postAvatarUrl}
+                                  alt={post.name}
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null
+                                    e.currentTarget.src = "/images/avatars/default-avatar.jpg"
+                                  }}
+                                  className="w-5 h-5 rounded-full object-cover shrink-0 bg-slate-100"
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-semibold flex items-center justify-center shrink-0">
+                                  {post.initials || getUserDisplayInitials(post.name, "TV")}
+                                </div>
+                              )}
+                              <span className="font-semibold text-slate-700 truncate">
+                                {post.name}
+                              </span>
+                              <span className="text-slate-400 shrink-0" aria-hidden="true">
+                                ·
+                              </span>
+                              <span className="shrink-0 whitespace-nowrap tabular-nums">
+                                {postDateLabel}
+                              </span>
+                              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[11px] font-medium shrink-0 whitespace-nowrap">
+                                {postCategory}
+                              </span>
+                            </div>
+                            <div className="shrink-0">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${
+                                  post.status === "active"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-slate-100 text-slate-500 border border-slate-200"
+                                }`}
+                              >
+                                {post.status === "active"
+                                  ? "Đang hoạt động"
+                                  : post.status === "pending"
+                                    ? "Chờ duyệt"
+                                    : "Đã ẩn"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Dòng 2: Tiêu đề bài viết khóa cứng 1 dòng */}
+                          <h3
+                            className="text-sm font-bold text-slate-900 leading-5 truncate block w-full shrink-0"
+                            title={postTitle}
+                          >
+                            {compactTitle}
+                          </h3>
+
+                          {/* Dòng 3: Chỉ số tương tác góc phải */}
+                          <div className="flex items-center justify-end gap-3 text-xs text-slate-500">
+                            <span
+                              className="inline-flex items-center gap-1"
+                              title={`${commentsCount} bình luận`}
+                            >
+                              <svg
+                                className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="1.75"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                              </svg>
+                              <span className="tabular-nums">{commentsCount}</span>
+                            </span>
+                            <span
+                              className="inline-flex items-center gap-1"
+                              title={`${likesCount} lượt thích`}
+                            >
+                              <svg
+                                className="w-3.5 h-3.5 text-slate-400 shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="1.75"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                              </svg>
+                              <span className="tabular-nums">{likesCount}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Footer Phân Trang bên trong đáy Thẻ Lớn */}
+              {filteredForumPosts.length > 0 && (
+                <div className="shrink-0 pt-3.5 mt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-500">
+                    Trang {safeCommunityPage} / {totalCommunityPages}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalCommunityPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCommunityPage(page)}
+                        className={`w-8 h-8 rounded-lg border text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                          page === safeCommunityPage
+                            ? "border-slate-800 text-slate-900 bg-white shadow-2xs"
+                            : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
           </div>
 
-          {/* CỘT PHẢI (col-span-12 lg:col-span-5 lg:sticky lg:top-6 space-y-4): Chi tiết bài viết & Bình luận */}
-          <div className="col-span-12 lg:col-span-5 lg:sticky lg:top-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-800">Chi tiết bài viết & Bình luận</h2>
-
+          {/* CỘT PHẢI (lg:col-span-5 h-full flex flex-col gap-5 overflow-hidden): 2 Thẻ Thông Tin Chi Tiết & Bình Luận */}
+          <div className="lg:col-span-5 lg:h-full flex flex-col gap-5 overflow-hidden min-w-0">
             {selectedPost ? (
               <>
-                {/* Khung 1 — Nội dung đầy đủ của bài viết đang chọn */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                  {/* Header của khung chi tiết */}
-                  <div className="flex items-start justify-between gap-3 pb-3.5 mb-3.5 border-b border-slate-200">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {selectedPost.avatarUrl ||
-                      users.find(
-                        (u) =>
-                          u.id === selectedPost.authorId ||
-                          u.name.toLowerCase() === selectedPost.name.toLowerCase(),
-                      )?.avatarUrl ? (
-                        <img
-                          src={
-                            selectedPost.avatarUrl ||
-                            users.find(
-                              (u) =>
-                                u.id === selectedPost.authorId ||
-                                u.name.toLowerCase() === selectedPost.name.toLowerCase(),
-                            )?.avatarUrl
-                          }
-                          alt={selectedPost.name}
-                          className="w-10 h-10 rounded-full object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 text-sm font-bold flex items-center justify-center shrink-0">
-                          {selectedPost.initials ||
-                            getUserDisplayInitials(selectedPost.name, "TV")}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-sm font-bold text-slate-900 truncate">
-                          {selectedPost.name}
-                        </div>
-                        <span
-                          className={`inline-block mt-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                            selectedPost.status === "active"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {selectedPost.status === "active" ? "Đang hoạt động" : "Đã ẩn"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Cụm nút thao tác bài viết */}
+                {/* Thẻ Trên: "Thông tin chi tiết" */}
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex-[3] min-h-0 flex flex-col overflow-hidden">
+                  {/* Header của Thẻ */}
+                  <div className="shrink-0 pb-3 mb-3 border-b border-slate-100 flex items-center justify-between gap-3">
+                    <h2 className="text-base font-bold text-slate-900">Thông tin chi tiết</h2>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -3554,7 +3722,7 @@ export default function AdminResourcePage() {
                             selectedPost.status === "active" ? "hidden" : "active",
                           )
                         }
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                        className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
                       >
                         {selectedPost.status === "hidden" ? "Hiện bài" : "Ẩn bài"}
                       </button>
@@ -3562,101 +3730,194 @@ export default function AdminResourcePage() {
                         type="button"
                         disabled={busyId === selectedPost.id}
                         onClick={() => remove(selectedPost.id, selectedPostParsed.title)}
-                        className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
+                        className="bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors disabled:opacity-50"
                       >
                         Xóa bài
                       </button>
                     </div>
                   </div>
 
-                  {/* Phần nội dung bài viết */}
-                  <h3 className="text-sm font-bold text-slate-900 mb-2 leading-snug">
-                    {selectedPostParsed.title}
-                  </h3>
-                  <div className="text-xs text-slate-700 whitespace-pre-line leading-relaxed bg-slate-50 p-3.5 rounded-lg border border-slate-200/80 max-h-[280px] overflow-y-auto">
-                    {selectedPostParsed.fullContent}
-                  </div>
-                  {selectedPost.image && (
-                    <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
-                      <img
-                        src={selectedPost.image}
-                        alt={selectedPostParsed.title}
-                        className="w-full max-h-52 object-cover"
-                      />
+                  {/* Thông tin tác giả & Tiêu đề */}
+                  <div className="shrink-0 mb-2.5">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {(() => {
+                        const selectedAvatarUrl = resolveMemberAvatar(
+                          selectedPost.authorId,
+                          selectedPost.name,
+                          selectedPost.avatarUrl,
+                        )
+                        return selectedAvatarUrl ? (
+                          <img
+                            src={selectedAvatarUrl}
+                            alt={selectedPost.name}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null
+                              e.currentTarget.src = "/images/avatars/default-avatar.jpg"
+                            }}
+                            className="w-9 h-9 rounded-full object-cover shrink-0 bg-slate-100"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">
+                            {selectedPost.initials ||
+                              getUserDisplayInitials(selectedPost.name, "TV")}
+                          </div>
+                        )
+                      })()}
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-slate-900 leading-tight truncate">
+                          {selectedPost.name}
+                        </div>
+                        <span
+                          className={`inline-block mt-1 rounded-full px-2 py-0.5 leading-none text-[11px] font-medium ${
+                            selectedPost.status === "active"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-slate-100 text-slate-500 border border-slate-200"
+                          }`}
+                        >
+                          {selectedPost.status === "active"
+                            ? "Đang hoạt động"
+                            : selectedPost.status === "pending"
+                              ? "Chờ duyệt"
+                              : "Đã ẩn"}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 text-xs font-medium text-slate-500">
+
+                    {selectedPostParsed.bodyContent !== selectedPostParsed.title && (
+                      <h3 className="text-base font-bold text-slate-900 mt-2.5 leading-snug">
+                        {selectedPostParsed.title}
+                      </h3>
+                    )}
+                  </div>
+
+                  {/* Nội dung bài viết & Hình ảnh trải rộng 100% chiều ngang trên nền trắng */}
+                  <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 scrollbar-thin">
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                      {selectedPostParsed.bodyContent}
+                    </p>
+                    {(() => {
+                      const selectedThumbUrl = selectedPost.image?.trim()
+                      const hasDetailImage = Boolean(
+                        selectedThumbUrl && !failedThumbUrls[selectedThumbUrl],
+                      )
+                      if (!hasDetailImage || !selectedThumbUrl) return null
+                      return (
+                        <img
+                          src={selectedThumbUrl}
+                          alt={selectedPostParsed.title}
+                          onError={() => markThumbFailed(selectedThumbUrl)}
+                          className="w-full max-h-[210px] rounded-xl object-cover border border-slate-100 bg-slate-100"
+                        />
+                      )
+                    })()}
+                  </div>
+
+                  {/* Footer tương tác */}
+                  <div className="shrink-0 pt-2.5 mt-2 border-t border-slate-100 text-xs font-medium text-slate-500">
                     {selectedPost.likes ?? 0} lượt thích ·{" "}
                     {selectedPost.comments?.length ?? selectedPost.commentsCount ?? 0} bình luận
                   </div>
-                </div>
+                </section>
 
-                {/* Khung 2 — Danh sách Bình luận cần kiểm duyệt */}
-                <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                  <h3 className="text-sm font-bold text-slate-900 mb-3">
-                    Bình luận ({selectedPost.comments?.length ?? 0})
-                  </h3>
+                {/* Thẻ Dưới: "Bình luận ({count})" */}
+                <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs flex-[2] min-h-[210px] flex flex-col overflow-hidden">
+                  <div className="shrink-0 pb-3 mb-3 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-900">
+                      Bình luận ({selectedPost.comments?.length ?? 0})
+                    </h2>
+                  </div>
 
                   {!selectedPost.comments || selectedPost.comments.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic py-4 text-center">
+                    <div className="flex-1 min-h-0 flex items-center justify-center text-xs text-slate-400 italic">
                       Chưa có bình luận nào cho bài viết này.
-                    </p>
+                    </div>
                   ) : (
-                    <div className="divide-y divide-slate-200">
+                    <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 scrollbar-thin">
                       {selectedPost.comments.map((comment) => {
-                        const commentAvatarUrl =
-                          comment.avatarUrl ||
-                          users.find(
-                            (u) =>
-                              u.id === comment.authorId ||
-                              u.name.toLowerCase() === comment.author.toLowerCase(),
-                          )?.avatarUrl
+                        const commentAvatarUrl = resolveMemberAvatar(
+                          comment.authorId,
+                          comment.author,
+                          comment.avatarUrl,
+                        )
+                        const isPostAuthor =
+                          (Boolean(comment.authorId) &&
+                            Boolean(selectedPost.authorId) &&
+                            comment.authorId === selectedPost.authorId) ||
+                          comment.author.trim().toLowerCase() ===
+                            selectedPost.name.trim().toLowerCase()
+                        const commentTimeLabel = formatForumCommentTime(comment.createdAt)
 
                         return (
                           <div
                             key={comment.id}
-                            className="py-3 first:pt-0 last:pb-0 flex items-start gap-3"
+                            className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 transition-colors hover:border-slate-300"
                           >
-                            {commentAvatarUrl ? (
-                              <img
-                                src={commentAvatarUrl}
-                                alt={comment.author}
-                                className="w-8 h-8 rounded-full object-cover shrink-0"
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center shrink-0">
-                                {comment.initials ||
-                                  getUserDisplayInitials(comment.author, "BL")}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-1">
+                            {/* Tầng trên: Header của bình luận */}
+                            <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-slate-200/70">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {commentAvatarUrl ? (
+                                  <img
+                                    src={commentAvatarUrl}
+                                    alt={comment.author}
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null
+                                      e.currentTarget.src = "/images/avatars/default-avatar.jpg"
+                                    }}
+                                    className="w-7 h-7 rounded-full object-cover shrink-0 bg-slate-100"
+                                  />
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 text-[11px] font-semibold flex items-center justify-center shrink-0">
+                                    {comment.initials ||
+                                      getUserDisplayInitials(comment.author, "BL")}
+                                  </div>
+                                )}
                                 <span className="text-xs font-bold text-slate-900 truncate">
                                   {comment.author}
                                 </span>
+                                {isPostAuthor && (
+                                  <span className="bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 whitespace-nowrap">
+                                    Tác giả
+                                  </span>
+                                )}
+                                {commentTimeLabel && (
+                                  <>
+                                    <span className="text-slate-400 shrink-0" aria-hidden="true">
+                                      ·
+                                    </span>
+                                    <span className="text-[11px] text-slate-500 shrink-0 whitespace-nowrap tabular-nums">
+                                      {commentTimeLabel}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+
+                              <div className="shrink-0">
                                 <button
                                   type="button"
+                                  aria-label={`Xóa bình luận của ${comment.author}`}
                                   onClick={() =>
                                     handleDeleteComment(selectedPost.id, comment.id)
                                   }
-                                  className="text-xs font-medium text-rose-600 hover:underline shrink-0 cursor-pointer"
+                                  className="bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                                 >
-                                  Xóa bình luận
+                                  Xóa
                                 </button>
                               </div>
-                              <p className="text-xs text-slate-600 leading-relaxed break-words">
-                                {comment.text}
-                              </p>
                             </div>
+
+                            {/* Tầng dưới: Nội dung bình luận trực tiếp */}
+                            <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line break-words">
+                              {comment.text}
+                            </p>
                           </div>
                         )
                       })}
                     </div>
                   )}
-                </div>
+                </section>
               </>
             ) : (
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-xs italic shadow-2xs">
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-2xs h-full flex items-center justify-center text-center text-slate-400 text-xs italic">
                 Chọn một bài viết ở danh sách bên trái để xem chi tiết và kiểm duyệt bình luận.
               </div>
             )}
