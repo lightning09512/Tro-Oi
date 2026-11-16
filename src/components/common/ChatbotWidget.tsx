@@ -14,10 +14,10 @@ type Room = {
 };
 
 const QUICK_PROMPTS = [
-  { tag: "Giá tốt", label: "Phòng trọ dưới 3 triệu ở Thủ Đức" },
-  { tag: "Tiện nghi", label: "Phòng có máy lạnh gần ĐH SPKT" },
-  { tag: "Ở ghép", label: "Cần tìm bạn ở ghép Quận 10" },
-  { tag: "Căn hộ", label: "Căn hộ mini đầy đủ nội thất Bình Thạnh" },
+  "Phòng trọ dưới 3 triệu ở Thủ Đức",
+  "Phòng có máy lạnh gần ĐH SPKT",
+  "Cần tìm bạn ở ghép Quận 10",
+  "Căn hộ mini đầy đủ nội thất Bình Thạnh",
 ];
 
 const MASCOT_IMG = "/images/avatars/tro-oi-ai-assistant.jpg";
@@ -302,17 +302,12 @@ export default function ChatbotWidget() {
                   <div className="flex flex-col gap-1.5">
                     {QUICK_PROMPTS.map((prompt) => (
                       <button
-                        key={prompt.label}
+                        key={prompt}
                         type="button"
-                        onClick={() => handleQuickPrompt(prompt.label)}
-                        className="flex items-center gap-2 rounded-xl border border-gray-200/80 bg-white px-3 py-2 text-left text-xs shadow-xs transition hover:border-[#059669] hover:bg-emerald-50/40"
+                        onClick={() => handleQuickPrompt(prompt)}
+                        className="rounded-xl border border-gray-200/80 bg-white px-3.5 py-2.5 text-left text-xs font-medium text-gray-700 shadow-xs transition hover:border-[#059669] hover:bg-emerald-50/40 hover:text-[#0F5132]"
                       >
-                        <span className="flex-shrink-0 rounded-md bg-emerald-100/90 px-1.5 py-0.5 text-[10px] font-bold text-[#0F5132]">
-                          {prompt.tag}
-                        </span>
-                        <span className="font-medium text-gray-800">
-                          {prompt.label}
-                        </span>
+                        {prompt}
                       </button>
                     ))}
                   </div>
