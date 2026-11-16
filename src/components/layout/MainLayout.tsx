@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router"
 import MainHeader from "@/components/layout/MainHeader"
 import SiteFooter from "@/components/layout/SiteFooter"
 import FloatingMascotWidget from "@/components/common/FloatingMascotWidget"
+import ChatbotWidget from "@/components/common/ChatbotWidget"
 import BottomNavigation from "@/components/layout/BottomNavigation"
 import useScrollToTop from "@/hooks/useScrollToTop"
 
@@ -19,6 +20,7 @@ export default function MainLayout() {
       <MainHeader />
       <div id="main-content" className="content-route" tabIndex={-1}><Outlet /></div>
       {isPublicContent && <FloatingMascotWidget />}
+      {!isFocusedWorkspace && <ChatbotWidget />}
       {!isFocusedWorkspace && <SiteFooter variant={isPublicContent ? "full" : "compact"} hidePromoBanner={isForum || isRoomDetail || isSearch} />}
       <BottomNavigation />
     </>
