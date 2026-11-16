@@ -46,29 +46,63 @@ const extractFilters = (parsed) => {
   return Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined))
 }
 
+const localFallbackParse = (query) => {
+  const text = query.toLowerCase()
+  const districts = ["bình thạnh", "thủ đức", "gò vấp", "tân bình", "quận 1", "quận 7", "quận 3", "quận 10", "quận 12", "phú nhuận", "tân phú", "bình tân", "hóc môn", "nhà bè"]
+  let district = undefined
+  for (const d of districts) {
+    if (text.includes(d)) { district = d; break; }
+  }
+  const priceMatch = text.match(/(?:dưới|tối đa|không quá|tầm|khoảng)\s*(\d+(?:[.,]\d+)?)\s*(?:triệu|tr)/i)
+  const maxPrice = priceMatch ? Number(priceMatch[1].replace(",", ".")) : undefined
+  
+  const amenities = []
+  if (/máy lạnh|điều hòa/i.test(text)) amenities.push("Máy lạnh")
+  if (/gác/i.test(text)) amenities.push("Gác lửng")
+  if (/ban công/i.test(text)) amenities.push("Ban công")
+  if (/máy giặt/i.test(text)) amenities.push("Máy giặt")
+
+  return {
+    query,
+    filters: {
+      district,
+      max_price: maxPrice ? maxPrice * 1_000_000 : undefined,
+      amenities,
+    }
+  }
+}
+
 const parseSearch = async (query) => {
-  const response = await fetch(`${AI_URL}/parse-search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!response.ok) throw new Error("AI parse service trả về lỗi")
-  return response.json()
+  try {
+    const response = await fetch(`${AI_URL}/parse-search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(3000),
+    })
+    if (response.ok) return await response.json()
+  } catch (err) {
+    // AI service not available, fallback to local rule-based parsing
+  }
+  return localFallbackParse(query)
 }
 
 const rankListings = async (query, rows) => {
-  const response = await fetch(`${AI_URL}/rank`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      descriptions: rows.map((row) => [row.title, row.description, row.location, row.room_type, ...(row.amenities ?? [])].filter(Boolean).join(" | ")),
-    }),
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!response.ok) throw new Error("AI rank service trả về lỗi")
-  return response.json()
+  try {
+    const response = await fetch(`${AI_URL}/rank`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        descriptions: rows.map((row) => [row.title, row.description, row.location, row.room_type, ...(row.amenities ?? [])].filter(Boolean).join(" | ")),
+      }),
+      signal: AbortSignal.timeout(5000),
+    })
+    if (response.ok) return await response.json()
+  } catch (err) {
+    // Ranking service unavailable, return null to maintain database query ordering
+  }
+  return null
 }
 
 const rankIds = (ranked) => {

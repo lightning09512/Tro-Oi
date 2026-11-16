@@ -12,7 +12,7 @@ export default function FloatingMascotWidget() {
     <>
       {/* Floating Sticker & Comic Callout Widget */}
       <aside
-        className="fixed bottom-6 right-4 z-40 flex flex-col items-end pointer-events-none select-none sm:bottom-8 sm:right-6"
+        className="fixed bottom-[4.25rem] right-4 z-40 flex flex-col items-end pointer-events-none select-none sm:bottom-20 sm:right-6"
         aria-label="Khuyến mãi & Chia sẻ cộng đồng"
       >
         <div className="pointer-events-auto flex flex-col items-end">
