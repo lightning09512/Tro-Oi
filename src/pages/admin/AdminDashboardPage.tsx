@@ -2,6 +2,11 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEve
 import { Link, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import { usePlatform } from "@/contexts/PlatformContext"
+import {
+  formatForumPostDate,
+  parseForumPostContent,
+  resolveMemberAvatar,
+} from "@/utils/forumPost"
 
 const ROOM_FALLBACK_SVG =
   "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='72' viewBox='0 0 96 72'><rect width='100%' height='100%' fill='%23e2e8f0'/><path d='M32 46l10-12 8 10 6-7 8 9H32z' fill='%2394a3b8'/><circle cx='38' cy='26' r='4' fill='%2394a3b8'/></svg>"
@@ -78,7 +83,11 @@ function CheckCircle2Icon({ className = "w-7 h-7 text-emerald-600 mb-1.5" }: { c
   )
 }
 
-function TaskCategoryIcon({ category }: { category: "Bài viết" | "Tin phòng" | "Bình luận" }) {
+function TaskCategoryIcon({
+  category,
+}: {
+  category: "Bài viết" | "Bài đăng" | "Tin phòng" | "Bình luận"
+}) {
   if (category === "Tin phòng") {
     return (
       <svg
@@ -133,6 +142,140 @@ function TaskCategoryIcon({ category }: { category: "Bài viết" | "Tin phòng"
   )
 }
 
+function FileTextIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+      <path d="M10 9H8" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+    </svg>
+  )
+}
+
+function MessageCircleIcon({ className = "w-3.5 h-3.5 text-slate-400" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+    </svg>
+  )
+}
+
+function ArrowRightIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  )
+}
+
+function EyeIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function PhoneCallIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+      <path d="M14.05 2a9 9 0 0 1 8 7.94" />
+      <path d="M14.05 6A5 5 0 0 1 18 10" />
+    </svg>
+  )
+}
+
+function SearchIcon({
+  className = "w-4 h-4 text-slate-400",
+}: {
+  className?: string
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  )
+}
+
+function ListFilterIcon({ className = "w-4 h-4 text-slate-500" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M7 12h10" />
+      <path d="M10 18h4" />
+    </svg>
+  )
+}
+
 
 /**
  * Component Donut Chart SVG thuần dành riêng cho Cơ cấu vai trò người dùng
@@ -145,35 +288,33 @@ function RoleDonutChart({
   total: number
   segments: { value: number; color: string; label: string }[]
 }) {
-  const radius = 38
+  const radius = 46
   const circumference = 2 * Math.PI * radius
   const sum = segments.reduce((acc, item) => acc + Math.max(0, item.value), 0)
 
   let accumulatedPercent = 0
 
   return (
-    <div className="saas-role-donut-box">
+    <div className="saas-role-donut-box w-[104px] h-[104px] sm:w-[120px] sm:h-[120px]">
       <svg
-        className="saas-donut-svg"
-        width="96"
-        height="96"
-        viewBox="0 0 96 96"
+        className="saas-donut-svg w-full h-full"
+        viewBox="0 0 116 116"
         role="img"
         aria-label={`Biểu đồ tròn cơ cấu vai trò ${total} tài khoản`}
       >
         <circle
-          cx="48"
-          cy="48"
+          cx="58"
+          cy="58"
           r={radius}
           fill="transparent"
           stroke="#F1F5F9"
-          strokeWidth="12"
+          strokeWidth="15"
         />
         {sum > 0 &&
           segments.map((seg, idx) => {
             const pct = Math.max(0, seg.value) / sum
             if (pct <= 0) return null
-            const dashLength = Math.max(1, pct * circumference - (segments.length > 1 ? 1.5 : 0))
+            const dashLength = Math.max(1, pct * circumference - (segments.length > 1 ? 2 : 0))
             const dashArray = `${dashLength} ${circumference}`
             const dashOffset = -accumulatedPercent * circumference
             accumulatedPercent += pct
@@ -181,15 +322,15 @@ function RoleDonutChart({
             return (
               <circle
                 key={`${seg.label}-${idx}`}
-                cx="48"
-                cy="48"
+                cx="58"
+                cy="58"
                 r={radius}
                 fill="transparent"
                 stroke={seg.color}
-                strokeWidth="12"
+                strokeWidth="15"
                 strokeDasharray={dashArray}
                 strokeDashoffset={dashOffset}
-                transform="rotate(-90 48 48)"
+                transform="rotate(-90 58 58)"
                 strokeLinecap="butt"
               >
                 <title>{`${seg.label}: ${seg.value}`}</title>
@@ -222,6 +363,7 @@ export default function AdminDashboardPage() {
   const [roomTab, setRoomTab] = useState<"featured" | "pending">("featured")
   const [tableSearch, setTableSearch] = useState("")
   const [actionPage, setActionPage] = useState(1)
+  const [failedPostThumbUrls, setFailedPostThumbUrls] = useState<Record<string, true>>({})
 
   // State Popover/Dropdown Bộ lọc nâng cao (chỉ lọc khi nhấn Áp dụng hoặc Đặt lại)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -378,15 +520,29 @@ export default function AdminDashboardPage() {
 
   // 2. Hàng đợi ưu tiên cần kiểm duyệt (Ưu tiên Báo cáo Khẩn cấp lên đầu + Deep-link)
   const allTasks = useMemo(() => {
+    const formatTaskDate = (createdAt?: string) => {
+      if (!createdAt) return null
+      const parsed = new Date(createdAt)
+      if (Number.isNaN(parsed.getTime())) return null
+      return formatForumPostDate(createdAt)
+    }
+
     const reportTasks = metrics.pendingReports.map((item) => {
       const isUrgent = URGENT_REPORT_REGEX.test(`${item.reason} ${item.description}`)
+      const categoryLabel: "Tin phòng" | "Bài đăng" | "Bình luận" =
+        item.targetType === "Bài viết" ? "Bài đăng" : item.targetType
+
       return {
         id: item.id,
         kind: "report" as const,
-        categoryLabel: item.targetType,
+        categoryLabel,
         isUrgent,
         title: item.targetTitle,
-        detail: `Lý do: ${item.reason} · Người báo: ${item.reporter}`,
+        badgeLabel: "Lý do:",
+        reasonText: item.reason,
+        actorLabel: "Người báo cáo",
+        actorName: item.reporter,
+        createdAtDate: formatTaskDate(item.createdAt),
         link: `/admin/bao-cao?status=pending&q=${encodeURIComponent(item.targetTitle)}`,
       }
     })
@@ -399,19 +555,30 @@ export default function AdminDashboardPage() {
       categoryLabel: "Tin phòng" as const,
       isUrgent: false,
       title: item.title,
-      detail: `Chủ trọ: ${item.ownerName} · Khu vực: ${item.location}`,
+      badgeLabel: "Khu vực:",
+      reasonText: item.location,
+      actorLabel: "Chủ trọ",
+      actorName: item.ownerName,
+      createdAtDate: formatTaskDate(item.createdAt),
       link: `/admin/tin-cho-thue?status=pending&q=${encodeURIComponent(item.title)}`,
     }))
 
-    const postTasks = metrics.pendingPosts.map((item) => ({
-      id: item.id,
-      kind: "post" as const,
-      categoryLabel: "Bài viết" as const,
-      isUrgent: false,
-      title: item.content,
-      detail: `Người đăng: ${item.name}`,
-      link: `/admin/dien-dan?status=pending&q=${encodeURIComponent(item.name)}`,
-    }))
+    const postTasks = metrics.pendingPosts.map((item) => {
+      const parsed = parseForumPostContent(item.content)
+      return {
+        id: item.id,
+        kind: "post" as const,
+        categoryLabel: "Bài đăng" as const,
+        isUrgent: false,
+        title: parsed.compactTitle,
+        badgeLabel: "Danh mục:",
+        reasonText: parsed.category,
+        actorLabel: "Người đăng",
+        actorName: item.name,
+        createdAtDate: formatTaskDate(item.createdAt),
+        link: `/admin/dien-dan?status=pending&q=${encodeURIComponent(parsed.compactTitle || item.name)}`,
+      }
+    })
 
     return [...reportTasks, ...roomTasks, ...postTasks]
   }, [metrics.pendingRooms, metrics.pendingPosts, metrics.pendingReports])
@@ -506,11 +673,18 @@ export default function AdminDashboardPage() {
   // Dữ liệu phân đoạn cho biểu đồ tròn Cơ cấu vai trò người dùng (Phần C)
   const roleDonutSegments = useMemo(
     () => [
-      { label: "Chủ trọ", value: metrics.landlordsCount, color: "#10b981" },
-      { label: "Người thuê", value: metrics.rentersCount, color: "#0f172a" },
-      { label: "Quản trị viên", value: metrics.adminsCount, color: "#6366f1" },
+      { label: "Chủ trọ", value: metrics.landlordsCount, pct: metrics.landlordPct, color: "#10B981" },
+      { label: "Người thuê", value: metrics.rentersCount, pct: metrics.renterPct, color: "#6EE7B7" },
+      { label: "Quản trị viên", value: metrics.adminsCount, pct: metrics.adminPct, color: "#94A3B8" },
     ],
-    [metrics.landlordsCount, metrics.rentersCount, metrics.adminsCount],
+    [
+      metrics.landlordsCount,
+      metrics.landlordPct,
+      metrics.rentersCount,
+      metrics.renterPct,
+      metrics.adminsCount,
+      metrics.adminPct,
+    ],
   )
 
   // 5. Hàm Duyệt nhanh (1-Click Quick Approve) an toàn với busyRef lock + Notification + Error Catching
@@ -709,7 +883,7 @@ export default function AdminDashboardPage() {
                 <Icon name="users" size={18} />
               </span>
               <span className="text-sm font-bold text-slate-900 truncate">
-                Thành viên hệ thống · {isLoading ? "—" : metrics.totalUsers.toLocaleString("vi-VN")}
+                Thành viên hệ thống
               </span>
             </div>
             <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
@@ -774,7 +948,7 @@ export default function AdminDashboardPage() {
                 <Icon name="building" size={18} />
               </span>
               <span className="text-sm font-bold text-slate-900 truncate">
-                Nguồn cung phòng trọ · {isLoading ? "—" : metrics.totalListings.toLocaleString("vi-VN")}
+                Nguồn cung phòng trọ
               </span>
             </div>
             <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
@@ -831,7 +1005,7 @@ export default function AdminDashboardPage() {
                 <Icon name="chat" size={18} />
               </span>
               <span className="text-sm font-bold text-slate-900 truncate">
-                Thảo luận cộng đồng · {isLoading ? "—" : posts.length.toLocaleString("vi-VN")}
+                Thảo luận cộng đồng
               </span>
             </div>
             <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
@@ -894,7 +1068,7 @@ export default function AdminDashboardPage() {
                 <Icon name="shield-check" size={18} />
               </span>
               <span className="text-sm font-bold text-slate-900 truncate">
-                Hàng đợi kiểm duyệt · {isLoading ? "—" : metrics.pendingTasksCount}
+                Hàng đợi kiểm duyệt
               </span>
             </div>
             <span className="text-xs font-medium text-slate-500 group-hover:text-slate-900 inline-flex items-center gap-1 transition-colors shrink-0">
@@ -928,16 +1102,16 @@ export default function AdminDashboardPage() {
       <div className="dashboard-main-grid saas-main-grid items-stretch">
         {/* CỘT TRÁI (2/3): Hàng đợi ưu tiên + Bảng "Danh sách & Hiệu suất tin đăng" */}
         <div className="dashboard-col-main flex flex-col gap-6">
-          <section className="saas-pending-card bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-            <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <section className="saas-pending-card bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs flex flex-col">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100">
               <h3 className="saas-pending-title text-base font-bold text-slate-900">
-                Việc cần xử lý · {allTasks.length}
+                Việc cần xử lý
               </h3>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center">
                 <button
                   type="button"
-                  className="saas-pending-viewall text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors"
+                  className="saas-pending-viewall text-xs font-semibold text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer"
                   onClick={() =>
                     navigate(
                       metrics.pendingReports.length > 0
@@ -952,14 +1126,14 @@ export default function AdminDashboardPage() {
                 >
                   Xem tất cả →
                 </button>
-                <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-slate-500 tabular-nums">
-                    Trang {currentActionPage} / {totalActionPages}
-                  </span>
+                <span className="h-3.5 w-px bg-slate-200 mx-3" aria-hidden="true" />
+                <span className="text-xs font-medium text-slate-500 mr-2 tabular-nums">
+                  Trang {currentActionPage} / {totalActionPages}
+                </span>
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    className="saas-pending-page-btn w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                    className="saas-pending-page-btn w-7 h-7 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
                     disabled={currentActionPage <= 1}
                     onClick={() => setActionPage((prev) => Math.max(1, prev - 1))}
                     aria-label="Trang trước"
@@ -968,7 +1142,7 @@ export default function AdminDashboardPage() {
                   </button>
                   <button
                     type="button"
-                    className="saas-pending-page-btn w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                    className="saas-pending-page-btn w-7 h-7 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
                     disabled={currentActionPage >= totalActionPages}
                     onClick={() =>
                       setActionPage((prev) => Math.min(totalActionPages, prev + 1))
@@ -982,49 +1156,92 @@ export default function AdminDashboardPage() {
             </div>
 
             {allTasks.length === 0 ? (
-              <div className="h-[164px] min-h-[164px] max-h-[164px] flex flex-col items-center justify-center text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 mt-3">
-                <CheckCircle2Icon className="w-7 h-7 text-emerald-600 mb-1.5" />
-                <div className="text-sm font-semibold text-slate-800">
+              <div className="h-[188px] rounded-xl border border-dashed border-slate-200 bg-slate-50/40 flex flex-col items-center justify-center gap-1.5 px-4 text-center">
+                <CheckCircle2Icon className="w-6 h-6 text-emerald-600" />
+                <span className="text-sm font-semibold text-slate-700">
                   Tất cả báo cáo và tin chờ duyệt đã được xử lý hoàn tất
-                </div>
-                <div className="text-xs text-slate-500 mt-0.5">
+                </span>
+                <span className="text-xs font-medium text-slate-400">
                   Hệ thống hiện không có mục nào tồn đọng
-                </div>
+                </span>
               </div>
             ) : (
-              <div className="h-[164px] min-h-[164px] max-h-[164px] flex flex-col justify-start">
+              <div className="flex flex-col gap-3">
                 {visibleTasks.map((task) => (
                   <div
                     key={`${task.kind}-${task.id}`}
-                    className="h-[82px] first:border-t-0 border-t border-slate-100 flex items-center justify-between gap-4 cursor-pointer shrink-0"
+                    className="min-h-[88px] sm:h-[88px] py-3 sm:py-0 px-4 rounded-xl bg-slate-50/80 border border-slate-200 hover:border-slate-300 hover:bg-slate-100/60 transition-all flex flex-col sm:grid sm:grid-cols-12 sm:items-center gap-3 sm:gap-4 cursor-pointer"
                     onClick={() => navigate(task.link)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        navigate(task.link)
+                      }
+                    }}
                   >
-                    <div className="w-16 h-14 rounded-xl bg-slate-100 border border-slate-200/70 flex flex-col items-center justify-center gap-1 shrink-0 text-slate-700">
-                      <TaskCategoryIcon category={task.categoryLabel} />
-                      <span className="text-[11px] font-semibold text-slate-700 leading-none">
-                        {task.categoryLabel}
-                      </span>
+                    {/* Cột 1: Icon Phân loại + Tiêu đề & Lý do */}
+                    <div className="sm:col-span-7 flex items-center gap-3.5 min-w-0">
+                      <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col items-center justify-center shrink-0 gap-1">
+                        <TaskCategoryIcon category={task.categoryLabel} />
+                        <span className="text-[11px] font-medium text-slate-600 leading-none">
+                          {task.categoryLabel}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                        <div
+                          className="text-sm font-bold text-slate-900 truncate"
+                          title={task.title}
+                        >
+                          {task.title}
+                        </div>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 text-[11px] font-semibold shrink-0">
+                            {task.badgeLabel}
+                          </span>
+                          <span
+                            className="text-xs font-medium text-slate-600 truncate"
+                            title={task.reasonText}
+                          >
+                            {task.reasonText}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    {/* Cột 2: Khối Metadata Người báo cáo & Ngày gửi */}
+                    <div className="sm:col-span-3 sm:pl-5 sm:py-1.5 sm:border-l sm:border-slate-300 flex flex-col justify-center gap-1 min-w-0">
                       <div
-                        className="text-sm font-bold text-slate-900 truncate"
-                        title={task.title}
+                        className="text-xs text-slate-500 truncate"
+                        title={`${task.actorLabel}: ${task.actorName}`}
                       >
-                        {task.title}
+                        {task.actorLabel}:{" "}
+                        <span className="font-semibold text-slate-800">{task.actorName}</span>
                       </div>
-                      <div
-                        className="text-xs text-slate-600 mt-1 truncate"
-                        title={task.detail}
-                      >
-                        {task.detail}
+                      <div className="text-xs text-slate-500 truncate">
+                        {task.createdAtDate ? (
+                          <>
+                            Ngày gửi:{" "}
+                            <span className="font-medium text-slate-700 tabular-nums">
+                              {task.createdAtDate}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            Trạng thái:{" "}
+                            <span className="font-medium text-slate-700">Chờ kiểm duyệt</span>
+                          </>
+                        )}
                       </div>
                     </div>
 
-                    <div className="shrink-0">
+                    {/* Cột 3: Nút Hành động */}
+                    <div className="sm:col-span-2 flex justify-end items-center">
                       <button
                         type="button"
-                        className="saas-pending-action-btn bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3.5 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors"
+                        className="px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-600 hover:text-white text-xs font-semibold transition-colors shrink-0 inline-flex items-center gap-1 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation()
                           navigate(task.link)
@@ -1037,7 +1254,7 @@ export default function AdminDashboardPage() {
                 ))}
 
                 {visibleTasks.length === 1 && (
-                  <div className="h-[82px] border-t border-dashed border-slate-100 flex items-center justify-center text-xs text-slate-400 shrink-0">
+                  <div className="h-[88px] px-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/40 flex items-center justify-center text-xs font-medium text-slate-400 select-none">
                     Không còn mục chờ nào khác trong trang này
                   </div>
                 )}
@@ -1046,15 +1263,14 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Card Bảng dữ liệu: "Danh sách & Hiệu suất tin đăng" */}
-          <section className="dashboard-card dashboard-listings-card saas-table-card flex-1 flex flex-col overflow-hidden">
-            <div className="saas-table-card-top shrink-0 pb-4">
-              <div className="saas-table-title-row">
-                <div>
-                  <h3>Danh sách & Hiệu suất tin đăng</h3>
-                  <p className="saas-table-subtitle">
-                    Theo dõi nguồn cung, mức giá, trạng thái kiểm duyệt và mức độ tương tác của từng phòng trọ
-                  </p>
-                </div>
+          <section className="dashboard-card dashboard-listings-card saas-table-card flex-1 flex flex-col overflow-hidden rounded-2xl">
+            {/* Tầng 1: Top Header Row */}
+            <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3 shrink-0">
+              <h3 className="text-base font-bold text-slate-900">
+                Danh sách &amp; Hiệu suất tin đăng
+              </h3>
+
+              <div className="flex items-center gap-2 shrink-0">
                 {roomTab === "pending" && metrics.pendingRooms.length > 1 && (
                   <button
                     type="button"
@@ -1067,71 +1283,102 @@ export default function AdminDashboardPage() {
                       : `Duyệt tất cả (${metrics.pendingRooms.length})`}
                   </button>
                 )}
-              </div>
-
-              {/* Thanh công cụ (Toolbar): Segmented Tabs bên trái + Tìm kiếm & Popover Bộ lọc bên phải */}
-              <div className="saas-table-toolbar">
-                <div
-                  className="pill-tabs saas-segmented-tabs"
-                  role="tablist"
-                  aria-label="Bộ lọc nhanh tin cho thuê"
+                <Link
+                  to={
+                    roomTab === "pending"
+                      ? "/admin/tin-cho-thue?status=pending"
+                      : "/admin/tin-cho-thue"
+                  }
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-50/70 hover:bg-emerald-600 text-emerald-800 hover:text-white border border-emerald-200 hover:border-emerald-600 text-xs font-semibold transition-all shadow-2xs shrink-0 whitespace-nowrap"
                 >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={roomTab === "featured"}
-                    className={`pill-tab ${roomTab === "featured" ? "active" : ""}`}
-                    onClick={() => setRoomTab("featured")}
-                  >
-                    Tất cả tin mở ({metrics.activeRooms.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={roomTab === "pending"}
-                    className={`pill-tab ${roomTab === "pending" ? "active" : ""}`}
-                    onClick={() => setRoomTab("pending")}
-                  >
-                    Chờ duyệt ({metrics.pendingRooms.length})
-                  </button>
-                </div>
+                  Quản lý tất cả tin đăng →
+                </Link>
+              </div>
+            </div>
 
-                <div className="saas-toolbar-right">
-                  <div className="saas-inline-search">
-                    <Icon name="search" size={14} />
-                    <input
-                      type="search"
-                      value={tableSearch}
-                      onChange={(e) => setTableSearch(e.target.value)}
-                      placeholder="Tìm kiếm tin..."
-                      aria-label="Tìm kiếm tin cho thuê trong bảng"
-                    />
-                  </div>
-
-                  {/* Nút Bộ lọc mở Menu Popover/Dropdown (Không tự ý lọc ngay khi bấm mở) */}
-                  <div className="saas-filter-dropdown-wrap" ref={filterPopoverRef}>
+            {/* Tầng 2: Toolbar Lọc & Tìm kiếm */}
+            <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-4 shrink-0">
+              {/* Segmented Pill Tabs tách Badge số lượng riêng */}
+              <div
+                className="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/80"
+                role="tablist"
+                aria-label="Bộ lọc nhanh tin cho thuê"
+              >
+                {(
+                  [
+                    { id: "featured", label: "Tất cả tin mở", count: metrics.activeRooms.length },
+                    { id: "pending", label: "Chờ duyệt", count: metrics.pendingRooms.length },
+                  ] as const
+                ).map((tab) => {
+                  const isActive = roomTab === tab.id
+                  return (
                     <button
+                      key={tab.id}
                       type="button"
-                      className={`saas-filter-btn${
-                        isFilterOpen || activeFilterCount > 0 ? " is-filtered" : ""
-                      }`}
-                      aria-expanded={isFilterOpen}
-                      aria-haspopup="dialog"
-                      onClick={() => {
-                        setIsFilterOpen((prev) => {
-                          const next = !prev
-                          if (next) {
-                            setDraftFilters(appliedFilters)
-                          }
-                          return next
-                        })
-                      }}
+                      role="tab"
+                      aria-selected={isActive}
+                      className={
+                        isActive
+                          ? "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white text-slate-900 font-semibold text-xs shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+                          : "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-xs transition-all cursor-pointer whitespace-nowrap"
+                      }
+                      onClick={() => setRoomTab(tab.id)}
                     >
-                      <Icon name="filter" size={14} />
-                      <span>
-                        {activeFilterCount > 0 ? `Bộ lọc (${activeFilterCount})` : "Bộ lọc"}
+                      <span>{tab.label}</span>
+                      <span
+                        className={
+                          isActive
+                            ? "px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold leading-none tabular-nums"
+                            : "px-2 py-0.5 rounded-full bg-slate-200/90 text-slate-600 text-[11px] font-semibold leading-none tabular-nums"
+                        }
+                      >
+                        {tab.count}
                       </span>
                     </button>
+                  )
+                })}
+              </div>
+
+              {/* Cụm Tìm kiếm mở rộng + Bộ lọc */}
+              <div className="flex items-center gap-2.5 flex-1 max-w-md justify-end min-w-[260px]">
+                <div className="relative flex-1 max-w-[340px]">
+                  <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Tìm kiếm theo tên phòng, địa chỉ, chủ trọ..."
+                    aria-label="Tìm kiếm tin cho thuê trong bảng"
+                    className="dashboard-listings-search-input w-full h-9 pl-9 pr-3.5 rounded-xl bg-slate-50/70 focus:bg-white border border-slate-200 focus:border-emerald-500 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:outline-none focus:ring-2 focus:ring-emerald-500/15 transition-all"
+                  />
+                </div>
+
+                {/* Nút Bộ lọc mở Menu Popover/Dropdown */}
+                <div className="saas-filter-dropdown-wrap" ref={filterPopoverRef}>
+                  <button
+                    type="button"
+                    className={`h-9 px-3.5 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer whitespace-nowrap ${
+                      isFilterOpen || activeFilterCount > 0
+                        ? "bg-slate-100 border-slate-300 text-slate-900"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-700"
+                    }`}
+                    aria-expanded={isFilterOpen}
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setIsFilterOpen((prev) => {
+                        const next = !prev
+                        if (next) {
+                          setDraftFilters(appliedFilters)
+                        }
+                        return next
+                      })
+                    }}
+                  >
+                    <ListFilterIcon className="w-4 h-4 text-slate-500" />
+                    <span>
+                      {activeFilterCount > 0 ? `Bộ lọc (${activeFilterCount})` : "Bộ lọc"}
+                    </span>
+                  </button>
 
                     {isFilterOpen && (
                       <div
@@ -1247,19 +1494,30 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
                 </div>
-              </div>
             </div>
 
-            <div className="dashboard-table-wrap flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+            <div className="dashboard-table-wrap flex-1 min-h-0 overflow-y-auto rounded-b-2xl scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
               <table className="dashboard-table saas-data-table">
-                <thead className="sticky top-0 z-10 bg-slate-50 border-y border-slate-200">
-                  <tr>
-                    <th>Thông tin phòng trọ & Khu vực</th>
-                    <th className="col-nowrap">Giá thuê</th>
-                    <th className="col-nowrap">Chủ trọ</th>
-                    <th className="col-nowrap">Lượt xem</th>
-                    <th className="col-nowrap">Trạng thái</th>
-                    <th className="col-actions">Thao tác</th>
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-slate-100/95 border-y border-slate-200/90 backdrop-blur-xs">
+                    <th className="py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Thông tin phòng trọ &amp; Khu vực
+                    </th>
+                    <th className="col-nowrap py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Giá thuê
+                    </th>
+                    <th className="col-nowrap py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Chủ trọ
+                    </th>
+                    <th className="col-nowrap py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Lượt xem
+                    </th>
+                    <th className="col-nowrap py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Trạng thái
+                    </th>
+                    <th className="col-actions py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-700 select-none">
+                      Thao tác
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1403,7 +1661,7 @@ export default function AdminDashboardPage() {
                               )}
                               <button
                                 type="button"
-                                className="bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition-colors whitespace-nowrap"
+                                className="rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 inline-flex items-center gap-1 transition-colors whitespace-nowrap cursor-pointer"
                                 onClick={() =>
                                   navigate(
                                     `/admin/tin-cho-thue?status=${room.status}&q=${encodeURIComponent(
@@ -1423,34 +1681,20 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-
-            <div className="px-5 py-3 bg-slate-50/60 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 mt-auto shrink-0">
-              <span>Hiển thị {filteredListings.length} tin đăng · Cuộn để xem thêm</span>
-              <Link
-                to={
-                  roomTab === "pending"
-                    ? "/admin/tin-cho-thue?status=pending"
-                    : "/admin/tin-cho-thue"
-                }
-                className="font-semibold text-slate-700 hover:text-emerald-700 transition-colors"
-              >
-                Quản lý tất cả tin đăng →
-              </Link>
-            </div>
           </section>
         </div>
 
         {/* CỘT PHẢI (1/3): 2 Card xếp chồng dọc (Giữ nguyên 100%) */}
         <div className="dashboard-col-side saas-side-stack flex flex-col gap-6">
-          {/* Card 1: "Cơ cấu nguồn cung & Lưu lượng" (Tách bạch rõ ràng 3 Phần A - B - C) */}
+          {/* Card 1: "Thống kê tin đăng & Thành viên" (Tách bạch rõ ràng 3 Phần A - B - C) */}
           <section className="dashboard-card dashboard-telemetry-card saas-side-card">
-            <h3 className="saas-side-card-title">Cơ cấu nguồn cung & Lưu lượng</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              Thống kê tin đăng &amp; Thành viên
+            </h3>
 
             {/* PHẦN A: Trạng thái nguồn cung phòng trọ (Segmented Progress Bar) */}
             <div className="saas-telemetry-block is-first">
-              <span className="saas-sub-heading">
-                Trạng thái tin cho thuê ({metrics.totalListings} tin)
-              </span>
+              <span className="saas-sub-heading">Trạng thái tin cho thuê</span>
               <div
                 className="saas-segmented-bar"
                 aria-label="Thanh tỷ lệ trạng thái tin cho thuê"
@@ -1461,8 +1705,8 @@ export default function AdminDashboardPage() {
                   title={`Đang mở: ${metrics.activeRooms.length} (${metrics.activeRoomPct}%)`}
                 />
                 <span
-                  className="saas-bar-slice is-amber"
-                  style={{ width: `${metrics.pendingRoomPct}%` }}
+                  className="saas-bar-slice"
+                  style={{ width: `${metrics.pendingRoomPct}%`, backgroundColor: "#cbd5e1" }}
                   title={`Chờ duyệt: ${metrics.pendingRooms.length} (${metrics.pendingRoomPct}%)`}
                 />
                 <span
@@ -1477,7 +1721,7 @@ export default function AdminDashboardPage() {
                   Đang mở: <b>{metrics.activeRooms.length}</b> ({metrics.activeRoomPct}%)
                 </span>
                 <span>
-                  <i className="saas-dot is-amber" />
+                  <i className="saas-dot is-slate" />
                   Chờ duyệt: <b>{metrics.pendingRooms.length}</b> ({metrics.pendingRoomPct}%)
                 </span>
                 <span>
@@ -1488,154 +1732,201 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* PHẦN B: Lưu lượng tương tác (2 Mini Stat Boxes) */}
+            {/* PHẦN B: Lưu lượng tương tác (2 Stat Boxes với khung Icon bên phải) */}
             <div className="saas-telemetry-block">
-              <div className="saas-mini-stats-grid">
-                <div className="saas-mini-stat-box">
-                  <span className="saas-mini-label">Tổng lượt xem tin</span>
-                  <strong className="saas-mini-value">
-                    {metrics.totalViews.toLocaleString("vi-VN")}
-                  </strong>
-                  <small className="saas-mini-note is-emerald">Trên toàn hệ thống</small>
+              <div className="grid grid-cols-2 gap-3 my-4">
+                <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="block text-xs font-medium text-slate-600">
+                      Tổng lượt xem tin
+                    </span>
+                    <span className="block text-2xl font-bold text-slate-900 my-0.5 tabular-nums">
+                      {metrics.totalViews.toLocaleString("vi-VN")}
+                    </span>
+                    <span className="block text-[11px] text-slate-500">Toàn hệ thống</span>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <EyeIcon className="w-5 h-5" />
+                  </div>
                 </div>
-                <div className="saas-mini-stat-box">
-                  <span className="saas-mini-label">Lượt liên hệ chủ trọ</span>
-                  <strong className="saas-mini-value">
-                    {metrics.totalContacts.toLocaleString("vi-VN")}
-                  </strong>
-                  <small className="saas-mini-note is-indigo">Kết nối thành công</small>
+
+                <div className="bg-slate-50/70 border border-slate-200/90 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="block text-xs font-medium text-slate-600">
+                      Lượt liên hệ chủ trọ
+                    </span>
+                    <span className="block text-2xl font-bold text-slate-900 my-0.5 tabular-nums">
+                      {metrics.totalContacts.toLocaleString("vi-VN")}
+                    </span>
+                    <span className="block text-[11px] text-slate-500">Kết nối thành công</span>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-slate-200/70 text-slate-600 flex items-center justify-center shrink-0">
+                    <PhoneCallIcon className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* PHẦN C: Cơ cấu vai trò thành viên (Biểu đồ Tròn Donut Chart riêng biệt) */}
+            {/* PHẦN C: Phân loại tài khoản (Donut Chart & Pill Legends) */}
             <div className="saas-telemetry-block">
-              <span className="saas-sub-heading">
-                Cơ cấu vai trò người dùng ({metrics.totalUsers} tài khoản)
-              </span>
-              <div className="saas-role-donut-row">
+              <span className="saas-sub-heading">Phân loại tài khoản</span>
+              <div className="flex items-center justify-center gap-6 sm:gap-10 pt-1">
                 <RoleDonutChart total={metrics.totalUsers} segments={roleDonutSegments} />
 
-                <div className="saas-role-legend-list">
-                  <div className="saas-role-legend-item">
-                    <span className="saas-role-label">
-                      <i className="saas-dot" style={{ background: "#10b981" }} />
-                      <span>Chủ trọ</span>
-                    </span>
-                    <strong>
-                      {metrics.landlordsCount} ({metrics.landlordPct}%)
-                    </strong>
-                  </div>
-                  <div className="saas-role-legend-item">
-                    <span className="saas-role-label">
-                      <i className="saas-dot" style={{ background: "#0f172a" }} />
-                      <span>Người thuê</span>
-                    </span>
-                    <strong>
-                      {metrics.rentersCount} ({metrics.renterPct}%)
-                    </strong>
-                  </div>
-                  <div className="saas-role-legend-item">
-                    <span className="saas-role-label">
-                      <i className="saas-dot" style={{ background: "#6366f1" }} />
-                      <span>Quản trị viên</span>
-                    </span>
-                    <strong>
-                      {metrics.adminsCount} ({metrics.adminPct}%)
-                    </strong>
-                  </div>
+                <div className="flex-1 max-w-[240px] space-y-2.5 min-w-0">
+                  {roleDonutSegments.map((segment) => (
+                    <div
+                      key={segment.label}
+                      className="bg-slate-50/80 border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <span className="inline-flex items-center gap-2 min-w-0">
+                        <i
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: segment.color }}
+                        />
+                        <span className="font-medium text-slate-700 truncate">
+                          {segment.label}
+                        </span>
+                      </span>
+                      <span className="font-bold text-slate-900 tabular-nums shrink-0">
+                        {segment.value} ({segment.pct}%)
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Card 2: "Thảo luận cộng đồng mới nhất" */}
+          {/* Card 2: "Thảo luận cộng đồng mới nhất" (Compact Thumbnail Feed) */}
           <section className="dashboard-card dashboard-forum-recent-card saas-side-card">
-            <h3 className="saas-side-card-title">Thảo luận cộng đồng mới nhất</h3>
+            <div className="flex items-center justify-between gap-3 pb-3 mb-1 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                Thảo luận cộng đồng mới nhất
+              </h3>
+              <Link
+                to="/admin/dien-dan"
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1 transition-colors shrink-0"
+              >
+                Quản lý →
+              </Link>
+            </div>
 
-            <div className="saas-recent-posts">
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, idx) => (
+            {isLoading ? (
+              <div className="flex flex-col gap-3 pt-2">
+                {Array.from({ length: 3 }).map((_, idx) => (
                   <div key={`post-skel-${idx}`} className="dashboard-skeleton-row" />
-                ))
-              ) : recentPosts.length === 0 ? (
-                <div className="dashboard-empty-box">
-                  <Icon name="chat" size={22} />
-                  <strong>Chưa có bài thảo luận mới</strong>
-                  <span>Các bài chia sẻ kinh nghiệm thuê trọ sẽ xuất hiện tại đây.</span>
-                </div>
-              ) : (
-                recentPosts.map((post) => (
-                  <article
-                    key={post.id}
-                    className="saas-post-item"
-                    onClick={() =>
-                      navigate(
-                        `/admin/dien-dan?status=${post.status}&q=${encodeURIComponent(post.name)}`,
-                      )
-                    }
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" &&
-                      navigate(
-                        `/admin/dien-dan?status=${post.status}&q=${encodeURIComponent(post.name)}`,
-                      )
-                    }
-                  >
-                    <div className="saas-post-head">
-                      <div className="saas-post-author">
-                        <div className="post-author-avatar">
-                          <img
-                            src={post.avatarUrl || "/images/avatars/default-brand-avatar.png"}
-                            alt={post.name}
-                            loading="lazy"
-                            onError={(e) => {
-                              e.currentTarget.onerror = null
-                              e.currentTarget.src = "/images/avatars/default-brand-avatar.png"
-                            }}
-                          />
+                ))}
+              </div>
+            ) : recentPosts.length === 0 ? (
+              <div className="dashboard-empty-box">
+                <Icon name="chat" size={22} />
+                <strong>Chưa có bài thảo luận mới</strong>
+                <span>Các bài chia sẻ kinh nghiệm thuê trọ sẽ xuất hiện tại đây.</span>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {recentPosts.map((post) => {
+                  const { title, compactTitle } = parseForumPostContent(post.content)
+                  const thumbUrl = post.image?.trim()
+                  const hasValidThumb = Boolean(thumbUrl && !failedPostThumbUrls[thumbUrl])
+                  const authorAvatarUrl = resolveMemberAvatar(
+                    users,
+                    post.authorId,
+                    post.name,
+                    post.avatarUrl,
+                  )
+                  const postDateLabel = formatForumPostDate(post.createdAt, post.time)
+                  const commentsCount = post.comments?.length ?? post.commentsCount ?? 0
+                  const targetUrl = `/admin/dien-dan?status=${post.status}&q=${encodeURIComponent(
+                    compactTitle || post.name,
+                  )}`
+
+                  return (
+                    <article
+                      key={post.id}
+                      className="py-3.5 flex items-center justify-between gap-3.5 group cursor-pointer"
+                      onClick={() => navigate(targetUrl)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          navigate(targetUrl)
+                        }
+                      }}
+                    >
+                      {/* A. Bên trái: Ảnh Thumbnail Vuông 56x56px */}
+                      {hasValidThumb && thumbUrl ? (
+                        <img
+                          src={thumbUrl}
+                          alt={compactTitle}
+                          loading="lazy"
+                          onError={() =>
+                            setFailedPostThumbUrls((prev) =>
+                              prev[thumbUrl] ? prev : { ...prev, [thumbUrl]: true },
+                            )
+                          }
+                          className="w-14 h-14 rounded-xl object-cover border border-slate-200/80 shrink-0 bg-slate-100"
+                        />
+                      ) : (
+                        <div
+                          className="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-400 shrink-0"
+                          aria-hidden="true"
+                        >
+                          <FileTextIcon className="w-5 h-5" />
                         </div>
-                        <div className="saas-post-author-meta">
-                          <strong>{post.name}</strong>
-                          <time>{post.time || "2 phút trước"}</time>
+                      )}
+
+                      {/* B. Ở giữa: Tiêu đề In Đậm & Hàng Thông Tin Phụ Không Dấu Chấm */}
+                      <div className="flex-1 min-w-0">
+                        <h4
+                          className="saas-recent-post-title text-sm font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors"
+                          title={title}
+                        >
+                          {compactTitle}
+                        </h4>
+
+                        <div className="flex items-center flex-wrap gap-x-3.5 gap-y-1 mt-1.5 text-xs text-slate-500">
+                          <span className="inline-flex items-center gap-1.5 min-w-0">
+                            <img
+                              src={authorAvatarUrl || "/images/avatars/default-avatar.jpg"}
+                              alt={post.name}
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null
+                                e.currentTarget.src = "/images/avatars/default-avatar.jpg"
+                              }}
+                              className="w-4 h-4 rounded-full object-cover shrink-0 bg-slate-100"
+                            />
+                            <span className="font-medium text-slate-700 truncate">
+                              {post.name}
+                            </span>
+                          </span>
+
+                          <time
+                            dateTime={post.createdAt || undefined}
+                            className="shrink-0 tabular-nums"
+                          >
+                            {postDateLabel}
+                          </time>
+
+                          <span className="inline-flex items-center gap-1 shrink-0 tabular-nums">
+                            <MessageCircleIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{commentsCount} bình luận</span>
+                          </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="saas-post-more-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(
-                            `/admin/dien-dan?status=${post.status}&q=${encodeURIComponent(
-                              post.name,
-                            )}`,
-                          )
-                        }}
-                        aria-label="Tùy chọn bài viết"
-                      >
-                        <Icon name="more" size={15} />
-                      </button>
-                    </div>
 
-                    <p className="saas-post-snippet">{post.content}</p>
-
-                    <div className="saas-post-footer">
-                      <span className="saas-post-comments">
-                        <Icon name="chat" size={13} />
-                        <span>{post.commentsCount || 0} bình luận</span>
-                        {post.status === "pending" && (
-                          <span className="post-pending-tag">Chờ duyệt</span>
-                        )}
+                      {/* C. Bên phải: Icon Mũi Tên Điều Hướng */}
+                      <span className="shrink-0" aria-hidden="true">
+                        <ArrowRightIcon className="w-4 h-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
                       </span>
-                      <span className="saas-post-reply-icon" aria-hidden="true">
-                        <Icon name="chat" size={13} />
-                      </span>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
           </section>
         </div>
       </div>

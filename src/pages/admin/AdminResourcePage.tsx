@@ -14,6 +14,12 @@ import {
 import { authService } from "@/services/authService"
 import { isApiMode, apiRequest } from "@/services/apiClient"
 import useDialogFocus from "@/hooks/useDialogFocus"
+import {
+  formatForumCommentTime,
+  formatForumPostDate,
+  parseForumPostContent as parsePostContent,
+  resolveMemberAvatar as resolveForumMemberAvatar,
+} from "@/utils/forumPost"
 
 type Resource = "users" | "listings" | "forum" | "categories" | "reports"
 type AdminRow = { id: string; title: string; detail: string; status: string; meta: string; image?: string }
@@ -87,6 +93,83 @@ function downloadCsv(filename: string, rows: AdminRow[]) {
   URL.revokeObjectURL(link.href)
 }
 
+function TaxonomyColumnIcon({
+  kind,
+  className = "w-4 h-4 text-slate-600 shrink-0",
+}: {
+  kind: "pin" | "home" | "sparkles"
+  className?: string
+}) {
+  if (kind === "pin") {
+    return (
+      <svg
+        aria-hidden="true"
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+    )
+  }
+
+  if (kind === "home") {
+    return (
+      <svg
+        aria-hidden="true"
+        className={className}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+        <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z" />
+      <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z" />
+    </svg>
+  )
+}
+
+function PencilIcon({ className = "w-3 h-3 text-slate-500 shrink-0" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+    </svg>
+  )
+}
+
 function getUserDisplayInitials(name: string, fallback?: string): string {
   const clean = name.trim()
   if (clean === "Quản trị viên") return "QT"
@@ -100,119 +183,6 @@ function getUserDisplayInitials(name: string, fallback?: string): string {
     return words[0].slice(0, 2).toUpperCase()
   }
   return fallback || "ND"
-}
-
-/** Định dạng ngày đăng bài viết cộng đồng theo chuẩn DD/MM/YYYY. */
-function formatForumPostDate(createdAt?: string, fallbackTime?: string): string {
-  if (createdAt) {
-    const parsed = new Date(createdAt)
-    if (!Number.isNaN(parsed.getTime())) {
-      const dd = String(parsed.getDate()).padStart(2, "0")
-      const mm = String(parsed.getMonth() + 1).padStart(2, "0")
-      return `${dd}/${mm}/${parsed.getFullYear()}`
-    }
-  }
-  if (fallbackTime) {
-    const match = fallbackTime.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/)
-    if (match) {
-      return `${match[1].padStart(2, "0")}/${match[2].padStart(2, "0")}/${match[3]}`
-    }
-    return fallbackTime
-  }
-  return "Chưa rõ"
-}
-
-/** Định dạng thời gian bình luận theo chuẩn HH:mm DD/MM/YYYY. */
-function formatForumCommentTime(createdAt?: string): string {
-  if (!createdAt) return ""
-  const parsed = new Date(createdAt)
-  if (Number.isNaN(parsed.getTime())) return ""
-  const hh = String(parsed.getHours()).padStart(2, "0")
-  const min = String(parsed.getMinutes()).padStart(2, "0")
-  const dd = String(parsed.getDate()).padStart(2, "0")
-  const mm = String(parsed.getMonth() + 1).padStart(2, "0")
-  return `${hh}:${min} ${dd}/${mm}/${parsed.getFullYear()}`
-}
-
-/** Rút gọn tiền tố đóng ngoặc vuông ở đầu tiêu đề cho danh sách thẻ ngang bên trái. */
-function stripLeadingBracketTag(title: string): string {
-  const stripped = title.replace(/^\[[^\]]+\]\s*/, "").trim()
-  return stripped || title
-}
-
-function parsePostContent(rawContent: string) {
-  const content = (rawContent || "").trim()
-  const lines = content.split("\n").map((l) => l.trim()).filter(Boolean)
-  let title = lines[0] || "Bài viết cộng đồng"
-  let excerpt = lines.slice(1).join(" ").trim()
-  let bodyContent = content
-
-  if (lines.length > 1) {
-    // Giữ nguyên ngắt đoạn của phần nội dung và loại bỏ dòng đầu tiên nếu trùng với tiêu đề
-    const rawLines = content.split(/\r?\n/)
-    const firstNonEmptyIdx = rawLines.findIndex((l) => l.trim().length > 0)
-    if (firstNonEmptyIdx !== -1 && rawLines[firstNonEmptyIdx].trim() === title) {
-      const rest = rawLines.slice(firstNonEmptyIdx + 1).join("\n").trim()
-      if (rest) {
-        bodyContent = rest
-      }
-    }
-  } else if (lines.length === 1) {
-    const bracketMatch = content.match(/^(\[[^\]]+\]\s*[^.\n]+)(?:[.\n]|$)/)
-    if (bracketMatch) {
-      title = bracketMatch[1]
-      const rest = content.slice(title.length).replace(/^[.\s]+/, "").trim()
-      excerpt = rest || content
-      bodyContent = rest || content
-    } else {
-      const dotIndex = content.indexOf(". ")
-      if (dotIndex > 10 && dotIndex < 70) {
-        title = content.slice(0, dotIndex).trim()
-        const rest = content.slice(dotIndex + 2).trim()
-        excerpt = rest || content
-        bodyContent = rest || content
-      } else {
-        const colonIndex = content.indexOf(": ")
-        if (colonIndex > 20 && colonIndex < 85 && content.length - (colonIndex + 2) >= 40) {
-          title = content.slice(0, colonIndex).trim()
-          const rest = content.slice(colonIndex + 2).trim()
-          excerpt = rest || content
-          bodyContent = rest || content
-        } else {
-          const leadInMatch = content.match(/^(.{15,85}?(?:!|\?|👋|⚠️))\s+(.{40,})$/u)
-          if (leadInMatch) {
-            title = leadInMatch[1].trim()
-            const rest = leadInMatch[2].trim()
-            excerpt = rest || content
-            bodyContent = rest || content
-          } else {
-            excerpt = content
-          }
-        }
-      }
-    }
-  }
-
-  let category = "Bài viết"
-  const lower = content.toLowerCase()
-  if (lower.includes("pass phòng") || lower.includes("chuyển nhượng") || lower.includes("sang nhượng")) {
-    category = "Pass phòng"
-  } else if (lower.includes("ở ghép") || lower.includes("tìm bạn")) {
-    category = "Tìm ở ghép"
-  } else if (lower.includes("review") || lower.includes("đánh giá")) {
-    category = "Review khu trọ"
-  } else if (lower.includes("kinh nghiệm") || lower.includes("mẹo") || lower.includes("chia sẻ") || lower.includes("hợp đồng")) {
-    category = "Kinh nghiệm"
-  }
-
-  return {
-    title,
-    compactTitle: stripLeadingBracketTag(title),
-    excerpt: excerpt || content,
-    category,
-    fullContent: content,
-    bodyContent,
-  }
 }
 
 export default function AdminResourcePage() {
@@ -895,15 +865,8 @@ export default function AdminResourcePage() {
     authorId?: string,
     authorName?: string,
     explicitAvatarUrl?: string,
-  ): string | undefined => {
-    if (explicitAvatarUrl?.trim()) return explicitAvatarUrl.trim()
-    const matched = users.find(
-      (u) =>
-        (authorId && u.id === authorId) ||
-        (authorName && u.name.toLowerCase() === authorName.toLowerCase()),
-    )
-    return matched?.avatarUrl?.trim() || undefined
-  }
+  ): string | undefined =>
+    resolveForumMemberAvatar(users, authorId, authorName, explicitAvatarUrl)
 
   const handleDeleteComment = async (postId: string, commentId: string) => {
     if (window.confirm("Xóa bình luận vi phạm này?")) {
@@ -2155,44 +2118,31 @@ export default function AdminResourcePage() {
           </p>
         )}
 
-        {/* 2. Bố Cục Chính: Bảng 3 Cột Dọc Độc Lập (3-Column Grid) */}
+        {/* 2. Bố Cục Chính: 3 Card Cột Nền Trắng với Header Xám & Thẻ Con Nền Xám */}
         <section
-          className="saas-taxonomy-board"
+          className="saas-taxonomy-board grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
           aria-busy={Boolean(busyId) || connectionState === "loading"}
         >
           {taxonomyColumns.map((col) => (
-            <article key={col.type} className="saas-taxonomy-card">
-              <div className="saas-taxonomy-card-top">
-                <header className="saas-taxonomy-card-header">
-                  <span className="saas-taxonomy-card-icon" aria-hidden="true">
-                    {col.icon === "pin" && <Icon name="pin" size={18} />}
-                    {col.icon === "home" && <Icon name="home" size={18} />}
-                    {col.icon === "sparkles" && (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3Z"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </span>
-                  <h2>
-                    {col.title} ({col.items.length})
-                  </h2>
-                </header>
+            <article
+              key={col.type}
+              className="bg-white border border-slate-300/90 rounded-2xl shadow-xs flex flex-col justify-between overflow-hidden h-full min-w-0"
+            >
+              {/* Header nền xám định hình cột */}
+              <header className="bg-slate-100/95 border-b border-slate-200/90 px-4 py-3.5 flex items-center justify-between gap-2 shrink-0">
+                <div className="inline-flex items-center gap-2 min-w-0">
+                  <TaxonomyColumnIcon kind={col.icon} className="w-4 h-4 text-slate-700 shrink-0" />
+                  <h2 className="text-sm font-bold text-slate-900 truncate">{col.title}</h2>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200/90 text-slate-800 text-xs font-bold shadow-2xs leading-none tabular-nums shrink-0">
+                  {col.items.length}
+                </span>
+              </header>
 
+              {/* Thân Card trắng: danh sách thẻ con xám + nút Thêm ở đáy */}
+              <div className="p-4 flex-1 flex flex-col justify-between bg-white">
                 {col.items.length > 0 ? (
-                  <div className="saas-taxonomy-list">
+                  <div className="flex flex-col gap-2.5">
                     {col.items.map((item) => {
                       const usageCount = categoryUsageCounts[item.id] ?? 0
                       const isHidden = item.status === "hidden"
@@ -2200,55 +2150,55 @@ export default function AdminResourcePage() {
                       return (
                         <div
                           key={item.id}
-                          className={`saas-taxonomy-row${isHidden ? " is-hidden" : ""}`}
+                          className={`group bg-slate-100/85 hover:bg-slate-200/60 border border-slate-200/95 hover:border-slate-300 rounded-xl px-3 2xl:px-3.5 py-2.5 flex items-center justify-between gap-2 transition-all${
+                            isHidden ? " opacity-60" : ""
+                          }`}
                         >
-                          {/* Cụm bên trái: Tên mục + Badge trạng thái & số lượng tin */}
-                          <div className="saas-taxonomy-row-left">
-                            <span className="saas-taxonomy-item-name" title={item.name}>
+                          {/* Cụm bên trái: Tên mục + Badge số tin */}
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span
+                              className="text-xs font-bold text-slate-900 truncate"
+                              title={item.name}
+                            >
                               {item.name}
                             </span>
                             {isHidden ? (
-                              <span className="saas-taxonomy-pill is-hidden">
-                                <span className="saas-taxonomy-dot is-hidden" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200/90 text-[11px] font-semibold shrink-0">
                                 <span>Đã ẩn</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                               </span>
                             ) : (
-                              <span className="saas-taxonomy-pill is-active">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold shrink-0 tabular-nums">
                                 <span>{usageCount} tin</span>
-                                <span className="saas-taxonomy-dot is-active" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               </span>
                             )}
                           </div>
 
-                          {/* Cụm bên phải: 3 thao tác Sửa | Ẩn | Xóa trên cùng 1 hàng ngang */}
+                          {/* Cụm bên phải: 3 nút thao tác nền trắng nổi bật */}
                           <fieldset
-                            className="saas-taxonomy-row-actions"
+                            className="flex items-center gap-1 2xl:gap-1.5 shrink-0 m-0 p-0 border-0"
                             disabled={Boolean(busyId)}
                             aria-label={`Thao tác với ${item.name}`}
                           >
                             <button
                               type="button"
-                              className="saas-taxonomy-action-btn"
+                              className="inline-flex items-center gap-1 px-2 2xl:px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-[11px] font-semibold shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                               onClick={() => openEdit(item, item.type)}
                             >
-                              Sửa
+                              <PencilIcon />
+                              <span>Sửa</span>
                             </button>
-                            <span className="saas-taxonomy-action-sep" aria-hidden="true">
-                              |
-                            </span>
                             <button
                               type="button"
-                              className="saas-taxonomy-action-btn"
+                              className="inline-flex items-center justify-center px-2 2xl:px-2.5 py-1 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                               onClick={() => action(item.id, "hidden")}
                             >
                               {isHidden ? "Hiện" : "Ẩn"}
                             </button>
-                            <span className="saas-taxonomy-action-sep" aria-hidden="true">
-                              |
-                            </span>
                             <button
                               type="button"
-                              className="saas-taxonomy-action-btn is-danger"
+                              className="inline-flex items-center justify-center px-2 2xl:px-2.5 py-1 rounded-lg bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 text-[11px] font-semibold shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                               onClick={() => requestDeleteCategory(item)}
                             >
                               Xóa
@@ -2259,17 +2209,22 @@ export default function AdminResourcePage() {
                     })}
                   </div>
                 ) : (
-                  <p className="saas-taxonomy-empty">Không có mục nào khớp</p>
+                  <p className="py-10 px-4 text-center text-xs font-medium text-slate-400 m-0">
+                    Không có mục nào khớp
+                  </p>
                 )}
-              </div>
 
-              <button
-                type="button"
-                className="saas-taxonomy-add-col-btn"
-                onClick={() => openEdit(undefined, col.type)}
-              >
-                {col.addLabel}
-              </button>
+                {/* Duy nhất 1 nút hành động ở đáy cột */}
+                <div className="mt-4 shrink-0">
+                  <button
+                    type="button"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-50/90 hover:bg-emerald-50/70 border border-dashed border-slate-300 hover:border-emerald-300 text-xs font-semibold text-slate-700 hover:text-emerald-800 transition-all cursor-pointer"
+                    onClick={() => openEdit(undefined, col.type)}
+                  >
+                    {col.addLabel}
+                  </button>
+                </div>
+              </div>
             </article>
           ))}
         </section>

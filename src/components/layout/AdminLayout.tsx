@@ -104,9 +104,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <main
-      className={`admin-layout admin-shell saas-admin-shell${isProfileActive ? " is-seamless-profile" : ""}`}
-    >
+    <main className="admin-layout admin-shell saas-admin-shell">
       {/* Lớp phủ màn hình nhỏ khi mở Sidebar */}
       {mobileSideOpen && (
         <div
