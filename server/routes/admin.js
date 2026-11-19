@@ -10,18 +10,18 @@ import { queueNotification, flushNotificationOutbox } from "../services/notifica
 
 const router = Router()
 router.use(requireAuth, requireRole("admin"))
-const userView = (row) => ({ id: row.id, name: row.name, email: row.email, phone: row.phone, role: row.role, status: row.status, initials: row.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(), createdAt: row.created_at })
+const userView = (row) => ({ id: row.id, name: row.name, email: row.email, phone: row.phone, role: row.role, status: row.status, avatarUrl: row.avatar_url ?? undefined, initials: row.name.trim().split(/\s+/).slice(-2).map((part) => part[0]).join("").toUpperCase(), createdAt: row.created_at })
 
 router.get("/users", async (req, res) => {
   const q = z.string().max(200).optional().parse(req.query.q)
-  const { rows } = await pool.query(`SELECT id,name,email,phone,role,status,created_at FROM users ${q ? "WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1" : ""} ORDER BY created_at DESC`, q ? [`%${q}%`] : [])
+  const { rows } = await pool.query(`SELECT id,name,email,phone,role,status,avatar_url,created_at FROM users ${q ? "WHERE name ILIKE $1 OR email ILIKE $1 OR phone ILIKE $1" : ""} ORDER BY created_at DESC`, q ? [`%${q}%`] : [])
   res.json({ items: rows.map(userView) })
 })
 
 router.post("/users", async (req, res) => {
   const input = z.object({ name: z.string().trim().min(2).max(120), email: z.email().transform((value) => value.toLowerCase()), phone: z.string().trim().min(9).max(20), role: z.enum(["renter", "landlord", "admin"]), password: z.string().min(8).max(128) }).parse(req.body)
   const hash = await bcrypt.hash(input.password, 12)
-  const { rows } = await pool.query("INSERT INTO users(name,email,phone,password_hash,role) VALUES($1,$2,$3,$4,$5) RETURNING id,name,email,phone,role,status,created_at", [input.name, input.email, input.phone.replace(/\s/g, ""), hash, input.role])
+  const { rows } = await pool.query("INSERT INTO users(name,email,phone,password_hash,role) VALUES($1,$2,$3,$4,$5) RETURNING id,name,email,phone,role,status,avatar_url,created_at", [input.name, input.email, input.phone.replace(/\s/g, ""), hash, input.role])
   res.status(201).json({ item: userView(rows[0]) })
 })
 
@@ -45,7 +45,7 @@ router.patch("/users/:id", async (req, res) => {
         return res.status(400).json({ error: "Cần giữ ít nhất một quản trị viên đang hoạt động." })
       }
     }
-    const { rows } = await client.query("UPDATE users SET name=$2,email=$3,phone=$4,role=$5,status=$6,password_hash=$7,updated_at=now() WHERE id=$1 RETURNING id,name,email,phone,role,status,created_at", [old.id, input.name ?? old.name, input.email ?? old.email, input.phone?.replace(/\s/g, "") ?? old.phone, input.role ?? old.role, input.status ?? old.status, passwordHash ?? old.password_hash])
+    const { rows } = await client.query("UPDATE users SET name=$2,email=$3,phone=$4,role=$5,status=$6,password_hash=$7,updated_at=now() WHERE id=$1 RETURNING id,name,email,phone,role,status,avatar_url,created_at", [old.id, input.name ?? old.name, input.email ?? old.email, input.phone?.replace(/\s/g, "") ?? old.phone, input.role ?? old.role, input.status ?? old.status, passwordHash ?? old.password_hash])
     await client.query("COMMIT")
     res.json({ item: userView(rows[0]) })
   } catch (error) {
@@ -92,8 +92,35 @@ router.get("/listings", async (req, res) => {
   if (input.q) { values.push(`%${input.q}%`); filters.push(`(l.title ILIKE $${values.length} OR l.location ILIKE $${values.length})`) }
   if (input.status) { values.push(input.status); filters.push(`l.status=$${values.length}`) }
   const where = filters.length ? `WHERE ${filters.join(" AND ")}` : ""
-  const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,u.phone AS owner_phone,round(l.price_vnd::numeric/1000000,1)::float AS price_value,l.area_m2::float AS area_value,to_char(l.price_vnd,'FM999G999G999G990')||'đ' AS price_label FROM listings l LEFT JOIN users u ON u.id=l.owner_id ${where} ORDER BY l.created_at DESC`, values)
-  res.json({ items: rows.map((row) => ({ id: row.id, title: row.title, price: row.price_label, priceValue: row.price_value, area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`, areaValue: row.area_value, location: row.location, type: row.room_type, amenities: row.amenities, image: row.image_url, gallery: row.gallery, ownerId: row.owner_id ?? "", ownerName: row.source_name ?? row.owner_name ?? "Chủ trọ", sourceName: row.source_name, sourceUrl: row.source_url, sourceCheckedAt: row.source_checked_at, phone: row.source_url ? undefined : row.contact_phone ?? row.owner_phone, deposit: row.deposit_text, description: row.description, status: row.status, views: row.views, contacts: row.contacts, createdAt: row.created_at })) })
+  const { rows } = await pool.query(`SELECT l.*,u.name AS owner_name,u.phone AS owner_phone,u.avatar_url AS owner_avatar_url,round(l.price_vnd::numeric/1000000,1)::float AS price_value,l.area_m2::float AS area_value,to_char(l.price_vnd,'FM999G999G999G990')||'đ' AS price_label FROM listings l LEFT JOIN users u ON u.id=l.owner_id ${where} ORDER BY l.created_at DESC`, values)
+  res.json({ items: rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    price: row.price_label,
+    priceValue: row.price_value,
+    area: row.area_value === null ? "Chưa cập nhật" : `${row.area_value} m²`,
+    areaValue: row.area_value,
+    location: row.location,
+    type: row.room_type,
+    amenities: row.amenities,
+    image: row.image_url,
+    gallery: row.gallery,
+    badge: row.status === "active" ? "Đang hiển thị" : row.status,
+    ownerId: row.owner_id ?? "",
+    ownerName: row.owner_name ?? row.source_name ?? "Chủ trọ",
+    ownerAvatarUrl: row.owner_avatar_url ?? undefined,
+    sourceName: row.source_name,
+    sourceUrl: row.source_url,
+    sourceCheckedAt: row.source_checked_at,
+    isReferenceListing: Boolean(row.source_url),
+    phone: row.source_url ? undefined : row.contact_phone ?? row.owner_phone,
+    deposit: row.deposit_text,
+    description: row.description,
+    status: row.status,
+    views: row.views,
+    contacts: row.contacts,
+    createdAt: row.created_at
+  })) })
 })
 
 router.get("/forum", async (_req, res) => {

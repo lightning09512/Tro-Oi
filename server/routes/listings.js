@@ -193,11 +193,14 @@ router.post("/:id/contact", async (req, res) => {
     await client.query("BEGIN")
     const updated = await client.query("UPDATE listings SET contacts=contacts+1 WHERE id=$1 AND status='active' RETURNING owner_id,contact_phone,source_url", [req.params.id])
     if (!updated.rows[0]) { await client.query("ROLLBACK"); return res.status(404).json({ error: "Tin phòng không còn hiển thị." }) }
-    if (updated.rows[0].source_url) { await client.query("ROLLBACK"); return res.status(409).json({ error: "Thông tin liên hệ cho tin này hiện chưa được thiết lập trên Trọ Ơi." }) }
     await client.query("INSERT INTO property_interactions(listing_id,interaction_type) VALUES($1,'contact')", [req.params.id])
-    const owner = await client.query("SELECT phone FROM users WHERE id=$1 AND status='active'", [updated.rows[0].owner_id])
+    let phone = updated.rows[0].contact_phone || ""
+    if (!phone && updated.rows[0].owner_id) {
+      const owner = await client.query("SELECT phone FROM users WHERE id=$1 AND status='active'", [updated.rows[0].owner_id])
+      phone = owner.rows[0]?.phone || ""
+    }
     await client.query("COMMIT")
-    res.json({ phone: updated.rows[0].contact_phone ?? owner.rows[0]?.phone ?? "" })
+    res.json({ phone })
   } catch (error) {
     await client.query("ROLLBACK")
     throw error

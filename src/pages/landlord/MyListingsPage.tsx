@@ -81,7 +81,14 @@ export default function MyListingsPage() {
             <h1>Tin cho thuê của tôi</h1>
             <p>Theo dõi trạng thái kiểm duyệt, cập nhật phòng và ghi nhận người thuê.</p>
           </div>
-          <Button icon="plus" onClick={() => navigate("/chu-tro/dang-tin")}>Đăng phòng mới</Button>
+          <div className="page-heading-actions">
+            <Button variant="outline" icon="chart" onClick={() => navigate("/chu-tro/thong-ke")}>
+              Xem thống kê
+            </Button>
+            <Button icon="plus" onClick={() => navigate("/chu-tro/dang-tin")}>
+              Đăng phòng mới
+            </Button>
+          </div>
         </div>
 
         <div className="workspace-toolbar">
@@ -114,9 +121,37 @@ export default function MyListingsPage() {
                   {item.status === "rejected" && <small className="review-note">Tin cần bổ sung thông tin trước khi đăng lại.</small>}
                   {item.status === "rented" && <small className="review-note">Người thuê hiện tại: {users.find((person) => person.id === item.currentTenantId)?.name ?? "Chưa ghi nhận"}</small>}
                 </div>
-                <div className="owned-listing-stats">
-                  <span><b>{item.views}</b> lượt xem</span>
-                  <span><b>{item.contacts}</b> liên hệ</span>
+                <div
+                  className="owned-listing-stats"
+                  onClick={() => navigate("/chu-tro/thong-ke")}
+                  title="Nhấn để xem trang thống kê chi tiết"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      navigate("/chu-tro/thong-ke")
+                    }
+                  }}
+                >
+                  <div className="owned-stat-item is-views">
+                    <span className="owned-stat-icon">
+                      <Icon name="eye" size={14} />
+                    </span>
+                    <div className="owned-stat-info">
+                      <b>{Number(item.views || 0).toLocaleString("vi-VN")}</b>
+                      <small>lượt xem</small>
+                    </div>
+                  </div>
+                  <div className="owned-stat-item is-contacts">
+                    <span className="owned-stat-icon">
+                      <Icon name="chat" size={14} />
+                    </span>
+                    <div className="owned-stat-info">
+                      <b>{Number(item.contacts || 0).toLocaleString("vi-VN")}</b>
+                      <small>liên hệ</small>
+                    </div>
+                  </div>
                 </div>
                 <fieldset className="owned-listing-actions" disabled={Boolean(busyId)} aria-label={`Thao tác với ${item.title}`}>
                   <button className="secondary-action" onClick={() => navigate(`/phong/${item.id}`)} title="Xem chi tiết tin phòng"><Icon name="eye" size={16} /> Xem tin</button>

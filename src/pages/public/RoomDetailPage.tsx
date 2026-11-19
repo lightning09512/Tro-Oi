@@ -255,6 +255,7 @@ export default function RoomDetailPage() {
     return (
       isMatch &&
       (item.status === "active" ||
+        user?.role === "admin" ||
         (item.status === "rented" &&
           user?.role === "renter" &&
           item.currentTenantId === user.id))
@@ -522,6 +523,10 @@ export default function RoomDetailPage() {
     setActionError("")
 
     try {
+      if (room.id) {
+        incrementListingContacts(room.id).catch(() => undefined)
+      }
+
       const conversation = await startConversation({
         accountId: user.id,
         name: ownerDisplayName,
