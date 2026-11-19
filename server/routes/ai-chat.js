@@ -1,12 +1,12 @@
-
 import { Router } from "express";
 import { GoogleGenAI, Type } from "@google/genai";
 import { pool } from "../config/db.js";
+import { executeAiSearch } from "./ai-search.js";
 
 const router = Router();
 
 const MODEL =
-    process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+    process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const gemini = process.env.GEMINI_API_KEY
     ? new GoogleGenAI({
@@ -18,17 +18,18 @@ const TOOL_DECLARATIONS = [
     {
         name: "search_rooms",
         description:
-            "Tìm phòng trọ thật trong Tro-Oi bằng yêu cầu tiếng Việt. " +
-            "Chỉ gọi khi đã có đủ thông tin phù hợp. " +
-            "Query phải tổng hợp cả những yêu cầu từ lượt trước.",
+            "Tìm kiếm danh sách phòng trọ thật trong hệ thống Trọ Ơi. " +
+            "Tham số query là câu tìm kiếm bằng tiếng Việt, chứa khu vực, ngân sách hoặc tiện ích cần tìm. " +
+            "QUY TẮC VỀ NGỮ CẢNH: " +
+            "1. Chỉ kế thừa thông tin từ lượt chat trước (như khu vực, mức giá) nếu người dùng đang bổ sung hoặc thu hẹp yêu cầu đó (ví dụ: 'thêm gác lửng nữa', 'giá rẻ hơn được không?'). " +
+            "2. Nếu người dùng hỏi một yêu cầu mới hoặc hỏi chung về tiện ích / loại phòng (ví dụ: 'có phòng nào có máy nước nóng, sân xe, hồ bơi ko', 'tìm phòng ở Cầu Giấy', 'có nhà nguyên căn nào ko'), KHÔNG ĐƯỢC gán ghép khu vực cũ vào query mà hãy tìm theo đúng câu hỏi mới.",
         parameters: {
             type: Type.OBJECT,
             properties: {
                 query: {
                     type: Type.STRING,
                     description:
-                        "Câu tìm kiếm đầy đủ bằng tiếng Việt, " +
-                        "bao gồm khu vực, ngân sách và tiện ích"
+                        "Câu tìm kiếm tiếng Việt đầy đủ, ví dụ: 'phòng trọ dưới 3 triệu ở Thủ Đức', 'phòng có hồ bơi sân xe máy nước nóng', 'ký túc xá Cầu Giấy'"
                 }
             },
             required: ["query"]
@@ -37,8 +38,7 @@ const TOOL_DECLARATIONS = [
     {
         name: "get_room_details",
         description:
-            "Lấy thông tin chi tiết một phòng trong Tro-Oi " +
-            "theo ID phòng đã tìm được.",
+            "Lấy thông tin chi tiết một phòng trong Tro-Oi theo ID phòng đã tìm được.",
         parameters: {
             type: Type.OBJECT,
             properties: {
@@ -52,7 +52,7 @@ const TOOL_DECLARATIONS = [
     }
 ];
 
-// Công cụ 1: Tái sử dụng AI Search hiện tại
+// Công cụ 1: Tái sử dụng AI Search trực tiếp
 async function searchRooms(query) {
     if (
         typeof query !== "string" ||
@@ -62,43 +62,27 @@ async function searchRooms(query) {
         return { error: "Câu tìm kiếm không hợp lệ" };
     }
 
-    const port = Number(process.env.PORT || 3001);
-
-    const response = await fetch(
-        `http://127.0.0.1:${port}/api/ai/search`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ query }),
-            signal: AbortSignal.timeout(90000)
-        }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
+    try {
+        const data = await executeAiSearch(query.trim());
         return {
-            error: data.error || "Tìm kiếm phòng thất bại",
-            status: response.status
+            total: data.total,
+            filters: data.filters,
+            fallbackNote: data.fallbackNote,
+            items: (data.items || []).slice(0, 5).map(room => ({
+                id: room.id,
+                title: room.title,
+                location: room.location,
+                price_vnd: room.price_vnd ?? (Number(room.priceValue) * 1_000_000),
+                amenities: room.amenities,
+                description: room.description,
+                aiScore: room.aiScore,
+                image_url: room.image_url ?? room.image
+            }))
         };
+    } catch (err) {
+        console.error("searchRooms error:", err);
+        return { error: "Tìm kiếm phòng thất bại" };
     }
-
-    return {
-        total: data.total,
-        filters: data.filters,
-        items: (data.items || []).slice(0, 5).map(room => ({
-            id: room.id,
-            title: room.title,
-            location: room.location,
-            price_vnd: room.price_vnd ?? (Number(room.priceValue) * 1_000_000),
-            amenities: room.amenities,
-            description: room.description,
-            aiScore: room.aiScore,
-            image_url: room.image_url ?? room.image
-        }))
-    };
 }
 
 // Công cụ 2: Chi tiết phòng theo ID
@@ -224,14 +208,15 @@ Giao tiếp bằng tiếng Việt tự nhiên, thân thiện, ngắn gọn và h
 - Khuyến khích dùng tính năng Báo cáo trên Trọ Ơi nếu phát hiện tin giả mạo.
 
 === 4. QUY TẮC PHẢN HỒI CỦA TRỢ LÝ ===
-1. Khi người dùng hỏi về dự án, cách sử dụng website, trường học, hay kinh nghiệm thuê trọ: Trả lời tự tin, súc tích và chuẩn xác dựa trên thông tin trên.
-2. Khi người dùng tìm phòng:
-   - Nếu chưa rõ khu vực hoặc mức giá, hỏi thêm thông tin ngắn gọn.
-   - Khi có nhu cầu cụ thể, gọi công cụ 'search_rooms' để tìm phòng THẬT trong cơ sở dữ liệu.
-   - Chỉ giới thiệu phòng lấy được từ công cụ 'search_rooms', KHÔNG tự bịa phòng trọ không có trong hệ thống.
+1. Khi người dùng hỏi về dự án, cách sử dụng website, trường học, hay kinh nghiệm thuê trọ: Trả lời tự tin, súc tích và chuẩn xác.
+2. Khi người dùng tìm phòng hoặc hỏi xem có phòng nào đáp ứng tiêu chí (giá, khu vực, tiện ích...):
+   - LUÔN LUÔN gọi công cụ 'search_rooms' để tìm kiếm dữ liệu THẬT trong cơ sở dữ liệu.
+   - Khi người dùng hỏi về các tiện ích (như hồ bơi, sân xe, máy nước nóng, máy giặt, điều hòa, gác lửng...): Hãy tìm kiếm phòng có các tiện ích đó. Nếu người dùng không nhắc đến khu vực, tìm kiếm trên toàn hệ thống (không tự ý bó hẹp vào khu vực từ câu hỏi trước).
+   - Nếu công cụ trả về kết quả có 'fallbackNote' (ví dụ: khu vực yêu cầu không có tiện ích đó nhưng hệ thống tìm thấy phòng ở khu vực khác): Hãy giải thích rõ ràng và giới thiệu phòng ở khu vực đó cho người dùng.
+   - Nếu công cụ tìm thấy phòng: Hãy tóm tắt và giới thiệu các điểm nổi bật của phòng. Giao diện người dùng sẽ tự động hiển thị thẻ card tương tác cho từng phòng (có tên, giá, địa chỉ và nút bấm), vì vậy bạn không cần ghi lại quá chi tiết từng dòng.
+   - Tuyệt đối KHÔNG tự ý khẳng định không có phòng nếu chưa gọi công cụ 'search_rooms'.
 3. Phong cách trình bày:
-   - Viết câu văn gãy gọn, tự nhiên, hạn chế lạm dụng quá nhiều dấu hoa thị (**) hoặc danh sách lồng nhau gây rối mắt.
-   - Giao diện người dùng sẽ tự động hiển thị thẻ card tương tác cho từng phòng (có tên, giá, địa chỉ và nút bấm), vì vậy trong lời nhắn bạn chỉ cần tóm tắt ngắn gọn và giới thiệu các điểm nổi bật nhất.
+   - Viết câu văn gãy gọn, tự nhiên, thân thiện. Không lạm dụng quá nhiều dấu hoa thị (**) hoặc danh sách lồng nhau gây rối mắt.
 4. Tuyệt đối không yêu cầu người dùng cung cấp mật khẩu, mã OTP hay thông tin tài khoản ngân hàng.
 `;
 

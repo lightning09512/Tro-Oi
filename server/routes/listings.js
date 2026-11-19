@@ -36,6 +36,60 @@ const hasInlineImage = (value) => [value.image, ...(value.gallery ?? [])].some((
 const lookup = async (id) => pool.query(`${listingSelect} WHERE l.id=$1 LIMIT 1`, [id])
 const canManage = (req, row) => req.user.role === "admin" || row.owner_id === req.user.id
 
+const AMENITY_SYNONYMS = {
+  "ho boi": ["%ho boi%", "%be boi%", "%boi%"],
+  "be boi": ["%ho boi%", "%be boi%", "%boi%"],
+  "may nuoc nong": ["%nuoc nong%", "%nong lanh%"],
+  "nong lanh": ["%nuoc nong%", "%nong lanh%"],
+  "binh nong lanh": ["%nuoc nong%", "%nong lanh%"],
+  "san xe": ["%xe%", "%o to%"],
+  "bai xe": ["%xe%", "%o to%"],
+  "bai de xe": ["%xe%", "%o to%"],
+  "cho de xe": ["%xe%", "%o to%"],
+  "khu de xe": ["%xe%", "%o to%"],
+  "cho do o to": ["%o to%", "%xe%"],
+  "may lanh": ["%may lanh%", "%dieu hoa%"],
+  "dieu hoa": ["%may lanh%", "%dieu hoa%"],
+  "may giat": ["%may giat%"],
+  "may say": ["%may say%"],
+  "tu lanh": ["%tu lanh%"],
+  "noi that": ["%noi that%"],
+  "noi that day du": ["%noi that%"],
+  "full noi that": ["%noi that%"],
+  "gac lung": ["%gac%"],
+  "gac": ["%gac%"],
+  "ban cong": ["%ban cong%"],
+  "cua so": ["%cua so%"],
+  "thang may": ["%thang may%"],
+  "khoa tu": ["%khoa tu%", "%van tay%", "%khoa van tay%"],
+  "khoa van tay": ["%khoa tu%", "%van tay%", "%khoa van tay%"],
+  "van tay": ["%khoa tu%", "%van tay%", "%khoa van tay%"],
+  "wc rieng": ["%wc%", "%ve sinh%", "%khep kin%"],
+  "ve sinh rieng": ["%wc%", "%ve sinh%", "%khep kin%"],
+  "wc khep kin": ["%wc%", "%ve sinh%", "%khep kin%"],
+  "bep": ["%bep%"],
+  "bep rieng": ["%bep%"],
+  "khu bep rieng": ["%bep%"],
+  "wifi": ["%wi-fi%", "%wifi%", "%internet%"],
+  "wi-fi": ["%wi-fi%", "%wifi%", "%internet%"],
+  "camera": ["%camera%", "%an ninh%"],
+  "camera an ninh": ["%camera%", "%an ninh%"],
+  "gio giac tu do": ["%tu do%"],
+  "tu do": ["%tu do%"],
+  "san phoi": ["%phoi%"],
+  "gym": ["%gym%"],
+  "phong gym": ["%gym%"],
+  "sauna": ["%sauna%"],
+  "giuong": ["%giuong%"],
+  "tu quan ao": ["%tu quan ao%", "%giuong tu%"],
+  "tivi": ["%tivi%"],
+  "may loc nuoc": ["%loc nuoc%"],
+}
+
+function stripAccents(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().trim()
+}
+
 const listingSearchQuery = z.object({ q: z.string().optional(), location: z.string().optional(), type: z.string().optional(), amenities: z.string().optional(), minPrice: z.coerce.number().optional(), maxPrice: z.coerce.number().optional(), minArea: z.coerce.number().optional(), maxArea: z.coerce.number().optional(), lat: z.coerce.number().optional(), lng: z.coerce.number().optional(), radiusKm: z.coerce.number().min(1).max(100).optional(), sort: z.enum(["newest", "price_asc", "price_desc", "area_desc", "nearby"]).default("newest"), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(60).default(24) })
 
 export const searchListings = async (input) => {
@@ -46,11 +100,28 @@ export const searchListings = async (input) => {
   let nearbyLatIndex
   const add = (sql, value) => { values.push(value); filters.push(sql.replace("?", `$${values.length}`)) }
   if (query.q) { values.push(`%${query.q}%`, `%${query.q}%`); filters.push(`(unaccent(l.title) ILIKE unaccent($${values.length - 1}) OR unaccent(l.location) ILIKE unaccent($${values.length}))`) }
-  if (query.location) { values.push(`%${query.location}%`); filters.push(`unaccent(l.location) ILIKE unaccent($${values.length})`) }
+  if (query.location) {
+    values.push(`%${query.location}%`)
+    const locIdx = values.length
+    filters.push(`(
+      unaccent(l.location) ILIKE unaccent($${locIdx})
+      OR (l.location_id IS NOT NULL AND l.location_id IN (
+        SELECT id FROM locations WHERE unaccent(name) ILIKE unaccent($${locIdx})
+      ))
+    )`)
+  }
   if (query.type) add("l.room_type = ?", query.type)
   if (query.amenities) {
     const amenities = query.amenities.split(",").map((value) => value.trim()).filter(Boolean).slice(0, 40)
-    if (amenities.length) add("l.amenities @> ?::jsonb", JSON.stringify(amenities))
+    for (const am of amenities) {
+      const clean = stripAccents(am)
+      const patterns = AMENITY_SYNONYMS[clean] || [`%${clean}%`]
+      values.push(patterns)
+      filters.push(`EXISTS (
+        SELECT 1 FROM jsonb_array_elements_text(l.amenities) AS elem
+        WHERE unaccent(elem) ILIKE ANY($${values.length})
+      )`)
+    }
   }
   if (query.minPrice !== undefined) add("l.price_vnd >= ?", Math.round(query.minPrice * 1_000_000))
   if (query.maxPrice !== undefined) add("l.price_vnd <= ?", Math.round(query.maxPrice * 1_000_000))
