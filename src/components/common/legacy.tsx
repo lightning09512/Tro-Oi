@@ -257,6 +257,67 @@ export function Icon({
         <circle cx="12" cy="12" r="10" />
       </>
     ),
+    paperclip: (
+      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+    ),
+    video: (
+      <>
+        <polygon points="23 7 16 12 23 17 23 7" />
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </>
+    ),
+    file: (
+      <>
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+        <polyline points="14 2 14 8 20 8" />
+      </>
+    ),
+    zap: (
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    ),
+    crop: (
+      <>
+        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+      </>
+    ),
+    panel: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M15 3v18" />
+      </>
+    ),
+    idCard: (
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <circle cx="9" cy="10" r="2" />
+        <path d="M15 8h2M15 12h2M7 16h10" />
+      </>
+    ),
+    font: (
+      <>
+        <polyline points="4 20 8 4 12 20" />
+        <line x1="5.5" y1="14" x2="10.5" y2="14" />
+        <path d="M14 12h6M17 9v11" />
+      </>
+    ),
+    qr: (
+      <>
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="3" height="3" />
+        <path d="M14 21h7M21 14v4" />
+      </>
+    ),
+    doubleCheck: (
+      <>
+        <path d="m2 12 5 5L18 6" />
+        <path d="m12 17 2.5 2.5L22 10" />
+      </>
+    ),
   }
   return (
     <svg

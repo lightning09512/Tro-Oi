@@ -106,6 +106,18 @@ export interface ReportRecord {
   createdAt: string
 }
 
+export interface ChatMessageItem {
+  id: string
+  from: "me" | "them"
+  text: string
+  time: string
+  type?: "text" | "image" | "file" | "sticker" | "qr_deposit"
+  fileUrl?: string
+  fileName?: string
+  fileSize?: string
+  status?: "sent" | "delivered" | "read"
+}
+
 export interface MessageRecord {
   id: string
   accountId: string
@@ -119,7 +131,7 @@ export interface MessageRecord {
   muted?: boolean
   roomId: string
   userId: string
-  messages: { id: string; from: "me" | "them"; text: string; time: string }[]
+  messages: ChatMessageItem[]
 }
 
 export interface CategoryRecord {
@@ -285,7 +297,7 @@ const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversa
     "/images/avatars/demo-owner-01.jpg",
     "/images/avatars/demo-owner-05.jpg",
   ]
-  const sampleMessages: { id: string; from: "me" | "them"; text: string; time: string }[][] = [
+  const sampleMessages: ChatMessageItem[][] = [
     [
       { id: "msg-1-1", from: "me", text: "Dạ em chào chị Ngọc ạ, em thấy tin phòng Ung Văn Khiêm của mình, hiện phòng còn trống không chị?", time: "09:30" },
       { id: "msg-1-2", from: "them", text: "Chào em nha, phòng lầu 2 ban công thoáng bên chị vẫn còn nhé! Em tính khi nào dọn qua?", time: "09:45" },
@@ -295,6 +307,29 @@ const initialMessages: MessageRecord[] = conversations.slice(0, 3).map((conversa
       { id: "msg-1-6", from: "them", text: "Điện 3.5k/số đồng hồ riêng từng phòng em nha, nước máy 20k/khối. Xe máy để tầng trệt có khóa vân tay với camera an ninh, miễn phí 1 xe nhé em.", time: "10:25" },
       { id: "msg-1-7", from: "me", text: "Dạ ưng quá chị ơi, chiều mai 5h30 em qua alo chị liền nha. Em cảm ơn chị ạ!", time: "10:30" },
       { id: "msg-1-8", from: "them", text: "Okie em nha, hẹn em chiều mai 5h30 qua xem phòng nhé!", time: "10:32" },
+      {
+        id: "msg-1-9",
+        from: "me",
+        text: "đây chị",
+        type: "image",
+        fileUrl: "https://img.vietqr.io/image/MB-0395990338-compact2.png?amount=500000&addInfo=TroOi%20Coc%20Phong&accountName=MINH%20KHANH",
+        fileName: "vietqr-mb-500k.png",
+        time: "12:38",
+        status: "delivered",
+      },
+      { id: "msg-1-10", from: "them", text: "chuyển r nha em", time: "12:44" },
+      { id: "msg-1-11", from: "me", text: "oke chị ơi", time: "12:44", status: "delivered" },
+      {
+        id: "msg-1-12",
+        from: "them",
+        text: "Chị gửi em xem trước file mẫu hợp đồng thuê phòng của bên mình nhé!",
+        type: "file",
+        fileUrl: "/sample-hop-dong-thue-tro.pdf",
+        fileName: "Hop_Dong_Thue_Phong_Tro_Mau_105_Ung_Van_Khiem.pdf",
+        fileSize: "1.4 MB",
+        time: "12:46",
+        status: "read",
+      },
     ],
     [
       { id: "msg-2-1", from: "them", text: "Chào bạn nha! Bạn đang đi làm hay sinh viên á? Tụi mình đang tìm 1 bạn nữ ở chung cho vui với share tiền phòng.", time: "08:50" },
@@ -413,7 +448,17 @@ interface PlatformContextValue {
   markSingleNotificationRead: (id: string, read?: boolean) => Promise<void>
   deleteNotification: (id: string) => Promise<void>
   clearAllNotifications: (userId: string) => Promise<void>
-  sendMessage: (conversationId: string, accountId: string, text: string) => Promise<void>
+  sendMessage: (
+    conversationId: string,
+    accountId: string,
+    text: string,
+    attachment?: {
+      type?: "text" | "image" | "file" | "sticker" | "qr_deposit"
+      fileUrl?: string
+      fileName?: string
+      fileSize?: string
+    }
+  ) => Promise<void>
   markConversationRead: (conversationId: string, accountId: string) => Promise<void>
   toggleConversationMute: (conversationId: string, accountId: string) => Promise<void>
   startConversation: (person: { accountId: string; name: string; avatar: string; avatarUrl?: string; userId: string; roomId: string }) => Promise<string>
@@ -725,20 +770,50 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       }
       setNotifications((current) => current.filter((item) => item.userId !== userId))
     },
-    sendMessage: async (conversationId, accountId, text) => {
+    sendMessage: async (conversationId, accountId, text, attachment) => {
+      const type = attachment?.type || (attachment?.fileUrl ? (/\.(jpg|jpeg|png|webp|gif|avif)$/i.test(attachment.fileUrl) ? "image" : "file") : "text")
+      const previewText = text || (type === "image" ? "[Hình ảnh]" : type === "qr_deposit" ? "[Mã QR đặt cọc]" : attachment?.fileName ? `[Tệp] ${attachment.fileName}` : "[Tệp đính kèm]")
+
       if (isApiMode) {
-        const result = await apiRequest<{ item: { id: string; from: "me" | "them"; text: string; time: string } }>(`messages/conversations/${encodeURIComponent(conversationId)}/messages`, { method: "POST", body: JSON.stringify({ text }) })
-        setMessages((current) => current.map((conversation) => conversation.id !== conversationId ? conversation : { ...conversation, text, unread: false, time: result.item.time, messages: [...conversation.messages, result.item] }))
+        const payload = {
+          text,
+          type,
+          fileUrl: attachment?.fileUrl || "",
+          fileName: attachment?.fileName || "",
+          fileSize: attachment?.fileSize || "",
+        }
+        const result = await apiRequest<{ item: ChatMessageItem }>(
+          `messages/conversations/${encodeURIComponent(conversationId)}/messages`,
+          { method: "POST", body: JSON.stringify(payload) }
+        )
+        setMessages((current) => current.map((conversation) => conversation.id !== conversationId ? conversation : {
+          ...conversation,
+          text: previewText,
+          unread: false,
+          time: result.item.time,
+          messages: [...conversation.messages, result.item]
+        }))
         return
       }
       const time = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
       const messageId = `message-${Date.now()}`
+      const newItem: ChatMessageItem = {
+        id: messageId,
+        from: conversationId ? "me" : "them",
+        text,
+        time,
+        type,
+        fileUrl: attachment?.fileUrl,
+        fileName: attachment?.fileName,
+        fileSize: attachment?.fileSize,
+        status: "delivered",
+      }
       setMessages((current) => current.map((conversation) => conversation.id !== conversationId ? conversation : {
         ...conversation,
-        text,
+        text: previewText,
         unread: conversation.accountId !== accountId,
         time,
-        messages: [...conversation.messages, { id: messageId, from: conversation.accountId === accountId ? "me" : "them", text, time }],
+        messages: [...conversation.messages, newItem],
       }))
     },
     markConversationRead: async (conversationId, accountId) => {

@@ -2,7 +2,11 @@ import mongoose from "mongoose"
 
 const messageSchema = new mongoose.Schema({
   senderId: { type: String, required: true },
-  text: { type: String, required: true, trim: true, maxlength: 4000 },
+  text: { type: String, default: "", trim: true, maxlength: 4000 },
+  type: { type: String, enum: ["text", "image", "file", "sticker", "qr_deposit"], default: "text" },
+  fileUrl: { type: String, default: "" },
+  fileName: { type: String, default: "" },
+  fileSize: { type: String, default: "" },
   readBy: { type: [String], default: [] },
 }, { timestamps: true })
 

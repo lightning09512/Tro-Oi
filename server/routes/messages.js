@@ -16,14 +16,34 @@ async function formatConversation(conversation, selfId) {
     conversation.listingId ? pool.query("SELECT id,title,price_vnd,image_url FROM listings WHERE id=$1", [conversation.listingId]) : Promise.resolve({ rows: [] }),
   ])
   const other = otherResult.rows[0]
+  const lastMsg = conversation.messages.at(-1)
+  let lastText = conversation.listingId ? "Quan tâm tin phòng này" : "Chưa có tin nhắn mới"
+  if (lastMsg) {
+    if (lastMsg.text) lastText = lastMsg.text
+    else if (lastMsg.type === "image") lastText = "[Hình ảnh]"
+    else if (lastMsg.type === "file") lastText = `[Tệp] ${lastMsg.fileName || "Tệp đính kèm"}`
+    else if (lastMsg.type === "qr_deposit") lastText = "[Mã QR đặt cọc]"
+    else if (lastMsg.fileUrl) lastText = "[Đính kèm]"
+  }
+
   return {
     id: String(conversation._id), accountId: selfId, name: other?.name ?? "Thành viên", avatar: initials(other?.name), avatarUrl: other?.avatar_url ?? undefined, active: false,
-    text: conversation.messages.at(-1)?.text ?? (conversation.listingId ? "Quan tâm tin phòng này" : "Chưa có tin nhắn mới"),
-    time: conversation.messages.at(-1) ? messageTime(conversation.messages.at(-1).createdAt) : messageTime(conversation.updatedAt),
+    text: lastText,
+    time: lastMsg ? messageTime(lastMsg.createdAt) : messageTime(conversation.updatedAt),
     unread: conversation.messages.some((message) => message.senderId !== selfId && !message.readBy.includes(selfId)),
     muted: conversation.mutedBy.includes(selfId), roomId: conversation.listingId || "", userId: otherId,
     relatedListing: listingResult.rows[0] ? { id: listingResult.rows[0].id, title: listingResult.rows[0].title, price: `${(listingResult.rows[0].price_vnd / 1_000_000).toLocaleString("vi-VN")} triệu`, image: listingResult.rows[0].image_url } : null,
-    messages: conversation.messages.map((message) => ({ id: String(message._id), from: message.senderId === selfId ? "me" : "them", text: message.text, time: messageTime(message.createdAt) })),
+    messages: conversation.messages.map((message) => ({
+      id: String(message._id),
+      from: message.senderId === selfId ? "me" : "them",
+      text: message.text || "",
+      type: message.type || (message.fileUrl ? (/\.(jpg|jpeg|png|webp|gif|avif)$/i.test(message.fileUrl) ? "image" : "file") : "text"),
+      fileUrl: message.fileUrl || "",
+      fileName: message.fileName || "",
+      fileSize: message.fileSize || "",
+      time: messageTime(message.createdAt),
+      status: message.readBy && message.readBy.length > 1 ? "read" : "delivered",
+    })),
   }
 }
 
@@ -55,17 +75,47 @@ router.get("/conversations/:id/messages", async (req, res) => {
 })
 
 router.post("/conversations/:id/messages", async (req, res) => {
-  const input = z.object({ text: z.string().trim().min(1).max(4000) }).parse(req.body)
+  const input = z.object({
+    text: z.string().trim().max(4000).optional().default(""),
+    type: z.enum(["text", "image", "file", "sticker", "qr_deposit"]).optional().default("text"),
+    fileUrl: z.string().optional().default(""),
+    fileName: z.string().optional().default(""),
+    fileSize: z.string().optional().default(""),
+  }).refine((data) => (data.text && data.text.length > 0) || (data.fileUrl && data.fileUrl.length > 0), {
+    message: "Nội dung tin nhắn hoặc tệp đính kèm không được để trống.",
+  }).parse(req.body)
+
   const conversation = await Conversation.findById(req.params.id)
   if (!conversation || !conversation.participants.includes(req.user.id)) return res.status(404).json({ error: "Không tìm thấy cuộc trò chuyện." })
   const otherId = conversation.participants.find((id) => id !== req.user.id)
   const other = await pool.query("SELECT status FROM users WHERE id=$1", [otherId])
   if (!other.rows[0] || other.rows[0].status !== "active") return res.status(403).json({ error: "Thành viên này hiện không thể nhận tin nhắn." })
-  conversation.messages.push({ senderId: req.user.id, text: input.text, readBy: [req.user.id] })
+
+  conversation.messages.push({
+    senderId: req.user.id,
+    text: input.text,
+    type: input.type,
+    fileUrl: input.fileUrl,
+    fileName: input.fileName,
+    fileSize: input.fileSize,
+    readBy: [req.user.id],
+  })
   conversation.updatedAt = new Date()
   await conversation.save()
   const message = conversation.messages.at(-1)
-  const payload = { id: String(message._id), conversationId: String(conversation._id), senderId: req.user.id, text: message.text, time: messageTime(message.createdAt), createdAt: message.createdAt }
+  const payload = {
+    id: String(message._id),
+    conversationId: String(conversation._id),
+    senderId: req.user.id,
+    text: message.text,
+    type: message.type,
+    fileUrl: message.fileUrl,
+    fileName: message.fileName,
+    fileSize: message.fileSize,
+    time: messageTime(message.createdAt),
+    createdAt: message.createdAt,
+    status: "delivered",
+  }
   req.app.get("io")?.to(`conversation:${conversation.id}`).emit("message:new", payload)
   res.status(201).json({ item: { ...payload, from: "me" } })
 })

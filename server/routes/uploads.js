@@ -10,10 +10,27 @@ import { requireAuth, requireRole } from "../middleware/auth.js"
 const router = Router()
 const localUploadsDir = fileURLToPath(new URL("../uploads/", import.meta.url))
 const extensionByMimeType = new Map([["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["image/avif", "avif"]])
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024, files: 1 }, fileFilter: (_req, file, done) => {
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 }, fileFilter: (_req, file, done) => {
   if (!extensionByMimeType.has(file.mimetype)) return done(new Error("Chỉ nhận ảnh JPG, PNG, WebP hoặc AVIF."))
   done(null, true)
 } })
+
+function formatFileSize(bytes) {
+  if (!bytes) return "0 B"
+  const units = ["B", "KB", "MB", "GB"]
+  let size = bytes
+  let unitIndex = 0
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+const uploadAnyFile = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 1 },
+})
 
 router.post("/image", requireAuth, requireRole("renter", "landlord", "admin"), upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Vui lòng chọn một ảnh." })
@@ -32,5 +49,57 @@ router.post("/image", requireAuth, requireRole("renter", "landlord", "admin"), u
     stream.end(req.file.buffer)
   })
   res.status(201).json({ url: result.secure_url, publicId: result.public_id })
+})
+
+router.post("/file", requireAuth, requireRole("renter", "landlord", "admin"), uploadAnyFile.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Vui lòng chọn một tệp hoặc ảnh." })
+  const hasCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+  const ext = (path.extname(req.file.originalname).slice(1) || "").toLowerCase()
+  const isImage = ["jpg", "jpeg", "png", "webp", "gif", "avif"].includes(ext)
+  const formattedSize = formatFileSize(req.file.size)
+  const filename = `${randomUUID()}${ext ? `.${ext}` : ""}`
+
+  if (!hasCloudinary) {
+    if (process.env.NODE_ENV === "production") return res.status(503).json({ error: "Cần cấu hình Cloudinary để lưu tệp trên máy chủ production.", code: "UPLOAD_NOT_CONFIGURED" })
+    await mkdir(localUploadsDir, { recursive: true })
+    await writeFile(path.join(localUploadsDir, filename), req.file.buffer, { flag: "wx" })
+    return res.status(201).json({
+      url: `/uploads/${filename}`,
+      fileName: req.file.originalname,
+      fileSize: formattedSize,
+      fileType: isImage ? "image" : "file",
+      storage: "local",
+    })
+  }
+
+  cloudinary.config({ cloud_name: process.env.CLOUDINARY_CLOUD_NAME, api_key: process.env.CLOUDINARY_API_KEY, api_secret: process.env.CLOUDINARY_API_SECRET })
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "tro-oi/attachments", resource_type: isImage ? "image" : "raw" },
+        (error, value) => (error ? reject(error) : resolve(value))
+      )
+      stream.end(req.file.buffer)
+    })
+    res.status(201).json({
+      url: result.secure_url,
+      fileName: req.file.originalname,
+      fileSize: formattedSize,
+      fileType: isImage ? "image" : "file",
+      publicId: result.public_id,
+    })
+  } catch (err) {
+    console.error("Cloudinary upload file error:", err)
+    // Fallback to local storage if Cloudinary upload fails
+    await mkdir(localUploadsDir, { recursive: true })
+    await writeFile(path.join(localUploadsDir, filename), req.file.buffer, { flag: "wx" })
+    res.status(201).json({
+      url: `/uploads/${filename}`,
+      fileName: req.file.originalname,
+      fileSize: formattedSize,
+      fileType: isImage ? "image" : "file",
+      storage: "local",
+    })
+  }
 })
 export default router
