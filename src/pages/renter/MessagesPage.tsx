@@ -1672,7 +1672,7 @@ export default function MessagesPage() {
         {qrModalOpen && (
           <div className="dialog-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setQrModalOpen(false) }}>
             <div className="action-dialog zalo-qr-dialog" role="dialog" aria-modal="true" style={{ maxWidth: "480px", borderRadius: "16px", overflow: "hidden", padding: 0 }}>
-              <div className="zalo-qr-header" style={{ padding: "16px 20px", background: "linear-gradient(135deg, #1e3a8a, #0284c7)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div className="zalo-qr-header" style={{ padding: "16px 20px", background: "linear-gradient(135deg, #1c472c, #2f7a4b)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 700, color: "#fff" }}>Tạo mã VietQR đặt cọc giữ phòng</h3>
                 <button type="button" className="zalo-action-btn" style={{ color: "#fff" }} onClick={() => setQrModalOpen(false)}>
                   <Icon name="close" size={18} />
@@ -1699,9 +1699,9 @@ export default function MessagesPage() {
                           borderRadius: "6px",
                           fontSize: "12.5px",
                           fontWeight: 600,
-                          background: qrAmount === amt ? "#0284c7" : "#f1f5f9",
+                          background: qrAmount === amt ? "#2f7a4b" : "#f1f5f9",
                           color: qrAmount === amt ? "#fff" : "#334155",
-                          border: "1px solid #cbd5e1",
+                          border: qrAmount === amt ? "1px solid #245f3b" : "1px solid #cbd5e1",
                           cursor: "pointer",
                         }}
                         onClick={() => setQrAmount(amt)}
