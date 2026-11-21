@@ -170,6 +170,24 @@ function PencilIcon({ className = "w-3 h-3 text-slate-500 shrink-0" }: { classNa
   )
 }
 
+function SearchIcon({ className = "w-4 h-4 text-slate-400" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  )
+}
+
 function getUserDisplayInitials(name: string, fallback?: string): string {
   const clean = name.trim()
   if (clean === "Quản trị viên") return "QT"
@@ -573,9 +591,6 @@ export default function AdminResourcePage() {
   const totalFilteredUsers = filteredUsers.length
   const totalUserPages = Math.max(1, Math.ceil(totalFilteredUsers / USERS_PAGE_SIZE))
   const safeCurrentUserPage = Math.min(currentPage, totalUserPages)
-  const userStartIndex =
-    totalFilteredUsers === 0 ? 0 : (safeCurrentUserPage - 1) * USERS_PAGE_SIZE + 1
-  const userEndIndex = Math.min(safeCurrentUserPage * USERS_PAGE_SIZE, totalFilteredUsers)
 
   const paginatedUsers = useMemo(() => {
     const start = (safeCurrentUserPage - 1) * USERS_PAGE_SIZE
@@ -591,10 +606,9 @@ export default function AdminResourcePage() {
     const admin = users.filter((u) => u.role === "admin").length
 
     const active = users.filter((u) => u.status === "active").length
-    const pending = users.filter((u) => (u.status as string) === "pending").length
     const locked = users.filter((u) => u.status === "locked").length
 
-    return { total, landlord, tenant, admin, active, pending, locked }
+    return { total, landlord, tenant, admin, active, locked }
   }, [users])
 
   const openEdit = (
@@ -1754,62 +1768,71 @@ export default function AdminResourcePage() {
 
   // Giao diện chuyên biệt cho màn hình "Kiểm duyệt" (/admin/bao-cao)
   if (resource === "reports") {
+    const reportStatusTabs = [
+      { id: "all", label: "Tất cả báo cáo", count: reportTabCounts.total, dotClass: null },
+      {
+        id: "pending",
+        label: "Chờ xét duyệt",
+        count: reportTabCounts.pending,
+        dotClass: "bg-slate-400",
+      },
+      {
+        id: "accepted",
+        label: "Đã chấp nhận",
+        count: reportTabCounts.accepted,
+        dotClass: "bg-emerald-500",
+      },
+      { id: "rejected", label: "Từ chối", count: reportTabCounts.rejected, dotClass: "bg-slate-400" },
+    ] as const
+
     return (
       <main className="admin-resource-page management-page management-admin admin-resource-page--reports saas-reports-page">
-        {/* Hàng 1: Dãy 4 Tab Trạng thái + Nút Tải CSV */}
-        <div className="saas-listings-top-row saas-reports-top-row">
-          <div className="saas-status-tabs" role="tablist" aria-label="Lọc theo trạng thái báo cáo">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={filter === "all"}
-              className={`saas-status-tab${filter === "all" ? " is-active" : ""}`}
-              onClick={() => handleFilterChange("all")}
-            >
-              <span>Tất cả báo cáo</span>
-              <strong className="saas-tab-badge">{reportTabCounts.total}</strong>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={filter === "pending"}
-              className={`saas-status-tab${filter === "pending" ? " is-active" : ""}`}
-              onClick={() => handleFilterChange("pending")}
-            >
-              <span className="saas-tab-dot is-slate" aria-hidden="true" />
-              <span>Chờ xét duyệt</span>
-              <strong className="saas-tab-badge">{reportTabCounts.pending}</strong>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={filter === "accepted"}
-              className={`saas-status-tab${filter === "accepted" ? " is-active" : ""}`}
-              onClick={() => handleFilterChange("accepted")}
-            >
-              <span className="saas-tab-dot is-emerald" aria-hidden="true" />
-              <span>Đã chấp nhận</span>
-              <strong className="saas-tab-badge">{reportTabCounts.accepted}</strong>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={filter === "rejected"}
-              className={`saas-status-tab${filter === "rejected" ? " is-active" : ""}`}
-              onClick={() => handleFilterChange("rejected")}
-            >
-              <span className="saas-tab-dot is-slate" aria-hidden="true" />
-              <span>Từ chối</span>
-              <strong className="saas-tab-badge">{reportTabCounts.rejected}</strong>
-            </button>
+        {/* Hàng 1: Dãy 4 Tab Trạng thái đồng bộ chiều cao + Nút Tải CSV Outline */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div
+            className="flex flex-wrap items-center gap-2.5"
+            role="tablist"
+            aria-label="Lọc theo trạng thái báo cáo"
+          >
+            {reportStatusTabs.map((tab) => {
+              const isActive = filter === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`h-10 px-4 rounded-xl text-sm inline-flex items-center gap-2 transition-all box-border border cursor-pointer whitespace-nowrap shadow-2xs ${
+                    isActive
+                      ? "border-emerald-600 ring-1 ring-emerald-600 bg-white text-slate-900 font-bold"
+                      : "border-slate-200 bg-white text-slate-600 font-medium hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                  onClick={() => handleFilterChange(tab.id)}
+                >
+                  {tab.dotClass && (
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${tab.dotClass}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-xs font-semibold leading-none tabular-nums ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           <button
             type="button"
-            className="saas-csv-btn"
+            className="h-10 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-sm font-medium inline-flex items-center gap-2 shadow-2xs transition-colors cursor-pointer shrink-0 whitespace-nowrap"
             onClick={() => downloadCsv("bao-cao-vi-pham-tro-oi.csv", filtered)}
           >
             <Icon name="download" size={16} />
@@ -1817,23 +1840,31 @@ export default function AdminResourcePage() {
           </button>
         </div>
 
-        {/* Hàng 2: Thanh Tìm kiếm & Bộ lọc Loại nội dung */}
-        <div className="saas-reports-filter-bar">
-          <label className="saas-filter-search saas-reports-search">
-            <Icon name="search" size={16} />
+        {/* Hàng 2: Tách rời Ô Tìm kiếm mở rộng & Cụm lọc Loại nội dung */}
+        <div className="flex flex-wrap items-center justify-between gap-4 my-4">
+          <div className="relative flex-1 min-w-[320px]">
+            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
-              aria-label="Tìm theo nội dung, người báo cáo, lý do"
+              type="text"
+              aria-label="Tìm theo nội dung, lý do vi phạm hoặc người báo cáo"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Tìm theo nội dung, người báo cáo, lý do..."
+              placeholder="Tìm theo nội dung, lý do vi phạm hoặc người báo cáo..."
               autoComplete="off"
               spellCheck={false}
+              className="saas-reports-search-input w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 shadow-2xs transition-all"
             />
-          </label>
+          </div>
 
-          <div className="saas-reports-type-filter" role="group" aria-label="Lọc theo loại nội dung">
-            <span className="saas-reports-type-filter-label">Loại nội dung:</span>
-            <div className="saas-reports-type-segment">
+          <div
+            className="flex items-center gap-2.5 shrink-0 flex-wrap"
+            role="group"
+            aria-label="Lọc theo loại nội dung"
+          >
+            <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
+              Loại nội dung:
+            </span>
+            <div className="inline-flex items-center bg-slate-200/70 p-1 rounded-xl border border-slate-200/80 h-10 gap-0.5">
               {(
                 [
                   { value: "all", label: "Tất cả" },
@@ -1841,16 +1872,24 @@ export default function AdminResourcePage() {
                   { value: "Bài viết", label: "Bài viết" },
                   { value: "Bình luận", label: "Bình luận" },
                 ] as const
-              ).map((seg) => (
-                <button
-                  key={seg.value}
-                  type="button"
-                  className={`saas-reports-type-segment-btn${reportTargetTypeFilter === seg.value ? " is-active" : ""}`}
-                  onClick={() => setReportTargetTypeFilter(seg.value)}
-                >
-                  {seg.label}
-                </button>
-              ))}
+              ).map((seg) => {
+                const isActive = reportTargetTypeFilter === seg.value
+                return (
+                  <button
+                    key={seg.value}
+                    type="button"
+                    aria-pressed={isActive}
+                    className={
+                      isActive
+                        ? "h-full inline-flex items-center justify-center bg-white text-slate-900 font-semibold shadow-2xs px-3 py-1 rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap"
+                        : "h-full inline-flex items-center justify-center text-slate-600 hover:text-slate-900 font-medium px-3 py-1 rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap"
+                    }
+                    onClick={() => setReportTargetTypeFilter(seg.value)}
+                  >
+                    {seg.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -1873,121 +1912,138 @@ export default function AdminResourcePage() {
           </p>
         )}
 
-        {/* Danh sách Báo Cáo Bố Cục Lưới 4 Cột Có Đường Ngăn Cách Dọc (4-Column Grid/Table) */}
+        {/* Danh sách Báo Cáo Bố Cục Lưới 4 Cột Có Đường Ngăn Cách Dọc Rõ Nét */}
         <section
-          className="saas-reports-list"
+          className="flex flex-col"
           aria-busy={Boolean(busyId) || connectionState === "loading"}
           aria-label="Danh sách báo cáo vi phạm"
         >
           {filteredReports.length > 0 && (
-            <div className="saas-reports-table-header" role="row" aria-hidden="true">
-              <div className="saas-report-col-1">Lý do vi phạm &amp; Phân loại</div>
-              <div className="saas-report-col-2">Nội dung bị báo cáo</div>
-              <div className="saas-report-col-3">Chi tiết phản ánh</div>
-              <div className="saas-report-col-4">Thao tác</div>
-            </div>
+            <>
+              <div
+                className="hidden lg:grid lg:grid-cols-12 items-center bg-slate-200/70 border border-slate-300/80 rounded-xl px-0 py-3 mb-3 lg:divide-x lg:divide-slate-300/70"
+                role="row"
+                aria-hidden="true"
+              >
+                <div className="lg:col-span-4 px-5 text-sm font-bold text-slate-800">
+                  Lý do vi phạm &amp; Phân loại
+                </div>
+                <div className="lg:col-span-3 px-5 text-sm font-bold text-slate-800">
+                  Nội dung bị báo cáo
+                </div>
+                <div className="lg:col-span-3 px-5 text-sm font-bold text-slate-800">
+                  Chi tiết phản ánh
+                </div>
+                <div className="lg:col-span-2 px-5 text-sm font-bold text-slate-800 text-center">
+                  Thao tác
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                {filteredReports.map((report) => {
+                  const isAccepted = report.status === "accepted"
+                  const isPending = report.status === "pending"
+                  const typeIcon =
+                    report.targetType === "Tin phòng"
+                      ? "home"
+                      : report.targetType === "Bài viết"
+                        ? "edit"
+                        : "chat"
+
+                  return (
+                    <article
+                      key={report.id}
+                      className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 shadow-2xs transition-all grid grid-cols-1 lg:grid-cols-12 items-stretch overflow-hidden divide-y divide-slate-200 lg:divide-y-0 lg:divide-x lg:divide-slate-200"
+                    >
+                      {/* Cột 1 (lg:col-span-4): Lý do vi phạm & Phân loại */}
+                      <div className="lg:col-span-4 p-5 flex flex-col justify-center min-w-0">
+                        <div className="saas-report-card-badges">
+                          <span className="saas-report-type-badge">
+                            <Icon name={typeIcon} size={13} />
+                            <span>{report.targetType}</span>
+                          </span>
+
+                          {isPending ? (
+                            <span className="saas-report-status-pill is-pending">
+                              <span className="saas-report-status-dot" aria-hidden="true" />
+                              <span>Chờ xét duyệt</span>
+                            </span>
+                          ) : isAccepted ? (
+                            <span className="saas-report-status-pill is-accepted">
+                              <span aria-hidden="true">✓</span>
+                              <span>Đã chấp nhận</span>
+                            </span>
+                          ) : (
+                            <span className="saas-report-status-pill is-rejected">
+                              <span aria-hidden="true">✕</span>
+                              <span>Từ chối</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="saas-report-reason-title" title={report.reason}>
+                          {report.reason}
+                        </h3>
+                      </div>
+
+                      {/* Cột 2 (lg:col-span-3): Nội dung bị báo cáo */}
+                      <div className="lg:col-span-3 p-5 flex flex-col justify-center min-w-0">
+                        <span className="saas-report-col-label">Đối tượng:</span>
+                        <a
+                          href={getReportTargetUrl(report)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="saas-report-target-title saas-report-target-link"
+                          title={`${report.targetTitle} — Mở xem nội dung gốc trong tab mới`}
+                        >
+                          <span>{report.targetTitle}</span>
+                          <span className="saas-report-target-arrow" aria-hidden="true">
+                            ↗
+                          </span>
+                        </a>
+                      </div>
+
+                      {/* Cột 3 (lg:col-span-3): Chi tiết phản ánh */}
+                      <div className="lg:col-span-3 p-5 flex flex-col justify-center min-w-0">
+                        <span className="saas-report-reporter-line">
+                          Người báo cáo: <strong>{report.reporter}</strong>
+                        </span>
+                        <p
+                          className="saas-report-quote-desc"
+                          title={report.description || "Không có mô tả chi tiết."}
+                        >
+                          &ldquo;{report.description || "Không có mô tả chi tiết."}&rdquo;
+                        </p>
+                      </div>
+
+                      {/* Cột 4 (lg:col-span-2): Thao tác căn giữa hoàn toàn */}
+                      <div className="lg:col-span-2 p-5 flex items-center justify-center min-w-0">
+                        {isPending ? (
+                          <button
+                            type="button"
+                            className="saas-report-btn-primary"
+                            disabled={Boolean(busyId)}
+                            onClick={() => openReportModal(report, "accepted")}
+                          >
+                            Xử lý
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="saas-report-btn-outline"
+                            disabled={Boolean(busyId)}
+                            onClick={() => openReportModal(report)}
+                          >
+                            Xem chi tiết
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            </>
           )}
-
-          {filteredReports.map((report) => {
-            const isAccepted = report.status === "accepted"
-            const isPending = report.status === "pending"
-            const typeIcon =
-              report.targetType === "Tin phòng"
-                ? "home"
-                : report.targetType === "Bài viết"
-                  ? "edit"
-                  : "chat"
-
-            return (
-              <article key={report.id} className="saas-report-card">
-                {/* Cột 1 (lg:col-span-4): Lý do vi phạm & Phân loại */}
-                <div className="saas-report-col-1">
-                  {/* Hàng 1: 2 Badge phân biệt hoàn toàn về hình dáng & độ tương phản */}
-                  <div className="saas-report-card-badges">
-                    <span className="saas-report-type-badge">
-                      <Icon name={typeIcon} size={13} />
-                      <span>{report.targetType}</span>
-                    </span>
-
-                    {isPending ? (
-                      <span className="saas-report-status-pill is-pending">
-                        <span className="saas-report-status-dot" aria-hidden="true" />
-                        <span>Chờ xét duyệt</span>
-                      </span>
-                    ) : isAccepted ? (
-                      <span className="saas-report-status-pill is-accepted">
-                        <span aria-hidden="true">✓</span>
-                        <span>Đã chấp nhận</span>
-                      </span>
-                    ) : (
-                      <span className="saas-report-status-pill is-rejected">
-                        <span aria-hidden="true">✕</span>
-                        <span>Từ chối</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Hàng 2: Lý do báo cáo (reason) in đậm cỡ lớn nổi bật nhất */}
-                  <h3 className="saas-report-reason-title" title={report.reason}>
-                    {report.reason}
-                  </h3>
-                </div>
-
-                {/* Cột 2 (lg:col-span-3): Nội dung bị báo cáo */}
-                <div className="saas-report-col-2">
-                  <span className="saas-report-col-label">Đối tượng:</span>
-                  <a
-                    href={getReportTargetUrl(report)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="saas-report-target-title saas-report-target-link"
-                    title={`${report.targetTitle} — Mở xem nội dung gốc trong tab mới`}
-                  >
-                    <span>{report.targetTitle}</span>
-                    <span className="saas-report-target-arrow" aria-hidden="true">
-                      ↗
-                    </span>
-                  </a>
-                </div>
-
-                {/* Cột 3 (lg:col-span-3): Chi tiết phản ánh */}
-                <div className="saas-report-col-3">
-                  <span className="saas-report-reporter-line">
-                    Người báo cáo: <strong>{report.reporter}</strong>
-                  </span>
-                  <p
-                    className="saas-report-quote-desc"
-                    title={report.description || "Không có mô tả chi tiết."}
-                  >
-                    &ldquo;{report.description || "Không có mô tả chi tiết."}&rdquo;
-                  </p>
-                </div>
-
-                {/* Cột 4 (lg:col-span-2): Thao tác (Chỉ giữ duy nhất 1 nút hành động) */}
-                <div className="saas-report-col-4">
-                  {isPending ? (
-                    <button
-                      type="button"
-                      className="saas-report-btn-primary"
-                      disabled={Boolean(busyId)}
-                      onClick={() => openReportModal(report, "accepted")}
-                    >
-                      Xử lý
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="saas-report-btn-outline"
-                      disabled={Boolean(busyId)}
-                      onClick={() => openReportModal(report)}
-                    >
-                      Xem chi tiết
-                    </button>
-                  )}
-                </div>
-              </article>
-            )
-          })}
 
           {filteredReports.length === 0 &&
             connectionState !== "loading" &&
@@ -2706,73 +2762,53 @@ export default function AdminResourcePage() {
 
         {/* 1. Hàng điều khiển đầu tiên (Top Action & Role Tabs Bar) */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Cụm trái (Segmented Role Tabs) */}
+          {/* Cụm trái (4 Tab Pill Vai trò độc lập) */}
           <div
-            className="inline-flex p-1 bg-slate-200/70 rounded-lg border border-slate-200/80"
+            className="flex flex-wrap items-center gap-2.5"
             role="tablist"
             aria-label="Lọc theo vai trò"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={userRoleFilter === "all"}
-              onClick={() => setUserRoleFilter("all")}
-              className={
-                userRoleFilter === "all"
-                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
-                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
-              }
-            >
-              Tất cả ({userCounts.total})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={userRoleFilter === "landlord"}
-              onClick={() => setUserRoleFilter("landlord")}
-              className={
-                userRoleFilter === "landlord"
-                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
-                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
-              }
-            >
-              Chủ trọ ({userCounts.landlord})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={userRoleFilter === "tenant"}
-              onClick={() => setUserRoleFilter("tenant")}
-              className={
-                userRoleFilter === "tenant"
-                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
-                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
-              }
-            >
-              Người thuê ({userCounts.tenant})
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={userRoleFilter === "admin"}
-              onClick={() => setUserRoleFilter("admin")}
-              className={
-                userRoleFilter === "admin"
-                  ? "bg-white text-slate-900 font-semibold shadow-xs rounded-md px-3.5 py-1.5 text-sm transition-all cursor-pointer"
-                  : "text-slate-600 hover:text-slate-900 px-3.5 py-1.5 text-sm font-medium transition-all cursor-pointer"
-              }
-            >
-              Quản trị viên ({userCounts.admin})
-            </button>
+            {(
+              [
+                { id: "all", label: "Tất cả", count: userCounts.total },
+                { id: "landlord", label: "Chủ trọ", count: userCounts.landlord },
+                { id: "tenant", label: "Người thuê", count: userCounts.tenant },
+                { id: "admin", label: "Quản trị viên", count: userCounts.admin },
+              ] as const
+            ).map((tab) => {
+              const isActive = userRoleFilter === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setUserRoleFilter(tab.id)}
+                  className={`h-10 px-4 rounded-xl text-sm inline-flex items-center gap-2 transition-all box-border border cursor-pointer whitespace-nowrap shadow-2xs ${
+                    isActive
+                      ? "bg-white border-emerald-600 ring-1 ring-emerald-600 text-slate-900 font-bold"
+                      : "bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-600 font-medium"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-xs font-semibold leading-none tabular-nums ${
+                      isActive
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           {/* Cụm phải (Summary Pills + Action Buttons) */}
           <div className="flex items-center gap-2.5 flex-wrap">
             <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
               Hoạt động: <strong className="text-slate-900 font-semibold">{userCounts.active}</strong>
-            </div>
-            <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
-              Chờ duyệt: <strong className="text-slate-900 font-semibold">{userCounts.pending}</strong>
             </div>
             <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 shadow-2xs">
               Đã khóa: <strong className="text-rose-600 font-semibold">{userCounts.locked}</strong>
@@ -3154,9 +3190,7 @@ export default function AdminResourcePage() {
                             title={
                               user.status === "locked"
                                 ? "Đã khóa — Nhấn để mở khóa tài khoản"
-                                : (user.status as string) === "pending"
-                                  ? "Chờ duyệt — Nhấn để khóa tài khoản"
-                                  : "Đang hoạt động — Nhấn để khóa tài khoản"
+                                : "Đang hoạt động — Nhấn để khóa tài khoản"
                             }
                             onClick={() => action(user.id, user.status)}
                             className={
@@ -3176,11 +3210,7 @@ export default function AdminResourcePage() {
                               <span className="w-2 h-2 rounded-full bg-white shadow-2xs" />
                             </span>
                             <span>
-                              {user.status === "active"
-                                ? "Hoạt động"
-                                : (user.status as string) === "pending"
-                                  ? "Chờ duyệt"
-                                  : "Đã khóa"}
+                              {user.status === "active" ? "Hoạt động" : "Đã khóa"}
                             </span>
                           </button>
                           <button
@@ -3224,12 +3254,7 @@ export default function AdminResourcePage() {
           )}
 
           {/* 4. Thanh Phân trang ở đáy bảng (Pagination Bar) */}
-          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
-            <span className="text-xs text-slate-500">
-              {totalFilteredUsers === 0
-                ? "Hiển thị 0 trên 0 thành viên"
-                : `Hiển thị ${userStartIndex}–${userEndIndex} trên ${totalFilteredUsers} thành viên`}
-            </span>
+          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-center">
             <div className="flex items-center gap-1">
               <button
                 type="button"
