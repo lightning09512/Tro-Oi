@@ -37,8 +37,69 @@ router.post("/", requireAuth, async (req, res) => {
 
 router.get("/", requireAuth, requireRole("admin"), async (req, res) => {
   const status = z.enum(["pending", "accepted", "rejected"]).optional().parse(req.query.status)
-  const { rows } = await pool.query(`SELECT r.*,u.name AS reporter FROM reports r JOIN users u ON u.id=r.reporter_id ${status ? "WHERE r.status=$1" : ""} ORDER BY r.created_at DESC`, status ? [status] : [])
-  res.json({ items: rows.map((item) => ({ id: item.id, reporterId: item.reporter_id, reporter: item.reporter, targetType: item.target_type, targetId: item.target_id, targetTitle: item.target_title, reason: item.reason, description: item.description, status: item.status, adminNote: item.admin_note, createdAt: item.created_at })) })
+  const { rows } = await pool.query(
+    `SELECT r.*,
+      u.name AS reporter,
+      COALESCE(tl.owner_id, tp.author_id, tc.author_id) AS target_author_id,
+      COALESCE(tl.author_name, tp.author_name, tc.author_name) AS target_author,
+      sw.content AS warning_note
+     FROM reports r
+     JOIN users u ON u.id = r.reporter_id
+     LEFT JOIN LATERAL (
+       SELECT l.owner_id, COALESCE(u_l.name, l.source_name) AS author_name
+       FROM listings l
+       LEFT JOIN users u_l ON u_l.id = l.owner_id
+       WHERE r.target_type = 'Tin phòng'
+         AND (l.id = r.target_id OR lower(trim(l.title)) = lower(trim(r.target_title)))
+       ORDER BY (l.id = r.target_id) DESC
+       LIMIT 1
+     ) tl ON true
+     LEFT JOIN LATERAL (
+       SELECT p.author_id, u_p.name AS author_name
+       FROM forum_posts p
+       JOIN users u_p ON u_p.id = p.author_id
+       WHERE r.target_type = 'Bài viết'
+         AND (p.id = r.target_id OR lower(trim(split_part(p.content, E'\n', 1))) = lower(trim(r.target_title)))
+       ORDER BY (p.id = r.target_id) DESC
+       LIMIT 1
+     ) tp ON true
+     LEFT JOIN LATERAL (
+       SELECT c.author_id, u_c.name AS author_name
+       FROM forum_comments c
+       JOIN users u_c ON u_c.id = c.author_id
+       WHERE r.target_type = 'Bình luận'
+         AND c.id = r.target_id
+       LIMIT 1
+     ) tc ON true
+     LEFT JOIN LATERAL (
+       SELECT content
+       FROM system_warnings
+       WHERE report_id = r.id
+       ORDER BY created_at DESC
+       LIMIT 1
+     ) sw ON true
+     ${status ? "WHERE r.status=$1" : ""}
+     ORDER BY r.created_at DESC`,
+    status ? [status] : [],
+  )
+  res.json({
+    items: rows.map((item) => ({
+      id: item.id,
+      reporterId: item.reporter_id,
+      reporter: item.reporter,
+      targetType: item.target_type,
+      targetId: item.target_id,
+      targetTitle: item.target_title,
+      targetAuthorId: item.target_author_id ?? undefined,
+      targetAuthor: item.target_author ?? undefined,
+      warningNote: item.warning_note ?? undefined,
+      reason: item.reason,
+      description: item.description,
+      status: item.status,
+      adminNote: item.admin_note,
+      createdAt: item.created_at,
+    })),
+  })
 })
 
 router.patch("/:id", requireAuth, requireRole("admin"), async (req, res) => {
