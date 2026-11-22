@@ -5,6 +5,78 @@ import { usePlatform, type NotificationRecord } from "@/contexts/PlatformContext
 import useAuth from "@/hooks/useAuth"
 
 type TabType = "all" | "unread" | "listing" | "message" | "system"
+type AdminTabType = "all" | "unread" | "moderation" | "listing" | "community"
+type AdminNotifCategory = "moderation" | "listing" | "community" | "system"
+
+function getAdminCategory(item: NotificationRecord): AdminNotifCategory {
+  const text = `${item.title} ${item.detail}`.toLocaleLowerCase("vi")
+  if (/báo cáo|vi phạm|khiếu nại|kiểm duyệt|tố cáo|lừa đảo|cảnh báo/.test(text)) {
+    return "moderation"
+  }
+  if (/phòng|tin đăng|tin cho thuê|duyệt|thuê/.test(text)) {
+    return "listing"
+  }
+  if (/diễn đàn|bài viết|bình luận|thành viên|tài khoản|chủ trọ|người thuê/.test(text)) {
+    return "community"
+  }
+  return "system"
+}
+
+function getAdminCategoryMeta(category: AdminNotifCategory) {
+  switch (category) {
+    case "moderation":
+      return {
+        icon: "shield-check",
+        label: "Kiểm duyệt & Báo cáo",
+        bg: "#fff7ed",
+        color: "#c2410c",
+        border: "#fed7aa",
+        isUrgent: true,
+      }
+    case "listing":
+      return {
+        icon: "building",
+        label: "Tin cho thuê",
+        bg: "#ecfdf5",
+        color: "#047857",
+        border: "#a7f3d0",
+        isUrgent: false,
+      }
+    case "community":
+      return {
+        icon: "users",
+        label: "Cộng đồng & Thành viên",
+        bg: "#eff6ff",
+        color: "#1d4ed8",
+        border: "#bfdbfe",
+        isUrgent: false,
+      }
+    case "system":
+    default:
+      return {
+        icon: "bell",
+        label: "Hệ thống",
+        bg: "#f1f5f9",
+        color: "#334155",
+        border: "#e2e8f0",
+        isUrgent: false,
+      }
+  }
+}
+
+function getAdminActionLink(category: AdminNotifCategory): { to: string; label: string } {
+  switch (category) {
+    case "moderation":
+      return { to: "/admin/bao-cao", label: "Xử lý báo cáo" }
+    case "listing":
+      return { to: "/admin/tin-cho-thue", label: "Xem tin đăng" }
+    case "community":
+      return { to: "/admin/dien-dan", label: "Xem cộng đồng" }
+    case "system":
+    default:
+      return { to: "/admin", label: "Về bảng quản trị" }
+  }
+}
 
 function getCategory(item: NotificationRecord): "listing" | "message" | "community" | "system" {
   const text = (item.title + " " + item.detail).toLowerCase()
@@ -76,6 +148,8 @@ export default function NotificationsPage() {
   } = usePlatform()
 
   const [activeTab, setActiveTab] = useState<TabType>("all")
+  const [adminTab, setAdminTab] = useState<AdminTabType>("all")
+  const [searchQuery, setSearchQuery] = useState("")
   const [busy, setBusy] = useState("")
   const [error, setError] = useState("")
   const runAction = async (key: string, action: () => Promise<void>) => {
@@ -147,17 +221,319 @@ export default function NotificationsPage() {
   }
 
   const defaultActionPath =
-    user?.role === "admin"
-      ? "/admin"
-      : user?.role === "landlord"
-        ? "/chu-tro/quan-ly-tin"
-        : "/tim-phong"
+    user?.role === "landlord"
+      ? "/chu-tro/quan-ly-tin"
+      : "/tim-phong"
   const defaultActionLabel =
-    user?.role === "admin"
-      ? "Về trang quản trị"
-      : user?.role === "landlord"
-        ? "Quản lý tin đăng"
-        : "Khám phá phòng trọ"
+    user?.role === "landlord"
+      ? "Quản lý tin đăng"
+      : "Khám phá phòng trọ"
+
+  const adminCounts = useMemo(() => {
+    let moderation = 0
+    let listing = 0
+    let community = 0
+    for (const item of mine) {
+      const cat = getAdminCategory(item)
+      if (cat === "moderation") moderation++
+      else if (cat === "listing") listing++
+      else if (cat === "community") community++
+    }
+    return {
+      all: mine.length,
+      unread: unreadCount,
+      moderation,
+      listing,
+      community,
+    }
+  }, [mine, unreadCount])
+
+  const adminFiltered = useMemo(() => {
+    const keyword = searchQuery.trim().toLocaleLowerCase("vi")
+    return mine.filter((item) => {
+      if (adminTab === "unread" && item.read) return false
+      if (adminTab !== "all" && adminTab !== "unread" && getAdminCategory(item) !== adminTab) {
+        return false
+      }
+      if (!keyword) return true
+      return (
+        item.title.toLocaleLowerCase("vi").includes(keyword) ||
+        item.detail.toLocaleLowerCase("vi").includes(keyword)
+      )
+    })
+  }, [mine, adminTab, searchQuery])
+
+  const { unreadAdminItems, readAdminItems } = useMemo(() => {
+    const unread: NotificationRecord[] = []
+    const read: NotificationRecord[] = []
+    for (const item of adminFiltered) {
+      if (item.read) read.push(item)
+      else unread.push(item)
+    }
+    unread.sort((a, b) => {
+      const aUrgent = getAdminCategory(a) === "moderation" ? 0 : 1
+      const bUrgent = getAdminCategory(b) === "moderation" ? 0 : 1
+      return aUrgent - bUrgent
+    })
+    return { unreadAdminItems: unread, readAdminItems: read }
+  }, [adminFiltered])
+
+  if (user?.role === "admin") {
+    const hasSearch = Boolean(searchQuery.trim())
+    const isFiltering = adminTab !== "all" || hasSearch
+
+    const renderAdminCard = (item: NotificationRecord) => {
+      const category = getAdminCategory(item)
+      const meta = getAdminCategoryMeta(category)
+      const action = getAdminActionLink(category)
+      const cardStateClass = !item.read ? (meta.isUrgent ? "is-urgent" : "is-unread") : ""
+
+      return (
+        <article key={item.id} className={`saas-notif-card ${cardStateClass}`.trim()}>
+          <div
+            className="saas-notif-icon-box"
+            style={{
+              backgroundColor: meta.bg,
+              color: meta.color,
+              borderColor: meta.border,
+            }}
+            aria-hidden="true"
+          >
+            <Icon name={meta.icon} size={19} />
+          </div>
+
+          <div className="saas-notif-card-body">
+            <div className="saas-notif-card-head">
+              <div className="saas-notif-title-group">
+                {!item.read && (
+                  <span
+                    className={`saas-notif-status-dot${meta.isUrgent ? " is-urgent" : ""}`}
+                    aria-label="Chưa đọc"
+                    title="Chưa đọc"
+                  />
+                )}
+                <span
+                  className="saas-notif-cat-badge"
+                  style={{
+                    backgroundColor: meta.bg,
+                    color: meta.color,
+                    borderColor: meta.border,
+                  }}
+                >
+                  {meta.label}
+                </span>
+                <h2 className="saas-notif-card-title">{item.title}</h2>
+              </div>
+              <span className="saas-notif-card-time">{formatRelativeTime(item.createdAt)}</span>
+            </div>
+
+            <p className="saas-notif-card-desc">{item.detail}</p>
+
+            <div className="saas-notif-card-foot">
+              <span className="saas-notif-read-state">
+                {item.read ? "Đã xem" : "Chưa đọc"}
+              </span>
+
+              <div className="saas-notif-card-actions">
+                <Link
+                  to={action.to}
+                  className={`saas-notif-cta${meta.isUrgent && !item.read ? " is-urgent" : ""}`}
+                >
+                  <span>{action.label}</span>
+                  <span aria-hidden="true">&rarr;</span>
+                </Link>
+
+                <button
+                  type="button"
+                  className="saas-notif-icon-btn"
+                  disabled={Boolean(busy)}
+                  aria-label={item.read ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc"}
+                  title={item.read ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc"}
+                  onClick={() => handleToggleRead(item)}
+                >
+                  <Icon name={item.read ? "eye" : "check"} size={15} />
+                </button>
+
+                <button
+                  type="button"
+                  className="saas-notif-icon-btn is-danger"
+                  disabled={Boolean(busy)}
+                  aria-label="Xóa thông báo"
+                  title="Xóa thông báo này"
+                  onClick={() => handleDelete(item.id)}
+                >
+                  <Icon name="trash" size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      )
+    }
+
+    return (
+      <main className="saas-admin-notifications">
+        {/* Thanh công cụ hợp nhất toàn chiều ngang */}
+        <section className="saas-notif-toolbar" aria-label="Bộ lọc và thao tác thông báo">
+          <div className="saas-notif-tabs" role="tablist" aria-label="Phân loại thông báo quản trị">
+            {[
+              { id: "all" as const, label: "Tất cả", count: adminCounts.all, warn: false },
+              { id: "unread" as const, label: "Chưa đọc", count: adminCounts.unread, warn: true },
+              { id: "moderation" as const, label: "Kiểm duyệt", count: adminCounts.moderation, warn: true },
+              { id: "listing" as const, label: "Tin cho thuê", count: adminCounts.listing, warn: false },
+              { id: "community" as const, label: "Cộng đồng", count: adminCounts.community, warn: false },
+            ].map((tab) => {
+              const isActive = adminTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`saas-notif-tab${isActive ? " is-active" : ""}`}
+                  onClick={() => setAdminTab(tab.id)}
+                >
+                  <span>{tab.label}</span>
+                  {(tab.id === "all" || tab.count > 0) && (
+                    <span
+                      className={`saas-notif-tab-count${tab.warn && tab.count > 0 && !isActive ? " is-warn" : ""}`}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="saas-notif-tools">
+            <div className="saas-notif-search">
+              <span className="saas-notif-search-icon" aria-hidden="true">
+                <Icon name="search" size={15} />
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Tìm trong thông báo..."
+                aria-label="Tìm trong thông báo"
+              />
+              {hasSearch && (
+                <button
+                  type="button"
+                  className="saas-notif-search-clear"
+                  aria-label="Xóa từ khóa tìm kiếm"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              className="saas-notif-tool-btn is-primary-soft"
+              onClick={handleMarkAllRead}
+              disabled={unreadCount === 0 || Boolean(busy)}
+              title="Đánh dấu tất cả là đã đọc"
+            >
+              <Icon name="check" size={15} />
+              <span>Đã đọc tất cả{unreadCount > 0 ? ` (${unreadCount})` : ""}</span>
+            </button>
+
+            {mine.length > 0 && (
+              <button
+                type="button"
+                className="saas-notif-tool-btn is-danger"
+                onClick={handleClearAll}
+                disabled={Boolean(busy)}
+                title="Xóa tất cả thông báo"
+              >
+                <Icon name="trash" size={14} />
+                <span>Xóa tất cả</span>
+              </button>
+            )}
+          </div>
+        </section>
+
+        {error && (
+          <p className="form-message error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {adminFiltered.length > 0 ? (
+          <div className="saas-notif-groups">
+            {unreadAdminItems.length > 0 && (
+              <section className="saas-notif-group" aria-label="Thông báo chưa đọc">
+                <div className="saas-notif-group-head">
+                  <span>Cần chú ý · Chưa đọc ({unreadAdminItems.length})</span>
+                  <span>Ưu tiên cảnh báo kiểm duyệt</span>
+                </div>
+                <div className="saas-notif-feed">{unreadAdminItems.map(renderAdminCard)}</div>
+              </section>
+            )}
+
+            {readAdminItems.length > 0 && (
+              <section className="saas-notif-group" aria-label="Thông báo đã đọc">
+                <div className="saas-notif-group-head">
+                  <span>Hoạt động hệ thống đã xem ({readAdminItems.length})</span>
+                </div>
+                <div className="saas-notif-feed">{readAdminItems.map(renderAdminCard)}</div>
+              </section>
+            )}
+          </div>
+        ) : (
+          <section className="saas-notif-empty">
+            <div className="saas-notif-empty-icon" aria-hidden="true">
+              <Icon name="bell" size={28} />
+            </div>
+            <h2>
+              {isFiltering
+                ? "Không có thông báo khớp bộ lọc"
+                : "Chưa có thông báo mới nào"}
+            </h2>
+            <p>
+              {isFiltering
+                ? "Thử chuyển sang tab Tất cả hoặc xóa từ khóa tìm kiếm để xem toàn bộ lịch sử thông báo."
+                : "Các biến động mới về báo cáo kiểm duyệt, tin cho thuê và hoạt động hệ thống gửi đến tài khoản quản trị sẽ hiển thị tại đây."}
+            </p>
+            <div className="saas-notif-empty-actions">
+              {isFiltering ? (
+                <button
+                  type="button"
+                  className="saas-notif-empty-btn is-primary"
+                  onClick={() => {
+                    setAdminTab("all")
+                    setSearchQuery("")
+                  }}
+                >
+                  Xem tất cả thông báo ({mine.length})
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="saas-notif-empty-btn is-primary"
+                    onClick={() => navigate("/admin")}
+                  >
+                    Về bảng quản trị
+                  </button>
+                  <button
+                    type="button"
+                    className="saas-notif-empty-btn is-outline"
+                    onClick={() => navigate("/admin/bao-cao")}
+                  >
+                    Mở trang Kiểm duyệt
+                  </button>
+                </>
+              )}
+            </div>
+          </section>
+        )}
+      </main>
+    )
+  }
 
   return (
     <main className="notifications-page">
@@ -165,12 +541,6 @@ export default function NotificationsPage() {
         <nav className="notif-breadcrumbs" aria-label="Đường dẫn trang">
           <Link to="/">Trang chủ</Link>
           <span>/</span>
-          {user?.role === "admin" ? (
-            <>
-              <Link to="/admin">Quản trị</Link>
-              <span>/</span>
-            </>
-          ) : null}
           <span>Thông báo</span>
         </nav>
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router"
 import { Icon } from "@/components/common/legacy"
 import useAuth from "@/hooks/useAuth"
@@ -11,17 +11,26 @@ interface NavItemConfig {
   badgeCount?: number
 }
 
-const ADMIN_HEADER_META: Record<string, { label: string }> = {
-  "/admin": { label: "Bảng quản trị" },
-  "/admin/nguoi-dung": { label: "Thành viên" },
-  "/admin/tin-cho-thue": { label: "Tin cho thuê" },
-  "/admin/dien-dan": { label: "Cộng đồng" },
-  "/admin/danh-muc": { label: "Danh mục & Tiện ích" },
-  "/admin/bao-cao": { label: "Kiểm duyệt" },
-  "/admin/thong-ke": { label: "Báo cáo & Thống kê" },
-  "/admin/ho-so": { label: "Hồ sơ & Bảo mật" },
-  "/admin/doi-mat-khau": { label: "Đổi mật khẩu" },
-  "/admin/thong-bao": { label: "Thông báo hệ thống" },
+const ADMIN_HEADER_META: Record<string, { label: string; icon: string }> = {
+  "/admin": { label: "Bảng quản trị", icon: "home" },
+  "/admin/nguoi-dung": { label: "Thành viên", icon: "users" },
+  "/admin/tin-cho-thue": { label: "Tin cho thuê", icon: "building" },
+  "/admin/dien-dan": { label: "Cộng đồng", icon: "chat" },
+  "/admin/danh-muc": { label: "Danh mục & Tiện ích", icon: "grid" },
+  "/admin/bao-cao": { label: "Kiểm duyệt", icon: "shield-check" },
+  "/admin/ho-so": { label: "Hồ sơ & Bảo mật", icon: "user" },
+  "/admin/doi-mat-khau": { label: "Đổi mật khẩu", icon: "lock" },
+  "/admin/thong-bao": { label: "Thông báo hệ thống", icon: "bell" },
+}
+
+function formatAdminTodayLabel(): string {
+  const formatted = new Intl.DateTimeFormat("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date())
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
 }
 
 export default function AdminLayout() {
@@ -30,10 +39,7 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [mobileSideOpen, setMobileSideOpen] = useState(false)
-
-  const accountMenuRef = useRef<HTMLDivElement | null>(null)
 
   const pendingReports = useMemo(
     () => reports.filter((item) => item.status === "pending").length,
@@ -44,6 +50,8 @@ export default function AdminLayout() {
     () => notifications.filter((item) => item.userId === user?.id && !item.read).length,
     [notifications, user?.id],
   )
+
+  const todayLabel = useMemo(() => formatAdminTodayLabel(), [])
 
   const isProfileActive = pathname === "/admin/ho-so" || pathname === "/admin/doi-mat-khau"
   const headerMeta = ADMIN_HEADER_META[pathname] ?? ADMIN_HEADER_META["/admin"]
@@ -61,17 +69,15 @@ export default function AdminLayout() {
       },
       { to: "/admin/nguoi-dung", icon: "users", label: "Thành viên" },
       { to: "/admin/dien-dan", icon: "chat", label: "Cộng đồng" },
-      { to: "/admin/thong-ke", icon: "chart", label: "Báo cáo" },
       { to: "/admin/ho-so", icon: "user", label: "Hồ sơ & Bảo mật" },
     ],
     [pendingReports],
   )
 
-  // Đóng menu tài khoản hoặc sidebar mobile khi nhấn phím Escape
+  // Đóng sidebar mobile khi nhấn phím Escape
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setAccountMenuOpen(false)
         setMobileSideOpen(false)
       }
     }
@@ -79,25 +85,12 @@ export default function AdminLayout() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  // Đóng menu tài khoản khi click ra ngoài
+  // Tự động đóng sidebar mobile khi chuyển route
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (accountMenuRef.current && !accountMenuRef.current.contains(event.target as Node)) {
-        setAccountMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  // Tự động đóng menu khi chuyển route
-  useEffect(() => {
-    setAccountMenuOpen(false)
     setMobileSideOpen(false)
   }, [pathname])
 
   const handleLogout = () => {
-    setAccountMenuOpen(false)
     if (!window.confirm("Bạn có chắc muốn đăng xuất khỏi trang quản trị?")) return
     logout()
     navigate("/admin/dang-nhap", { replace: true, state: null })
@@ -162,52 +155,84 @@ export default function AdminLayout() {
 
       {/* Khu vực chính bên phải */}
       <section className="admin-main saas-admin-main">
-        {/* B. Thanh Header trên cùng (Top Header Bar) */}
-        <header className="admin-topbar saas-topbar">
-          <div className="saas-topbar-left">
-            <button
-              type="button"
-              className="saas-mobile-menu-btn"
-              onClick={() => setMobileSideOpen((prev) => !prev)}
-              aria-label="Mở menu điều hướng"
-            >
-              <Icon name="menu" size={20} />
-            </button>
-            {!isProfileActive && <h1 className="saas-topbar-title">{headerMeta.label}</h1>}
-          </div>
-
-          <div className="saas-topbar-right">
-            {/* Nút chuông thông báo có chấm đỏ thông báo mới */}
-            <button
-              type="button"
-              className={`saas-notif-btn${pathname === "/admin/thong-bao" ? " is-active" : ""}`}
-              aria-label={
-                unreadNotifications > 0
-                  ? `Thông báo, ${unreadNotifications} chưa đọc`
-                  : "Thông báo"
-              }
-              title={
-                unreadNotifications > 0
-                  ? `${unreadNotifications} thông báo chưa đọc`
-                  : "Thông báo"
-              }
-              onClick={() => navigate("/admin/thong-bao")}
-            >
-              <Icon name="bell" size={18} />
-              <span
-                className={`saas-notif-dot${unreadNotifications > 0 ? " has-unread" : ""}`}
-                aria-hidden="true"
-              />
-            </button>
-
-            {/* Cụm thông tin tài khoản Admin + Dropdown Menu */}
-            <div className="saas-account-dropdown" ref={accountMenuRef}>
+        {/* B. Thẻ Header nổi xanh rừng thương hiệu (Floating Brand Topbar Card) */}
+        <div className="saas-topbar-wrap">
+          <header className="admin-topbar saas-topbar">
+            <div className="saas-topbar-left">
               <button
                 type="button"
-                className={`saas-account-trigger${accountMenuOpen || isProfileActive ? " is-active" : ""}`}
-                onClick={() => setAccountMenuOpen((prev) => !prev)}
-                aria-expanded={accountMenuOpen}
-                aria-haspopup="menu"
+                className="saas-mobile-menu-btn"
+                onClick={() => setMobileSideOpen((prev) => !prev)}
+                aria-label="Mở menu điều hướng"
+              >
+                <Icon name="menu" size={20} />
+              </button>
+              <span className="saas-topbar-page-icon" aria-hidden="true">
+                <Icon name={headerMeta.icon} size={18} />
+              </span>
+              <div className="saas-topbar-heading">
+                <h1 className="saas-topbar-title">{headerMeta.label}</h1>
+                <p className="saas-topbar-date">{todayLabel}</p>
+              </div>
+            </div>
+
+            <div className="saas-topbar-right">
+              {/* Nút chuyển nhanh về trang chủ công khai */}
+              <NavLink
+                to="/"
+                className="saas-topbar-btn"
+                title="Về trang chủ công khai"
+                aria-label="Về trang chủ công khai"
+              >
+                <span className="saas-topbar-btn-icon" aria-hidden="true">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3.6 9h16.8M3.6 15h16.8" />
+                    <path d="M12 3a14 14 0 0 0 0 18 14 14 0 0 0 0-18z" />
+                  </svg>
+                </span>
+                <span className="saas-topbar-btn-label">Về trang chủ</span>
+              </NavLink>
+
+              {/* Nút thông báo có chữ + chỉ hiện chấm đỏ khi có thông báo chưa đọc */}
+              <button
+                type="button"
+                className={`saas-notif-btn${pathname === "/admin/thong-bao" ? " is-active" : ""}`}
+                aria-label={
+                  unreadNotifications > 0
+                    ? `Thông báo, ${unreadNotifications} chưa đọc`
+                    : "Thông báo"
+                }
+                title={
+                  unreadNotifications > 0
+                    ? `${unreadNotifications} thông báo chưa đọc`
+                    : "Thông báo"
+                }
+                onClick={() => navigate("/admin/thong-bao")}
+              >
+                <Icon name="bell" size={16} />
+                <span className="saas-topbar-btn-label">Thông báo</span>
+                {unreadNotifications > 0 && (
+                  <span className="saas-notif-dot" aria-hidden="true" />
+                )}
+              </button>
+
+              <span className="saas-topbar-divider" aria-hidden="true" />
+
+              {/* Thẻ tài khoản Admin 2 dòng — bấm mở thẳng Hồ sơ & Bảo mật */}
+              <NavLink
+                to="/admin/ho-so"
+                className={`saas-account-trigger${isProfileActive ? " is-active" : ""}`}
+                title="Hồ sơ & Bảo mật"
               >
                 <span className="saas-account-avatar">
                   <img
@@ -219,49 +244,44 @@ export default function AdminLayout() {
                     }}
                   />
                 </span>
-                <strong className="saas-account-name">
-                  {user?.name === "Quản trị viên" ? "Admin" : (user?.name ?? "Admin")}
-                </strong>
-                <Icon name="chevron-down" size={15} />
-              </button>
+                <span className="saas-account-meta">
+                  <strong className="saas-account-name">
+                    {user?.name === "Quản trị viên" ? "Admin" : (user?.name ?? "Admin")}
+                  </strong>
+                  <span className="saas-account-email">
+                    {user?.email ?? "admin@trooi.vn"}
+                  </span>
+                </span>
+              </NavLink>
 
-              {accountMenuOpen && (
-                <div className="saas-account-menu" role="menu">
-                  <div className="saas-account-menu-header">
-                    <strong>{user?.name ?? "Quản trị viên"}</strong>
-                    <span>{user?.email ?? "admin@trooi.vn"}</span>
-                  </div>
-                  <div className="saas-account-menu-divider" />
-                  <NavLink to="/" className="saas-account-menu-item" role="menuitem">
-                    <Icon name="home" size={15} />
-                    <span>Về trang chủ công khai</span>
-                  </NavLink>
-                  <NavLink to="/admin/ho-so" className="saas-account-menu-item" role="menuitem">
-                    <Icon name="user" size={15} />
-                    <span>Hồ sơ & Bảo mật</span>
-                  </NavLink>
-                  <NavLink
-                    to="/admin/doi-mat-khau"
-                    className="saas-account-menu-item"
-                    role="menuitem"
-                  >
-                    <Icon name="lock" size={15} />
-                    <span>Đổi mật khẩu</span>
-                  </NavLink>
-                  <div className="saas-account-menu-divider" />
-                  <button
-                    type="button"
-                    className="saas-account-menu-item is-danger"
-                    role="menuitem"
-                    onClick={handleLogout}
-                  >
-                    <span>Đăng xuất</span>
-                  </button>
-                </div>
-              )}
+              {/* Nút đăng xuất trực tiếp trên Header */}
+              <button
+                type="button"
+                className="saas-logout-btn"
+                onClick={handleLogout}
+                title="Đăng xuất khỏi trang quản trị"
+                aria-label="Đăng xuất"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span className="saas-topbar-btn-label">Đăng xuất</span>
+              </button>
             </div>
-          </div>
-        </header>
+          </header>
+        </div>
 
         <div className="admin-content saas-admin-content">
           <Outlet />

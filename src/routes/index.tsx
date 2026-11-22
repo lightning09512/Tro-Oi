@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react"
-import { createBrowserRouter } from "react-router"
+import { createBrowserRouter, Navigate } from "react-router"
 import MainLayout from "@/components/layout/MainLayout"
 import AdminLayout from "@/components/layout/AdminLayout"
 import RoleGuard from "@/components/common/RoleGuard"
@@ -36,7 +36,6 @@ import MessagesPage from "@/pages/renter/MessagesPage"
 import MembersPage from "@/pages/community/MembersPage"
 import AdminDashboardPage from "@/pages/admin/AdminDashboardPage"
 import AdminResourcePage from "@/pages/admin/AdminResourcePage"
-import AdminStatsPage from "@/pages/admin/AdminStatsPage"
 import LoginPage from "@/pages/auth/LoginPage"
 import RegisterPage from "@/pages/auth/RegisterPage"
 import PasswordRecoveryPage from "@/pages/auth/PasswordRecoveryPage"
@@ -147,7 +146,7 @@ export const router = createBrowserRouter([
         path: "bao-cao",
         element: guard(admin, <AdminResourcePage />),
       },
-      { path: "thong-ke", element: guard(admin, <AdminStatsPage />) },
+      { path: "thong-ke", element: <Navigate to="/admin" replace /> },
     ],
   },
   { path: "*", element: <ErrorPage code={404} /> },
