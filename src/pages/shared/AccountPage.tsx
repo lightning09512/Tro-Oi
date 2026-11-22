@@ -617,14 +617,8 @@ export default function AccountPage({
 
   if (isAdmin) {
     return (
-      <div className="saas-admin-profile-page px-4 pt-2 pb-10 sm:px-6 sm:pt-3 sm:pb-12 bg-slate-50">
+      <div className="saas-admin-profile-page px-4 pt-5 pb-10 sm:px-6 sm:pt-6 sm:pb-12 bg-slate-50">
         <div className="max-w-[1060px] mx-auto w-full space-y-5">
-          <header>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {passwordMode ? "Đổi mật khẩu" : "Hồ sơ & Bảo mật"}
-            </h1>
-          </header>
-
           {(profileStatus === "success" || passwordStatus === "success") && (
             <div
               className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-medium text-emerald-800"

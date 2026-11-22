@@ -3632,18 +3632,519 @@
   box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
 }
 
-.admin-shell.saas-admin-shell .notifications-page {
-  background: transparent !important;
-  background-color: transparent !important;
-  padding: 8px 0 36px;
+.admin-shell.saas-admin-shell .saas-admin-notifications {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.admin-shell.saas-admin-shell .notifications-page .notif-tabs,
-.admin-shell.saas-admin-shell .notifications-page .notif-card:not(.unread),
-.admin-shell.saas-admin-shell .notifications-page .notif-empty-card {
+.admin-shell.saas-admin-shell .saas-notif-toolbar {
   background: #ffffff;
-  border-color: rgba(226, 232, 240, 0.8);
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab.is-active {
+  background: #eaf4ec;
+  border-color: #c6e7cf;
+  color: #1b492d;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab.is-active .saas-notif-tab-count {
+  background: #1b492d;
+  color: #ffffff;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tab-count.is-warn {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search {
+  width: 224px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search:focus-within {
+  background: #ffffff;
+  border-color: #2f7a4b;
+  box-shadow: 0 0 0 3px rgba(47, 122, 75, 0.14);
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search-icon {
+  color: #64748b;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  padding: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search input:focus-visible {
+  outline: none;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search input::placeholder {
+  color: #94a3b8;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-search-clear {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn.is-primary-soft {
+  background: #eaf4ec;
+  border-color: #c6e7cf;
+  color: #245f3b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn.is-primary-soft:hover:not(:disabled) {
+  background: #dceee0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn.is-danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn.is-danger:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-tool-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.06);
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card.is-unread {
+  border-color: #c6e7cf;
+  background: #fbfefb;
+  box-shadow: inset 3px 0 0 #2f7a4b, 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card.is-urgent {
+  border-color: #fed7aa;
+  background: #fffdfb;
+  box-shadow: inset 3px 0 0 #ea580c, 0 2px 6px rgba(15, 23, 42, 0.03);
+}
+
+.admin-shell.saas-admin-shell .saas-notif-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2f7a4b;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-status-dot.is-urgent {
+  background: #ea580c;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-cat-badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-time {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-desc {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #475569;
+  overflow-wrap: anywhere;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-read-state {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-cta {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eaf4ec;
+  border: 1px solid #c6e7cf;
+  color: #1b492d;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: background-color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-cta:hover {
+  background: #dceee0;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-cta.is-urgent {
+  background: #1b492d;
+  border-color: #153a24;
+  color: #ffffff;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-cta.is-urgent:hover {
+  background: #245f3b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-icon-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-icon-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-icon-btn.is-danger {
+  color: #dc2626;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-icon-btn.is-danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 56px 24px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #eaf4ec;
+  border: 1px solid #c6e7cf;
+  color: #245f3b;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty p {
+  margin: 0 0 22px;
+  max-width: 48ch;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #64748b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-btn {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-btn.is-primary {
+  background: #1b492d;
+  border: 1px solid #153a24;
+  color: #ffffff;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-btn.is-primary:hover {
+  background: #245f3b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-btn.is-outline {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+}
+
+.admin-shell.saas-admin-shell .saas-notif-empty-btn.is-outline:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+@media (max-width: 1180px) {
+  .admin-shell.saas-admin-shell .saas-notif-toolbar {
+    align-items: stretch;
+  }
+  .admin-shell.saas-admin-shell .saas-notif-tools {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .admin-shell.saas-admin-shell .saas-notif-search {
+    flex: 1 1 200px;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-shell.saas-admin-shell .saas-notif-card {
+    padding: 14px;
+    gap: 12px;
+  }
+  .admin-shell.saas-admin-shell .saas-notif-icon-box {
+    display: none;
+  }
+  .admin-shell.saas-admin-shell .saas-notif-card-head {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .admin-shell.saas-admin-shell .saas-notif-empty {
+    padding: 40px 16px;
+  }
 }
 
 .admin-shell.saas-admin-shell .admin-content.saas-admin-content:has(> .saas-admin-profile-page) {
