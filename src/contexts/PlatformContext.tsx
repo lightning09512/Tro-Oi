@@ -99,6 +99,9 @@ export interface ReportRecord {
   targetType: "Tin phòng" | "Bài viết" | "Bình luận"
   targetId: string
   targetTitle: string
+  targetAuthorId?: string
+  targetAuthor?: string
+  warningNote?: string
   reason: string
   description: string
   status: "pending" | "accepted" | "rejected"

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
-import { useLocation, useSearchParams } from "react-router"
+import { useLocation, useNavigate, useSearchParams } from "react-router"
 import { Button, Icon } from "@/components/common/legacy"
 import {
   usePlatform,
@@ -203,6 +203,18 @@ function getUserDisplayInitials(name: string, fallback?: string): string {
   return fallback || "ND"
 }
 
+const VIETNAMESE_DIACRITIC_REGEX =
+  /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i
+
+function foldVietnamese(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLocaleLowerCase("vi")
+}
+
 export default function AdminResourcePage() {
   const { pathname } = useLocation()
   const resource = (
@@ -238,6 +250,7 @@ export default function AdminResourcePage() {
     connectionError,
   } = usePlatform()
 
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [filter, setFilter] = useState(() => searchParams.get("status") ?? "all")
@@ -263,7 +276,8 @@ export default function AdminResourcePage() {
   const [reportTargetTypeFilter, setReportTargetTypeFilter] =
     useState<"all" | ReportRecord["targetType"]>("all")
   const [editorError, setEditorError] = useState("")
-  const [dialog, setDialog] = useState<"edit" | "report" | "delete" | null>(null)
+  const [dialog, setDialog] = useState<"edit" | "report" | "delete" | "violations" | null>(null)
+  const [violationsUser, setViolationsUser] = useState<PlatformUser | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string
     title: string
@@ -291,6 +305,7 @@ export default function AdminResourcePage() {
       if (!busyRef.current) {
         setDialog(null)
         setDeleteTarget(null)
+        setViolationsUser(null)
       }
     },
     Boolean(dialog),
@@ -304,6 +319,7 @@ export default function AdminResourcePage() {
     setReportTargetTypeFilter("all")
     setDialog(null)
     setDeleteTarget(null)
+    setViolationsUser(null)
     setActionError("")
   }, [resource, searchParams])
 
@@ -315,7 +331,97 @@ export default function AdminResourcePage() {
     } else {
       nextParams.set("status", nextStatus)
     }
+    if (query.trim()) {
+      nextParams.set("q", query)
+    } else {
+      nextParams.delete("q")
+    }
     setSearchParams(nextParams, { replace: true })
+  }
+
+  const updateReportQuery = (nextQuery: string) => {
+    setQuery(nextQuery)
+    if (searchParams.has("q")) {
+      const nextParams = new URLSearchParams(searchParams)
+      if (nextQuery.trim()) {
+        nextParams.set("q", nextQuery)
+      } else {
+        nextParams.delete("q")
+      }
+      setSearchParams(nextParams, { replace: true })
+    }
+  }
+
+  const resolveReportTargetAuthor = (
+    report: ReportRecord,
+  ): { id?: string; name: string; resolved: boolean } => {
+    const normTitle = report.targetTitle.trim().toLocaleLowerCase("vi")
+
+    if (report.targetType === "Tin phòng") {
+      const matchedListing =
+        listings.find((item) => item.id === report.targetId) ??
+        listings.find((item) => item.title.trim().toLocaleLowerCase("vi") === normTitle)
+      if (matchedListing) {
+        const ownerUser = matchedListing.ownerId
+          ? users.find((u) => u.id === matchedListing.ownerId)
+          : undefined
+        const name = (ownerUser?.name || matchedListing.ownerName || "").trim()
+        return {
+          id: matchedListing.ownerId || ownerUser?.id || undefined,
+          name: name || "Chưa rõ",
+          resolved: Boolean(name),
+        }
+      }
+    } else if (report.targetType === "Bài viết") {
+      const matchedPost =
+        posts.find((item) => item.id === report.targetId) ??
+        posts.find(
+          (item) => parsePostContent(item.content).title.trim().toLocaleLowerCase("vi") === normTitle,
+        )
+      if (matchedPost) {
+        const authorUser = matchedPost.authorId
+          ? users.find((u) => u.id === matchedPost.authorId)
+          : undefined
+        const name = (authorUser?.name || matchedPost.name || "").trim()
+        return {
+          id: matchedPost.authorId || authorUser?.id || undefined,
+          name: name || "Chưa rõ",
+          resolved: Boolean(name),
+        }
+      }
+    } else if (report.targetType === "Bình luận") {
+      const matchedComment = posts
+        .flatMap((post) => post.comments ?? [])
+        .find((comment) => comment.id === report.targetId)
+      if (matchedComment) {
+        const commentUser = matchedComment.authorId
+          ? users.find((u) => u.id === matchedComment.authorId)
+          : undefined
+        const name = (commentUser?.name || matchedComment.author || "").trim()
+        return {
+          id: matchedComment.authorId || commentUser?.id || undefined,
+          name: name || "Chưa rõ",
+          resolved: Boolean(name),
+        }
+      }
+    }
+
+    if (report.targetAuthor?.trim()) {
+      return {
+        id: report.targetAuthorId || undefined,
+        name: report.targetAuthor.trim(),
+        resolved: true,
+      }
+    }
+
+    return { id: undefined, name: "Chưa rõ", resolved: false }
+  }
+
+  const isReportAgainstUser = (report: ReportRecord, user: PlatformUser): boolean => {
+    const author = resolveReportTargetAuthor(report)
+    if (author.id) return author.id === user.id
+    if (!author.resolved) return false
+    return author.name.trim().toLocaleLowerCase("vi") === user.name.trim().toLocaleLowerCase("vi")
   }
 
   const statusOptions: Record<Resource, string[]> = {
@@ -472,14 +578,17 @@ export default function AdminResourcePage() {
         status: item.status,
         meta: `Danh mục ${item.type.toLocaleLowerCase("vi")}`,
       }))
-    return reports.map((item) => ({
-      id: item.id,
-      title: item.targetTitle,
-      detail: `${item.targetType} · ${item.reason}`,
-      status: item.status,
-      meta: `${item.reporter} · ${item.description || "Không có mô tả thêm"}`,
-    }))
-  }, [resource, users, filteredListings, posts, categories, reports])
+    return reports.map((item) => {
+      const targetAuthor = resolveReportTargetAuthor(item)
+      return {
+        id: item.id,
+        title: item.targetTitle,
+        detail: `${item.targetType} · ${item.reason}`,
+        status: item.status,
+        meta: `Người đăng: ${targetAuthor.name} · Người báo cáo: ${item.reporter} · ${item.description || "Không có mô tả thêm"}`,
+      }
+    })
+  }, [resource, users, filteredListings, posts, categories, reports, listings])
 
   const filtered = useMemo(() => {
     if (resource === "listings") return rows
@@ -495,15 +604,21 @@ export default function AdminResourcePage() {
   // Tự động đưa về trang 1 khi thay đổi từ khóa tìm kiếm, tab trạng thái, khu vực hoặc sắp xếp
   useEffect(() => {
     setCurrentPage(1)
-  }, [query, filter, areaFilter, sortBy, resource, userRoleFilter, userSortBy])
+  }, [
+    query,
+    filter,
+    areaFilter,
+    sortBy,
+    resource,
+    userRoleFilter,
+    userSortBy,
+    reportTargetTypeFilter,
+  ])
 
   const LISTINGS_PAGE_SIZE = 5
   const totalFilteredListings = filteredListings.length
   const totalListingPages = Math.max(1, Math.ceil(totalFilteredListings / LISTINGS_PAGE_SIZE))
   const safeCurrentPage = Math.min(currentPage, totalListingPages)
-  const listingStartIndex =
-    totalFilteredListings === 0 ? 0 : (safeCurrentPage - 1) * LISTINGS_PAGE_SIZE + 1
-  const listingEndIndex = Math.min(safeCurrentPage * LISTINGS_PAGE_SIZE, totalFilteredListings)
 
   const paginatedListings = useMemo(() => {
     const start = (safeCurrentPage - 1) * LISTINGS_PAGE_SIZE
@@ -644,6 +759,12 @@ export default function AdminResourcePage() {
     setDialog("report")
   }
 
+  const openViolationsModal = (user: PlatformUser) => {
+    setViolationsUser(user)
+    setActionError("")
+    setDialog("violations")
+  }
+
   // Số lượng tin cho thuê áp dụng cho từng mục Danh mục & Tiện ích
   const categoryUsageCounts = useMemo(() => {
     const amenityKeywordsMap: Record<string, string[]> = {
@@ -724,9 +845,13 @@ export default function AdminResourcePage() {
     return { total, pending, accepted, rejected }
   }, [reports])
 
-  // Danh sách Báo cáo vi phạm đã lọc theo Tab trạng thái, Loại nội dung & Từ khóa
+  // Danh sách Báo cáo vi phạm đã lọc theo Tab trạng thái, Loại nội dung & Từ khóa (bao gồm tên người đăng)
   const filteredReports = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("vi")
+    const trimmedQuery = query.trim()
+    const normalizedQuery = trimmedQuery.toLocaleLowerCase("vi")
+    const foldedQuery = foldVietnamese(trimmedQuery)
+    const hasDiacritics = VIETNAMESE_DIACRITIC_REGEX.test(trimmedQuery)
+
     return reports.filter((item) => {
       const matchStatus = filter === "all" || item.status === filter
       if (!matchStatus) return false
@@ -734,15 +859,28 @@ export default function AdminResourcePage() {
         reportTargetTypeFilter === "all" || item.targetType === reportTargetTypeFilter
       if (!matchType) return false
       if (normalizedQuery) {
-        const searchable =
-          `${item.targetTitle} ${item.targetType} ${item.reason} ${item.reporter} ${item.description}`.toLocaleLowerCase(
-            "vi",
-          )
-        if (!searchable.includes(normalizedQuery)) return false
+        const targetAuthor = resolveReportTargetAuthor(item)
+        const targetUser = targetAuthor.id
+          ? users.find((u) => u.id === targetAuthor.id)
+          : undefined
+        const searchable = `${item.targetTitle} ${item.targetType} ${item.reason} ${item.reporter} ${item.description} ${targetAuthor.resolved ? targetAuthor.name : ""} ${targetUser?.email ?? ""} ${targetUser?.phone ?? ""}`
+        const matched = hasDiacritics
+          ? searchable.toLocaleLowerCase("vi").includes(normalizedQuery)
+          : foldVietnamese(searchable).includes(foldedQuery)
+        if (!matched) return false
       }
       return true
     })
-  }, [reports, filter, reportTargetTypeFilter, query])
+  }, [reports, filter, reportTargetTypeFilter, query, listings, posts, users])
+
+  const REPORTS_PAGE_SIZE = 5
+  const totalFilteredReports = filteredReports.length
+  const totalReportPages = Math.max(1, Math.ceil(totalFilteredReports / REPORTS_PAGE_SIZE))
+  const safeCurrentReportPage = Math.min(currentPage, totalReportPages)
+  const paginatedReports = useMemo(() => {
+    const start = (safeCurrentReportPage - 1) * REPORTS_PAGE_SIZE
+    return filteredReports.slice(start, start + REPORTS_PAGE_SIZE)
+  }, [filteredReports, safeCurrentReportPage])
 
   // Xác định URL hiển thị thực tế của đối tượng bị báo cáo (Phương án A - Mở ở tab mới)
   const getReportTargetUrl = (report: ReportRecord): string => {
@@ -758,7 +896,13 @@ export default function AdminResourcePage() {
     }
 
     if (report.targetType === "Bài viết") {
-      const matchedPost = posts.find((item) => item.id === report.targetId)
+      const matchedPost =
+        posts.find((item) => item.id === report.targetId) ??
+        posts.find(
+          (item) =>
+            parsePostContent(item.content).title.trim().toLocaleLowerCase("vi") ===
+            report.targetTitle.trim().toLocaleLowerCase("vi"),
+        )
       return matchedPost ? `/bai-viet/${matchedPost.id}` : "/dien-dan"
     }
 
@@ -1126,14 +1270,7 @@ export default function AdminResourcePage() {
     try {
       await updateReport(reportTarget.id, reportDecision, reporterNote.trim())
       if (sendWarning && warningMessage.trim()) {
-        const targetUserId =
-          reportTarget.targetType === "Tin phòng"
-            ? listings.find((item) => item.id === reportTarget.targetId)?.ownerId
-            : reportTarget.targetType === "Bài viết"
-              ? posts.find((item) => item.id === reportTarget.targetId)?.authorId
-              : posts
-                  .flatMap((item) => item.comments)
-                  .find((item) => item.id === reportTarget.targetId)?.authorId
+        const targetUserId = resolveReportTargetAuthor(reportTarget).id
         if (targetUserId) {
           if (isApiMode) {
             try {
@@ -1622,7 +1759,13 @@ export default function AdminResourcePage() {
               </a>
             </div>
 
-            {/* Đường kẻ mảnh ngăn cách Hàng 2 và Hàng 3 */}
+            {/* Hàng 3: Người đăng nội dung */}
+            <span className="saas-report-summary-label">Người đăng:</span>
+            <div className="saas-report-summary-value saas-report-summary-author">
+              {resolveReportTargetAuthor(reportTarget).name}
+            </div>
+
+            {/* Đường kẻ mảnh ngăn cách phần đối tượng và chi tiết phản ánh */}
             <div className="saas-report-summary-divider" aria-hidden="true" />
 
             {/* Hàng 3: Chi tiết phản ánh */}
@@ -1766,6 +1909,130 @@ export default function AdminResourcePage() {
       </div>
     ) : null
 
+  const liveViolationsUser = violationsUser
+    ? (users.find((u) => u.id === violationsUser.id) ?? violationsUser)
+    : null
+
+  const violationsDialogNode =
+    dialog === "violations" && liveViolationsUser ? (() => {
+      const userViolations = reports.filter(
+        (r) => r.status === "accepted" && isReportAgainstUser(r, liveViolationsUser),
+      )
+
+      return (
+        <div
+          className="dialog-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !busyRef.current) {
+              setDialog(null)
+              setViolationsUser(null)
+            }
+          }}
+        >
+          <section
+            ref={dialogRef}
+            className="saas-violations-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-violations-modal-title"
+          >
+            {/* Header 1 dòng gọn gàng */}
+            <div className="saas-report-modal-header">
+              <h2 id="admin-violations-modal-title" className="saas-violations-modal-title">
+                Lịch sử vi phạm · {liveViolationsUser.name}
+              </h2>
+              <button
+                type="button"
+                className="saas-modal-close-btn"
+                disabled={Boolean(busyId)}
+                onClick={() => {
+                  setDialog(null)
+                  setViolationsUser(null)
+                }}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Khung lưới Nhãn – Giá Trị đồng bộ (145px | 1fr) */}
+            <div className="saas-violations-list">
+              {userViolations.length > 0 ? (
+                userViolations.map((violation) => (
+                  <article key={violation.id} className="saas-violations-card">
+                    <span className="saas-violations-label">Lý do vi phạm:</span>
+                    <div className="saas-violations-value">
+                      <span className="saas-violations-reason-tag">{violation.reason}</span>
+                    </div>
+
+                    <span className="saas-violations-label">Phân loại &amp; Ngày:</span>
+                    <div className="saas-violations-value saas-violations-meta">
+                      {violation.targetType} · {formatForumPostDate(violation.createdAt)}
+                    </div>
+
+                    <span className="saas-violations-label">Nội dung vi phạm:</span>
+                    <div className="saas-violations-value">
+                      <a
+                        href={getReportTargetUrl(violation)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="saas-violations-target-link"
+                        title="Mở xem nội dung gốc trong tab mới"
+                      >
+                        <span>{violation.targetTitle}</span>
+                        <span className="saas-report-target-arrow" aria-hidden="true">
+                          ↗
+                        </span>
+                      </a>
+                    </div>
+
+                    <div className="saas-report-summary-divider" aria-hidden="true" />
+
+                    <span className="saas-violations-label">Chi tiết phản ánh:</span>
+                    <div className="saas-violations-value saas-violations-desc">
+                      <strong>{violation.reporter}:</strong>{" "}
+                      &ldquo;{violation.description || "Không có mô tả chi tiết."}&rdquo;
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="saas-violations-empty">
+                  Tài khoản này chưa có vi phạm nào được xác nhận.
+                </div>
+              )}
+            </div>
+
+            {/* Footer 2 nút đồng đều kích thước */}
+            <div className="saas-violations-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetName = liveViolationsUser.name
+                  setDialog(null)
+                  setViolationsUser(null)
+                  navigate(`/admin/bao-cao?q=${encodeURIComponent(targetName)}`)
+                }}
+                className="saas-violations-btn-outline"
+              >
+                Xem tại Kiểm duyệt
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(busyId)}
+                onClick={() => {
+                  setDialog(null)
+                  setViolationsUser(null)
+                }}
+                className="saas-violations-btn-primary"
+              >
+                Đóng
+              </button>
+            </div>
+          </section>
+        </div>
+      )
+    })() : null
+
   // Giao diện chuyên biệt cho màn hình "Kiểm duyệt" (/admin/bao-cao)
   if (resource === "reports") {
     const reportStatusTabs = [
@@ -1833,7 +2100,21 @@ export default function AdminResourcePage() {
           <button
             type="button"
             className="h-10 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-sm font-medium inline-flex items-center gap-2 shadow-2xs transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-            onClick={() => downloadCsv("bao-cao-vi-pham-tro-oi.csv", filtered)}
+            onClick={() =>
+              downloadCsv(
+                "bao-cao-vi-pham-tro-oi.csv",
+                filteredReports.map((item) => {
+                  const targetAuthor = resolveReportTargetAuthor(item)
+                  return {
+                    id: item.id,
+                    title: item.targetTitle,
+                    detail: `${item.targetType} · ${item.reason}`,
+                    status: statusText[item.status] ?? item.status,
+                    meta: `Người đăng: ${targetAuthor.name} · Người báo cáo: ${item.reporter} · ${item.description || "Không có mô tả thêm"}`,
+                  }
+                }),
+              )
+            }
           >
             <Icon name="download" size={16} />
             <span>Tải CSV</span>
@@ -1846,14 +2127,25 @@ export default function AdminResourcePage() {
             <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
             <input
               type="text"
-              aria-label="Tìm theo nội dung, lý do vi phạm hoặc người báo cáo"
+              aria-label="Tìm theo nội dung, lý do vi phạm, người đăng hoặc người báo cáo"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Tìm theo nội dung, lý do vi phạm hoặc người báo cáo..."
+              onChange={(event) => updateReportQuery(event.target.value)}
+              placeholder="Tìm theo nội dung, lý do vi phạm, người đăng hoặc người báo cáo..."
               autoComplete="off"
               spellCheck={false}
-              className="saas-reports-search-input w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 shadow-2xs transition-all"
+              className="saas-reports-search-input w-full h-10 pl-10 pr-9 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 shadow-2xs transition-all"
             />
+            {query.trim() && (
+              <button
+                type="button"
+                className="saas-reports-search-clear"
+                onClick={() => updateReportQuery("")}
+                aria-label="Xóa từ khóa tìm kiếm"
+                title="Xóa tìm kiếm"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           <div
@@ -1912,37 +2204,38 @@ export default function AdminResourcePage() {
           </p>
         )}
 
-        {/* Danh sách Báo Cáo Bố Cục Lưới 4 Cột Có Đường Ngăn Cách Dọc Rõ Nét */}
+        {/* Bảng Danh sách Báo Cáo gom trong 1 thẻ lớn có phân trang 5 bản ghi/trang */}
         <section
-          className="flex flex-col"
+          className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden"
           aria-busy={Boolean(busyId) || connectionState === "loading"}
           aria-label="Danh sách báo cáo vi phạm"
         >
-          {filteredReports.length > 0 && (
+          {paginatedReports.length > 0 && (
             <>
               <div
-                className="hidden lg:grid lg:grid-cols-12 items-center bg-slate-200/70 border border-slate-300/80 rounded-xl px-0 py-3 mb-3 lg:divide-x lg:divide-slate-300/70"
+                className="hidden lg:grid saas-reports-grid-row items-center bg-slate-50/80 border-b border-slate-200 py-3.5 lg:divide-x lg:divide-slate-200"
                 role="row"
                 aria-hidden="true"
               >
-                <div className="lg:col-span-4 px-5 text-sm font-bold text-slate-800">
+                <div className="px-5 text-sm font-bold text-slate-800">
                   Lý do vi phạm &amp; Phân loại
                 </div>
-                <div className="lg:col-span-3 px-5 text-sm font-bold text-slate-800">
+                <div className="px-5 text-sm font-bold text-slate-800">
                   Nội dung bị báo cáo
                 </div>
-                <div className="lg:col-span-3 px-5 text-sm font-bold text-slate-800">
+                <div className="px-5 text-sm font-bold text-slate-800">
                   Chi tiết phản ánh
                 </div>
-                <div className="lg:col-span-2 px-5 text-sm font-bold text-slate-800 text-center">
+                <div className="px-5 text-sm font-bold text-slate-800 text-center">
                   Thao tác
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2.5">
-                {filteredReports.map((report) => {
+              <div className="divide-y divide-slate-200">
+                {paginatedReports.map((report) => {
                   const isAccepted = report.status === "accepted"
                   const isPending = report.status === "pending"
+                  const targetAuthor = resolveReportTargetAuthor(report)
                   const typeIcon =
                     report.targetType === "Tin phòng"
                       ? "home"
@@ -1953,10 +2246,10 @@ export default function AdminResourcePage() {
                   return (
                     <article
                       key={report.id}
-                      className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 shadow-2xs transition-all grid grid-cols-1 lg:grid-cols-12 items-stretch overflow-hidden divide-y divide-slate-200 lg:divide-y-0 lg:divide-x lg:divide-slate-200"
+                      className="grid grid-cols-1 saas-reports-grid-row items-stretch hover:bg-slate-50/60 transition-colors divide-y divide-slate-200 lg:divide-y-0 lg:divide-x lg:divide-slate-200"
                     >
-                      {/* Cột 1 (lg:col-span-4): Lý do vi phạm & Phân loại */}
-                      <div className="lg:col-span-4 p-5 flex flex-col justify-center min-w-0">
+                      {/* Cột 1: Lý do vi phạm & Phân loại */}
+                      <div className="p-5 flex flex-col justify-center min-w-0">
                         <div className="saas-report-card-badges">
                           <span className="saas-report-type-badge">
                             <Icon name={typeIcon} size={13} />
@@ -1986,8 +2279,8 @@ export default function AdminResourcePage() {
                         </h3>
                       </div>
 
-                      {/* Cột 2 (lg:col-span-3): Nội dung bị báo cáo */}
-                      <div className="lg:col-span-3 p-5 flex flex-col justify-center min-w-0">
+                      {/* Cột 2: Nội dung bị báo cáo */}
+                      <div className="p-5 flex flex-col justify-center min-w-0">
                         <span className="saas-report-col-label">Đối tượng:</span>
                         <a
                           href={getReportTargetUrl(report)}
@@ -2001,10 +2294,25 @@ export default function AdminResourcePage() {
                             ↗
                           </span>
                         </a>
+                        <span className="saas-report-author-line">
+                          <span>Người đăng:</span>
+                          {targetAuthor.resolved ? (
+                            <button
+                              type="button"
+                              className="saas-report-author-btn"
+                              onClick={() => updateReportQuery(targetAuthor.name)}
+                              title={`Lọc các báo cáo liên quan đến ${targetAuthor.name}`}
+                            >
+                              {targetAuthor.name}
+                            </button>
+                          ) : (
+                            <span className="saas-report-author-unknown">{targetAuthor.name}</span>
+                          )}
+                        </span>
                       </div>
 
-                      {/* Cột 3 (lg:col-span-3): Chi tiết phản ánh */}
-                      <div className="lg:col-span-3 p-5 flex flex-col justify-center min-w-0">
+                      {/* Cột 3: Chi tiết phản ánh */}
+                      <div className="p-5 flex flex-col justify-center min-w-0">
                         <span className="saas-report-reporter-line">
                           Người báo cáo: <strong>{report.reporter}</strong>
                         </span>
@@ -2016,8 +2324,8 @@ export default function AdminResourcePage() {
                         </p>
                       </div>
 
-                      {/* Cột 4 (lg:col-span-2): Thao tác căn giữa hoàn toàn */}
-                      <div className="lg:col-span-2 p-5 flex items-center justify-center min-w-0">
+                      {/* Cột 4: Thao tác căn giữa hoàn toàn */}
+                      <div className="p-5 flex items-center justify-center min-w-0">
                         {isPending ? (
                           <button
                             type="button"
@@ -2048,7 +2356,7 @@ export default function AdminResourcePage() {
           {filteredReports.length === 0 &&
             connectionState !== "loading" &&
             connectionState !== "error" && (
-              <div className="resource-empty resource-empty--reports saas-reports-empty">
+              <div className="resource-empty resource-empty--reports saas-reports-empty border-0 rounded-none shadow-none">
                 <Icon name="shield" />
                 <h3>
                   {reports.length
@@ -2062,6 +2370,42 @@ export default function AdminResourcePage() {
                 </p>
               </div>
             )}
+
+          {/* Thanh Phân trang ở đáy thẻ (5 bản ghi/trang) */}
+          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-200 flex items-center justify-center">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={safeCurrentReportPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Trước
+              </button>
+              {Array.from({ length: totalReportPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={
+                    safeCurrentReportPage === pageNum
+                      ? "bg-emerald-600 text-white border border-emerald-600 rounded-md px-2.5 py-1 text-xs font-semibold shadow-2xs cursor-pointer"
+                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+                  }
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={safeCurrentReportPage >= totalReportPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalReportPages, p + 1))}
+                className="bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed rounded-md px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Sau
+              </button>
+            </div>
+          </div>
         </section>
 
         {reportDialogNode}
@@ -2551,11 +2895,6 @@ export default function AdminResourcePage() {
             {/* Thanh điều khiển Phân trang (Pagination Bar) */}
             {totalFilteredListings > 0 && (
               <nav className="saas-pagination-bar" aria-label="Phân trang danh sách tin cho thuê">
-                <span className="saas-pagination-info">
-                  Hiển thị <b>{listingStartIndex}–{listingEndIndex}</b> trong tổng số{" "}
-                  <b>{totalFilteredListings}</b> tin cho thuê
-                </span>
-
                 <div className="saas-pagination-controls">
                   <button
                     type="button"
@@ -2951,35 +3290,7 @@ export default function AdminResourcePage() {
                     )
                     const userPostCount = userPosts.length
 
-                    const reportsAgainstUser = reports.filter((r) => {
-                      if (r.targetType === "Tin phòng") {
-                        return userListings.some(
-                          (l) =>
-                            l.id === r.targetId ||
-                            l.title.trim().toLowerCase() ===
-                              r.targetTitle.trim().toLowerCase(),
-                        )
-                      }
-                      if (r.targetType === "Bài viết") {
-                        return userPosts.some(
-                          (p) =>
-                            p.id === r.targetId ||
-                            parsePostContent(p.content).title.trim().toLowerCase() ===
-                              r.targetTitle.trim().toLowerCase(),
-                        )
-                      }
-                      if (r.targetType === "Bình luận") {
-                        return posts.some((p) =>
-                          (p.comments ?? []).some(
-                            (c) =>
-                              c.id === r.targetId &&
-                              (c.authorId === user.id ||
-                                c.author?.toLowerCase() === user.name.toLowerCase()),
-                          ),
-                        )
-                      }
-                      return false
-                    })
+                    const reportsAgainstUser = reports.filter((r) => isReportAgainstUser(r, user))
                     const acceptedViolations = reportsAgainstUser.filter(
                       (r) => r.status === "accepted",
                     ).length
@@ -3127,9 +3438,28 @@ export default function AdminResourcePage() {
                           {/* Rãnh con 2: Vi phạm */}
                           <div className="px-2 py-3 flex items-center justify-center h-full">
                             {acceptedViolations > 0 ? (
-                              <span className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-600 whitespace-nowrap">
-                                {acceptedViolations} vi phạm
-                              </span>
+                              <button
+                                type="button"
+                                onClick={() => openViolationsModal(user)}
+                                title={`Nhấn để xem chi tiết ${acceptedViolations} vi phạm của ${user.name}`}
+                                aria-label={`Xem chi tiết ${acceptedViolations} vi phạm của ${user.name}`}
+                                className="inline-flex items-center justify-center gap-1 w-[112px] py-1 rounded-full bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-300 text-xs font-semibold text-rose-600 whitespace-nowrap transition-colors cursor-pointer"
+                              >
+                                <span>{acceptedViolations} vi phạm</span>
+                                <svg
+                                  aria-hidden="true"
+                                  className="w-3 h-3 text-rose-500 shrink-0"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                  <circle cx="12" cy="12" r="3" />
+                                </svg>
+                              </button>
                             ) : (
                               <span className="inline-flex items-center justify-center w-[112px] py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 whitespace-nowrap">
                                 0 vi phạm
@@ -3291,6 +3621,7 @@ export default function AdminResourcePage() {
         </div>
 
         {editDialogNode}
+        {violationsDialogNode}
         {confirmDialogNode}
       </main>
     )
