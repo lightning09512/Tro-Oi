@@ -45,6 +45,7 @@ export default function MainHeader() {
   }, [pathname, search])
   const isAuthPage =
     pathname === "/dang-nhap" ||
+    pathname === "/admin/dang-nhap" ||
     pathname === "/dang-ky" ||
     pathname === "/quen-mat-khau" ||
     pathname === "/dat-lai-mat-khau"

@@ -73,6 +73,7 @@ export const router = createBrowserRouter([
       { path: "/trang-ca-nhan", Component: PublicProfilePage },
       { path: "/nguoi-dung/:id", Component: PublicProfilePage },
       { path: "/dang-nhap", Component: LoginPage },
+      { path: "/admin/dang-nhap", element: <LoginPage admin /> },
       { path: "/dang-ky", Component: RegisterPage },
       { path: "/quen-mat-khau", element: <PasswordRecoveryPage /> },
       { path: "/dat-lai-mat-khau", element: <PasswordRecoveryPage reset /> },
@@ -114,7 +115,6 @@ export const router = createBrowserRouter([
       { path: "/404", element: <ErrorPage code={404} /> },
     ],
   },
-  { path: "/admin/dang-nhap", element: <LoginPage admin /> },
   {
     path: "/admin",
     element: guard(admin, <AdminLayout />),

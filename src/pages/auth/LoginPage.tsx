@@ -130,9 +130,13 @@ export default function LoginPage({ admin = false }: { admin?: boolean }) {
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </Button>
 
-        {!admin && (
+        {!admin ? (
           <p className="auth-switch">
             Chưa có tài khoản? <NavLink to="/dang-ky">Đăng ký ngay</NavLink>
+          </p>
+        ) : (
+          <p className="auth-switch">
+            <NavLink to="/dang-nhap">&larr; Về đăng nhập thành viên</NavLink>
           </p>
         )}
 
