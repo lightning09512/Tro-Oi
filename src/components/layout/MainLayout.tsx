@@ -9,7 +9,8 @@ import useScrollToTop from "@/hooks/useScrollToTop"
 export default function MainLayout() {
   const { pathname } = useLocation()
   useScrollToTop()
-  const isFocusedWorkspace = pathname === "/tin-nhan" || pathname === "/chu-tro/dang-tin" || /^\/chu-tro\/tin\/[^/]+\/chinh-sua$/.test(pathname)
+  const isAuthPage = pathname === "/dang-nhap" || pathname === "/dang-ky" || pathname === "/quen-mat-khau" || pathname === "/dat-lai-mat-khau"
+  const isFocusedWorkspace = isAuthPage || pathname === "/tin-nhan" || pathname === "/chu-tro/dang-tin" || /^\/chu-tro\/tin\/[^/]+\/chinh-sua$/.test(pathname)
   const isPublicContent = pathname === "/" || pathname === "/tim-phong" || pathname.startsWith("/phong/") || pathname === "/dien-dan" || pathname.startsWith("/bai-viet/")
   const isForum = pathname === "/dien-dan" || pathname.startsWith("/bai-viet/")
   const isRoomDetail = pathname.startsWith("/phong/")
